@@ -1,8 +1,10 @@
 <?php
 namespace Recognize\FilemanagerBundle\Tests\Service;
 
+use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -87,6 +89,40 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $this->assertEquals( $this->getExpectedLimitedSearchResults(), $files );
     }
 
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testRenamingDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $filemanagerservice->rename("testing", "testing4");
+        $files = $filemanagerservice->searchDirectoryContents( "", "/testing4/" );
+        $this->assertEquals($this->getExpectedRenamedDirectory(), $files[0] );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \Recognize\FilemanagerBundle\Exception\ConflictException
+     */
+    public function testConflictingRenaming(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $filemanagerservice->rename("testing", "testing2");
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \Symfony\Component\Filesystem\Exception\FileNotFoundException
+     */
+    public function testNonexistingFileRenaming(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $filemanagerservice->rename("testingnonexistingdirectory", "testing2");
+    }
+
 
     protected function fillTempDirectory(){
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);
@@ -142,5 +178,9 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3", "testing/level2", "testing/level2/level3" );
 
         return $contents;
+    }
+
+    protected function getExpectedRenamedDirectory(){
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing4", "", "testing4" );
     }
 }

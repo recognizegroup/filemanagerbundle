@@ -1,20 +1,18 @@
 <?php
 namespace Recognize\FilemanagerBundle\Service;
 
+use Recognize\FilemanagerBundle\Exception\ConflictException;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
 class FilemanagerService {
 
-    private $finder;
-    private $filesystem;
     private $working_directory;
 
     public function __construct( array $configuration ){
-        $this->finder = new Finder();
-        $this->filesystem = new Filesystem();
-
         if( isset( $configuration['default_directory'] ) ){
             $this->working_directory = $configuration['default_directory'];
         } else {
@@ -39,7 +37,6 @@ class FilemanagerService {
         }
 
         $finder->depth( $depth )->in( $path );
-
         return $this->finderToFilesArray( $finder );
     }
 
@@ -86,5 +83,59 @@ class FilemanagerService {
         }
 
         return $files;
+    }
+
+    /**
+     * Get the first file that is collected in the finder
+     *
+     * @param Finder $finder
+     * @return SplFileInfo
+     */
+    protected function getFirstFileInFinder( Finder $finder ){
+        $iterator = $finder->getIterator();
+        $iterator->next();
+        return $iterator->current();
+    }
+
+    /**
+     * Renames a directory or a file
+     *
+     * @param string $relative_path_to_file            The relative path from the working directory to the file
+     * @param string $new_name                         The new file name
+     *
+     * @throws FileNotFoundException                   When the file or directory to be renamed does not exist
+     * @throws IOException                             When target file or directory already exists
+     * @throws IOException                             When origin cannot be renamed
+     */
+    public function rename( $relative_path_to_file, $new_name ){
+        $fs = new Filesystem();
+        $finder = new Finder();
+        $finder->in($this->working_directory)->path("/^" . $relative_path_to_file . "$/" );
+
+        $filechanges = array();
+
+        if( $finder->count() > 0 ){
+
+            $filepath = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
+            $oldfile = $this->getFirstFileInFinder( $finder );
+
+            $newfilepath = $oldfile->getPath() . DIRECTORY_SEPARATOR . $new_name;
+            $newfile = new SplFileInfo( $newfilepath, $oldfile->getRelativePath(), $new_name );
+
+            // Prevent files from being overwritten
+            if( $fs->exists( $newfilepath ) ){
+                throw new ConflictException();
+            }
+
+            $filechanges[] = $oldfile;
+            $filechanges[] = $newfile;
+
+            $fs->rename( $filepath, $newfilepath );
+
+        } else {
+            throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
+        }
+
+        return $filechanges;
     }
 }

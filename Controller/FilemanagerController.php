@@ -2,13 +2,21 @@
 
 namespace Recognize\CMSBundle\Controller;
 
+use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
 class FilemanagerController extends Controller {
 
+    /**
+     * @return FilemanagerService
+     */
+    protected function getFilemanager(){
+        return $this->get('recognize.file_manager');
+    }
+
     public function read(Request $request){
-        $filemanager = $this->get('recognize.file_manager');
+        $filemanager = $this->getFilemanager();
     }
 
     public function create(Request $request) {
@@ -24,6 +32,12 @@ class FilemanagerController extends Controller {
     }
 
     public function rename(Request $request) {
+        $filemanager = $this->getFilemanager();
+
+        $oldfile = "";
+        $newfile = "1";
+
+        $filemanager->rename( $oldfile, $newfile );
 
     }
 
