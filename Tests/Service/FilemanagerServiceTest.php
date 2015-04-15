@@ -54,6 +54,40 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $this->assertEquals( $this->getExpectedNestedDirectoryContents(), $files );
     }
 
+    public function testFullFilenameSearching(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $files = $filemanagerservice->searchDirectoryContents("", "/testing2/");
+        $this->assertEquals( $this->getExpectedSearchContents(), $files );
+    }
+
+    public function testEmptySearching(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $files = $filemanagerservice->searchDirectoryContents("", "/filethatdoesntexist.jpg/");
+        $this->assertEquals( array(), $files );
+    }
+
+
+    public function testPartialFilenameAndNestedSearching(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $files = $filemanagerservice->searchDirectoryContents("", "/vel3/");
+        $this->assertEquals( $this->getExpectedNestedSearchContents(), $files );
+    }
+
+    public function testSearchLimitedToThisDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $files = $filemanagerservice->searchDirectoryContents("testing", "/level/", true);
+        $this->assertEquals( $this->getExpectedLimitedSearchResults(), $files );
+    }
+
+
     protected function fillTempDirectory(){
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing2" , 0777);
@@ -72,6 +106,28 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     protected function getExpectedTestingDirectoryContents(){
         $contents = array();
         $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "", "level2" );
+
+        return $contents;
+    }
+
+    protected function getExpectedSearchContents(){
+        $contents = array();
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing2", "", "testing2" );
+
+        return $contents;
+    }
+
+    protected function getExpectedLimitedSearchResults(){
+        $contents = array();
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "", "level2" );
+
+        return $contents;
+    }
+
+
+    protected function getExpectedNestedSearchContents(){
+        $contents = array();
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "testing/level2", "testing/level2/level3" );
 
         return $contents;
     }
