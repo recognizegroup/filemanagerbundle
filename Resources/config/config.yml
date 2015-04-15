@@ -1,4 +1,4 @@
 services:
     recognize_filemanager:
         class: Recognize\FilemanagerBundle\Service\FilemanagerService
-        arguments: [%kernel.root_dir%/../]
+        arguments: [ %recognize_filemanager.config% ]

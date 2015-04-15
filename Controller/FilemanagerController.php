@@ -7,6 +7,10 @@ use Symfony\Component\HttpFoundation\Request;
 
 class FilemanagerController extends Controller {
 
+    public function read(Request $request){
+        $filemanager = $this->get('recognize.file_manager');
+    }
+
     public function create(Request $request) {
 
     }

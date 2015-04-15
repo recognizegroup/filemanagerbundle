@@ -1,5 +1,5 @@
 <?php
-namespace Acme\DemoBundle\Command;
+namespace Recognize\FilemanagerBundle\Command;
 
 use Recognize\FilemanagerBundle\Command\FileCommandInterface;
 
