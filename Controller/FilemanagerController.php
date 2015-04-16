@@ -1,7 +1,7 @@
 <?php
+namespace Recognize\FilemanagerBundle\Controller;
 
-namespace Recognize\CMSBundle\Controller;
-
+use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,13 +17,24 @@ class FilemanagerController extends Controller {
 
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
+        $contents = $filemanager->getDirectoryContents( $request->get('directory') );
+
+
+        $builder = new FilemanagerResponseBuilder();
+        $builder->addFiles( $contents );
+        return $builder->build();
+    }
+
+    public function search(Request $request){
+        $filemanager = $this->getFilemanager();
+
+        $files = $filemanager->searchDirectoryContents($request->get('directory'), "/" . $request->get('q') . "/" );
+        $builder = new FilemanagerResponseBuilder();
+        $builder->addFiles( $files );
+        return $builder->build();
     }
 
     public function create(Request $request) {
-
-    }
-
-    public function download(Request $request) {
 
     }
 
@@ -37,8 +48,7 @@ class FilemanagerController extends Controller {
         $oldfile = "";
         $newfile = "1";
 
-        $filemanager->rename( $oldfile, $newfile );
-
+        $changes = $filemanager->rename( $oldfile, $newfile );
     }
 
     public function delete(Request $request) {

@@ -25,7 +25,7 @@ class Configuration implements ConfigurationInterface {
         $rootNode = $treeBuilder->root('recognize_filemanager');
         $rootNode
             ->children()
-                ->scalarNode('default_folder')->defaultValue('')->end()
+                ->scalarNode('default_directory')->defaultValue('')->end()
             ->end()
         ;
 

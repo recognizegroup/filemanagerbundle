@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Service;
 
+use InvalidArgumentException;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -25,6 +26,8 @@ class FilemanagerService {
      *
      * @param string $directory_path            The relative path from the working directory
      * @param int $depth                        The depth level of the directories to get
+     *
+     * @throws InvalidArgumentException         When the directory or file does not exist
      * @return SplFileInfo[] files
      */
     public function getDirectoryContents( $directory_path = "", $depth = 0 ){
@@ -35,6 +38,7 @@ class FilemanagerService {
         if( $depth !== 0 ){
             $depth = "<" . $depth;
         }
+
 
         $finder->depth( $depth )->in( $path );
         return $this->finderToFilesArray( $finder );
@@ -79,10 +83,26 @@ class FilemanagerService {
         $files = array();
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
-            $files[] = $file;
+            $files[] = $this->transformFileRelativePath( $file );
         }
 
         return $files;
+    }
+
+    /**
+     * Because the file returned from the Finder doesn't have the correct relative path from the working directory,
+     * We need this function to implement the actual relative path
+     *
+     * @param SplFileInfo $file
+     * @return SplFileInfo
+     */
+    protected function transformFileRelativePath( $file ){
+        $path = $file->getPath() . DIRECTORY_SEPARATOR;
+        $absolutepath = $path . $file->getFilename();
+
+        $count = 1;
+        $relativePath = str_replace($this->working_directory . DIRECTORY_SEPARATOR, "", $path, $count );
+        return new SplFileInfo( $absolutepath, $relativePath, $file->getFilename() );
     }
 
     /**
@@ -94,7 +114,7 @@ class FilemanagerService {
     protected function getFirstFileInFinder( Finder $finder ){
         $iterator = $finder->getIterator();
         $iterator->next();
-        return $iterator->current();
+        return $this->transformFileRelativePath( $iterator->current() );
     }
 
     /**
@@ -137,5 +157,9 @@ class FilemanagerService {
         }
 
         return $filechanges;
+    }
+
+    public function move(){
+
     }
 }

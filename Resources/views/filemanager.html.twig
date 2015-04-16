@@ -3,56 +3,532 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>File Manager</title>
-    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/styles/reset.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/scripts/jquery.filetree/jqueryFileTree') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/scripts/jquery.contextmenu/jquery.contextMenu-1.01.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/styles/filemanager.css') }}" />
-    <link rel="stylesheet" type="text/css" href="../public/" />
-    <!--[if IE]>
-    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/styles/ie.css') }}"/>
-    <![endif]-->
+    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/jquery-1.11.2.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/jstree.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/themes/default/style.css') }}" />
 </head>
 <body>
-<div>
-    <form id="uploader" method="post">
-        <button id="home" name="home" type="button" value="Home">&nbsp;</button>
-        <h1></h1>
-        <div id="uploadresponse"></div>
-        <input id="mode" name="mode" type="hidden" value="add" />
-        <input id="currentpath" name="currentpath" type="hidden" />
-<span id="file-input-container">
-	<div id="alt-fileinput">
-        <input	id="filepath" name="filepath" type="text" /><button id="browse" name="browse" type="button" value="Browse"></button>
-    </div>
-	<input	id="newfile" name="newfile" type="file" />
-</span>
-        <button id="upload" name="upload" type="submit" value="Upload"></button>
-        <button id="newfolder" name="newfolder" type="button" value="New Folder"></button>
-        <button id="grid" class="ON" type="button">&nbsp;</button>
-        <button id="list" type="button">&nbsp;</button>
-    </form>
-    <div id="splitter">
-        <div id="filetree"></div>
-        <div id="fileinfo">
-            <h1></h1>
+    <div>
+
+        <div class="filetree">
+
         </div>
+
+
+        <script type="text/javascript">
+            (function() {
+                "use_strict";
+
+                var FileTree = function(element, options){
+                    var defaults = {
+                        debug: false,
+                    };
+                    this.options = $.extend(true, defaults, options);
+                    this.init( this.options, element );
+                };
+
+                /**
+                 * Manages the in-memory file tree
+                 */
+                FileTree.prototype = {
+                    _debug: false,
+                    _root: {
+                        children: {}
+                    },
+
+                    /** Used for setting the ID of the jstree */
+                    _walk_itteration: 0,
+
+                    /**
+                     * Initialize the Tree configuration
+                     */
+                    init: function (config, element) {
+                        this.$element = element;
+
+                        if( config !== null && typeof config === 'object' ){
+                            this._debug = config.debug;
+                        }
+
+                        this.debug( "Initializing" );
+                        this.debug( config );
+
+                        return this;
+                    },
+
+                    /**
+                     * Recursively walk over the entire tree and call a function for each file
+                     *
+                     * @param callback          The function that will be called on every file retrieved
+                     * @param nodes             File nodes
+                     */
+                    walk: function( callback, nodes ){
+                        if( typeof nodes === "undefined" ){
+                            nodes = this._root.children;
+                        }
+
+                        for(var folder_name in nodes) {
+                            var node = nodes[ folder_name ];
+                            this._walk_itteration++;
+
+                            callback( node, this._walk_itteration );
+                            if( typeof node.children === "object" && node.children !== null ){
+
+                                var keys = [];
+                                for( var key in node.children ){
+                                    keys.push( key );
+                                }
+
+                                if( keys.length > 0 ){
+                                    this.walk( callback, node.children );
+                                }
+                            }
+                        }
+                    },
+
+                    /**
+                     * Add new files to the FileTree and check for conflicts
+                     */
+                    addFiles: function( files ){
+                        for( var i = 0, length = files.length; i < length; i++ ){
+                            var file = files[i];
+                            this.setFile( file.path, file);
+                        }
+
+                        console.log( this._root );
+
+                        this.updateJstree();
+                    },
+
+                    /**
+                     * Add or override a filenode to the children of a
+                     */
+                    setFile: function( path, filenode ){
+                        filenode.children = {};
+
+                        // Directly add to the root if the path is empty
+                        if( path == "" ){
+                            this._root.children[ filenode.name ] = filenode;
+                        } else {
+                            var pathnodes = filenode.path.split('/');
+
+                            if( typeof this._root.children[ pathnodes[0] ] !== "undefined" ) {
+                                this._root.children[ pathnodes[0] ].children[ filenode.name ] = filenode;
+                            }
+                        }
+                    },
+
+                    /**
+                     * Add changes to the FileTree
+                     */
+                    addChanges: function( changes ){
+
+                    },
+
+                    /**
+                     * Turns the current in memory file tree into a list of files that the jsTree plugin can understand
+                     */
+                    flattenTree: function(){
+                        var jstreedata = [];
+
+                        this.walk(function(filenode, itteration){
+                            var parent = filenode.path;
+                            if( parent == "" ){
+                                parent = "#";
+                            }
+
+                            var jstreenode =  {"id": "js_tree_file_" + itteration, "text": filenode.name, "parent": parent };
+                            jstreedata.push( jstreenode );
+                        });
+
+                        this._walk_itteration = 0;
+
+                        return jstreedata;
+                    },
+
+                    /**
+                     * Update the state of the jsTree plugin
+                     */
+                    updateJstree: function(){
+                        this.$element.jstree('destroy').jstree({ 'core': {
+                            'data' : this.flattenTree(),
+                            'multiple': false}
+                        });
+                    },
+
+                    /**
+                     * Displays debug data
+                     * @param debug_message
+                     */
+                    debug: function( debug_message ) {
+                        if( typeof debug_message === "string" ){
+                            debug_message =  "FileTree: " + debug_message;
+                        }
+
+                        if(this._debug) console.log( debug_message );
+                    },
+
+                    /**
+                     * Log an error
+                     *
+                     * @param errormessage
+                     */
+                    errorLog: function( errormessage ) {
+                        console.error( errormessage );
+                    }
+                };
+
+                var FilemanagerAPI = function(element, options) {
+                    var defaults = {
+                        debug: false,
+                        api: {
+                            url: location.protocol + '//' + location.host + location.pathname,
+                            paths: {
+                                create: "/create",
+                                read: "",
+                                search: "/search",
+                                move: "/move",
+                                rename: "/rename",
+                                delete: "/delete"
+                            }
+                        }
+                    };
+                    this.options = $.extend(true, defaults, options);
+                    this.init( this.options, element );
+                };
+
+                FilemanagerAPI.prototype = {
+
+                    /** FileTree object */
+                    _fileTree: null,
+
+                    _debug: false,
+                    _url: "",
+                    _path_create: "",
+                    _path_move: "",
+                    _path_rename: "",
+                    _path_read_directory: "",
+                    _path_delete: "",
+                    _path_search: "",
+                    $element: null,
+
+                    /**
+                     * Initialize the API configuration
+                     */
+                    init: function (config, element) {
+                        this.$element = element;
+
+                        if( config !== null && typeof config === 'object' ){
+                            this._fileTree = config.fileTree;
+
+                            if( typeof config.debug !== 'undefined'){
+                                this._debug = config.debug;
+                            }
+
+                            if( config.api !== null && typeof config.api === 'object' ){
+                                if( typeof config.api.url !== 'undefined'){
+                                    this._url = config.api.url;
+                                }
+
+                                if( config.api.paths !== null && typeof config.api.paths === 'object' ) {
+
+
+                                    if (typeof config.api.paths.move !== 'undefined') {
+                                        this._path_move = config.api.paths.move;
+                                    }
+
+                                    if (typeof config.api.paths.rename !== 'undefined') {
+                                        this._path_rename = config.api.paths.rename;
+                                    }
+
+                                    if (typeof config.api.paths.create !== 'undefined') {
+                                        this._path_create = config.api.paths.create;
+                                    }
+
+                                    if (typeof config.api.paths.delete !== 'undefined') {
+                                        this._path_delete = config.api.paths.delete;
+                                    }
+
+                                    if (typeof config.api.paths.read !== 'undefined') {
+                                        this._path_read_directory = config.api.paths.read;
+                                    }
+
+                                    if (typeof config.api.paths.search !== 'undefined') {
+                                        this._path_search = config.api.paths.search;
+                                    }
+                                }
+                            }
+                        }
+
+                        this.debug( "Initializing" );
+                        this.debug( config );
+
+                        return this;
+                    },
+
+                    /**
+                     * Displays debug data
+                     * @param debug_message
+                     */
+                    debug: function( debug_message ) {
+                        if( typeof debug_message === "string" ){
+                            debug_message =  "FilemanagerAPI: " + debug_message;
+                        }
+
+                        if(this._debug) console.log( debug_message );
+                    },
+
+                    /**
+                     * Log an error
+                     *
+                     * @param errormessage
+                     */
+                    errorLog: function( errormessage ) {
+                        console.error( errormessage );
+                    },
+
+                    /**
+                     * Send an ajax request to the server
+                     *
+                     * @param path                  The absolute link to the api
+                     * @param method                The request method
+                     * @param parameters            Parameters to be added to the URL
+                     *
+                     * @returns Promise object
+                     */
+                    _sendRequest: function( path, method, parameters ){
+                        if( typeof method === 'undefined'){
+                            method = "GET";
+                        }
+
+                        if( typeof parameters !== 'object' ){
+                            parameters = {};
+                        }
+
+                        // Add the reference to this object to the ajax settings
+                        // To allow for easy debug messages
+                        var self = this;
+
+                        return $.ajax({
+                            url: path,
+                            data: parameters,
+                            dataType: "json",
+                            method: method,
+                            self: self,
+                            beforeSend: function (jqXHR) {
+                                this.self.debug("Sending " + this.method + " request to " + this.url + "...");
+                            }
+
+                        // Log the response
+                        }).done( function( data ){
+                            this.self.debug( data );
+
+                        // Log the failure
+                        }).fail( function( jqXHR, error, errorMessage ){
+                            this.self.debug( { statuscode: jqXHR.status,
+                                statustext: jqXHR.statusText,
+                                response: jqXHR.responseText });
+                        });
+                    },
+
+                    /**
+                     * Send a read directory call to the server
+                     *
+                     * @param directory                     The directory to read
+                     */
+                    read: function( directory ){
+                        var url = this._url + this._path_read_directory;
+
+                        this._sendRequest( url, "GET", { directory: directory } )
+                            .done(function( data, status, jqXHR) {
+                                var contents = data.data.contents;
+
+                                this.self._fileTree.addFiles( contents );
+                            });
+                    },
+
+                    /**
+                     * Send a search call to the server
+                     *
+                     * @param directory                     The directory to read
+                     * @param query                         The value to search for
+                     */
+                    search: function( directory, query ){
+                        var url = this._url + this._path_search;
+
+                        this._sendRequest( url, "GET", { directory: directory, q: query } )
+                            .done(function( data, status, jqXHR) {
+
+                            })
+                            .fail(function( data, status, jqXHR ) {
+
+                            });
+                    },
+
+                    /**
+                     * Send a move request to the server
+                     *
+                     * @param file                          The path to the file including the filename
+                     * @param new_location                  The new location of the file
+                     */
+                    move: function( file, new_location ){
+                        var url = this._url + this._path_move;
+
+                        this._sendRequest( url, "POST", { file: file, location: new_location } )
+                                .done(function( data, status, jqXHR) {
+
+                                })
+                                .fail(function( data, status, jqXHR ) {
+
+                                });
+                    },
+
+                    /**
+                     * Send a rename request to the server
+                     *
+                     * @param file                          The path to the file including the filename
+                     * @param new_filename                  The new location of the file
+                     */
+                    rename: function( file, new_filename ){
+                        var url = this._url + this._path_rename;
+
+                        this._sendRequest( url, "POST", { file: file, name: new_filename } )
+                                .done(function( data, status, jqXHR) {
+
+                                })
+                                .fail(function( data, status, jqXHR ) {
+
+                                });
+                    },
+
+                    /**
+                     * Send a request to the server that creates a directory
+                     *
+                     * @param path                          The path to the directory
+                     * @param name                          The name of the directory to be made
+                     */
+                    createDirectory: function( path, name ){
+                        var url = this._url + this._path_create;
+
+                        this._sendRequest( url, "POST", { type: "directory", location: path, name: name } )
+                                .done(function( data, status, jqXHR) {
+
+                                })
+                                .fail(function( data, status, jqXHR ) {
+
+                                });
+                    },
+
+                    /**
+                     * Send a request to the server that deletes a file or a directory
+                     *
+                     * @param path                          The path to the directory
+                     * @param name                          The name of the file or directory to destroy
+                     */
+                    delete: function( path, name ){
+                        var url = this._url + this._path_delete;
+
+                        this._sendRequest( url, "POST", { location: path, name: name } )
+                                .done(function( data, status, jqXHR) {
+
+                                })
+                                .fail(function( data, status, jqXHR ) {
+
+                                });
+                    }
+                };
+
+                $.fn.filemanager = function( config ) {
+                    var tree = new FileTree( this, config );
+
+                    this.data('tree', tree );
+                    config.fileTree = tree;
+                    this.data('api', new FilemanagerAPI( this, config ) );
+
+
+                    return this;
+                };
+
+            })( jQuery );
+
+            $('.filetree').filemanager({ debug: true, api: { url: "http://recocms/admin/fileapi" } });
+
+
+            /**
+             var FilemanagerAPI = {
+
+                _debug: false,
+                _url: "",
+                _path_create: "create",
+                _path_move: "move",
+                _path_rename: "rename",
+                _path_read_directory: "",
+                _path_delete: "delete",
+                _tree: []
+
+
+                /**
+                 * Initialize the Filemanager API object
+                 *
+                 * @param config
+             *
+            init: function (config) {
+                if( config !== null && typeof config === 'object' ){
+
+                    if( typeof config.debug !== 'undefined'){
+                        this.debug = config.debug;
+                    }
+
+                    if( config.api !== null && typeof config.api === 'object' ){
+                        if( typeof config.api.url !== 'undefined'){
+                            this._url = config.api.url;
+                        }
+
+                        if( typeof config.api.movePath !== 'undefined'){
+                            this._path_move = config.api.movePath;
+                        }
+
+                        if( typeof config.api.renamePath !== 'undefined'){
+                            this._path_rename = config.api.renamePath;
+                        }
+
+                        if( typeof config.api.createPath !== 'undefined'){
+                            this._path_create = config.api.createPath;
+                        }
+
+                        if( typeof config.api.deletePath !== 'undefined'){
+                            this._path_delete = config.api.deletePath;
+                        }
+
+                        if( typeof config.api.readDirectoryPath !== 'undefined'){
+                            this._path_read_directory = config.api.readDirectoryPath;
+                        }
+                    }
+
+                }
+            }
+
+            sendAjaxCall: function( path, parameters ){
+
+            }
+
+            showError: function( errormessage ){
+
+            }
+            };
+            */
+
+            /*var filetree = $('.filetree').jstree({ 'core': {
+                'data' : [
+                    { "id" : "ajson1", "parent" : "#", "text" : "Simple root node" },
+                    { "id" : "ajson2", "parent" : "#", "text" : "Root node 2" },
+                    { "id" : "ajson3", "parent" : "ajson2", "text" : "Child 1" },
+                    { "id" : "ajson4", "parent" : "ajson2", "text" : "Child 2" }
+                ],
+                'multiple': false}
+            });
+
+            filetree.create_node( "#", "Iminlovewithdacoco" );*/
+        </script>
     </div>
-
-    <ul id="itemOptions" class="contextMenu">
-        <li class="select"><a href="#select"></a></li>
-        <li class="download"><a href="#download"></a></li>
-        <li class="rename"><a href="#rename"></a></li>
-        <li class="delete separator"><a href="#delete"></a></li>
-    </ul>
-
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery-1.8.3.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.form-3.24.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.splitter/jquery.splitter-1.5.1.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.filetree/jqueryFileTree.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.contextmenu/jquery.contextMenu-1.01.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.impromptu-3.2.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/jquery.tablesorter-2.7.2.min.js') }}"></script>
-    <!--<script type="text/javascript" src="../public/scripts/filemanager.config.js"></script>-->
-    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/scripts/filemanager.js') }}"></script>
 </body>
 </html>
