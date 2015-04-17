@@ -21,7 +21,7 @@
 
                 var FileTree = function(element, options){
                     var defaults = {
-                        debug: false,
+                        debug: false
                     };
                     this.options = $.extend(true, defaults, options);
                     this.init( this.options, element );
@@ -91,37 +91,224 @@
                     addFiles: function( files ){
                         for( var i = 0, length = files.length; i < length; i++ ){
                             var file = files[i];
-                            this.setFile( file.path, file);
+                            this._setFile( file );
                         }
 
-                        console.log( this._root );
+                        this.debug( "Tree structure after updating" );
+                        this.debug( this._root );
 
                         this.updateJstree();
                     },
 
                     /**
-                     * Add or override a filenode to the children of a
+                     * Add or override a filenode
                      */
-                    setFile: function( path, filenode ){
+                    _setFile: function( filenode ){
                         filenode.children = {};
 
-                        // Directly add to the root if the path is empty
-                        if( path == "" ){
-                            this._root.children[ filenode.name ] = filenode;
-                        } else {
-                            var pathnodes = filenode.path.split('/');
+                        var node = this._findNode( filenode.path );
 
-                            if( typeof this._root.children[ pathnodes[0] ] !== "undefined" ) {
-                                this._root.children[ pathnodes[0] ].children[ filenode.name ] = filenode;
-                            }
+                        // Just set the value if the childnode doesn't exist
+                        if( typeof node.children[ filenode.name ] === "undefined" ){
+                            node.children[ filenode.name ] = filenode;
+
+                        // Otherwise recursively merge the values of the node
+                        } else {
+                            node.children[ filenode.name] = $.extend( true, node.children[ filenode.name ], filenode );
                         }
                     },
 
                     /**
-                     * Add changes to the FileTree
+                     * Walk through the tree - Adding nodes where they aren't set,
+                     * before returning the node object that was found
+                     *
+                     * @return object
+                     */
+                    _findNode: function( path ){
+                        var pathnodes = this._extractPathNodes( path );
+
+                        // Get the file node in the nested structure
+                        var node = this._root;
+                        for( var i = 0, length = pathnodes.length; i < length; i++ ){
+                            var pathnode = pathnodes[ i ];
+
+                            if( typeof node.children[ pathnode ] === "undefined") {
+                                node.children[ pathnode ] = { children: {} };
+                            }
+
+                            node = node.children[ pathnode ];
+                        }
+
+                        return node;
+                    },
+
+                    /**
+                     * Extract the actual path nodes without empty strings caused by multiple backslashes
+                     *
+                     * @return []
+                     */
+                    _extractPathNodes: function( path ){
+                        var crudepathnodes = path.split('/');
+                        var pathnodes = [];
+                        for( var i = 0, length = crudepathnodes.length; i < length; i++ ){
+                            if( crudepathnodes[i] !== "" ){
+                                pathnodes.push( crudepathnodes[i] );
+                            }
+                        }
+
+                        return pathnodes;
+                    },
+
+                    /**
+                     * Add changes to the FileTree like:
+                     *      Creating a filenode
+                     *      Moving treenodes around or renaming a node
+                     *      Deleting a node and its children
                      */
                     addChanges: function( changes ){
 
+                        // Loop through the changes and execute them
+                        if( typeof changes !== "undefined" || !changes ){
+                            for( var i = 0, length = changes.length; i < length; i++ ){
+                                this._executeChange( changes[ i ] );
+                            }
+                        }
+
+                        this.debug( "Tree structure after updating" );
+                        this.debug( this._root );
+                    },
+
+                    /**
+                     * Route the different types of changes to their correct execution methods
+                     *
+                     * @param change            A change object containing a type, the current file and the updated file data
+                     */
+                    _executeChange: function( change ){
+                        switch( change.type ){
+                            case "delete":
+                                this._deleteNode( change.file );
+                                break;
+                            case "create":
+                                this._setFile( change.file );
+                                break;
+                            case "rename":
+                            case "move":
+                                this._updateNode( change.file, change.updatedfile );
+                                break;
+                        }
+                    },
+
+                    /**
+                     * Update the node and where needed its children
+                     * If the path has changed, destroy the old file node as well
+                     *
+                     * @param file          The old file
+                     * @param newfile       The updated file data
+                     *
+                     *
+                     */
+                    _updateNode: function( file, newfile ){
+                        /*
+                         var change = {
+                         type: "delete",
+                         file: { path: "app", name: "cache" },
+                         updatedfile: {}
+                         };*/
+
+                        var node = this._findNodeIfexists( file.path );
+
+                        if( node !== false || typeof node.children[ file.name ] !== "undefined" ){
+                            var currentfile = node.children[ file.name ];
+                            var updatedfile = $.extend( true, currentfile, newfile );
+
+
+                            // Check if the path location has changed
+                            var oldpath = this._appendSlashToPath( oldfile.path );
+                            var newpath = this._appendSlashToPath( newfile.path );
+
+                            if( oldpath + currentfile.name !== newpath + newfile.name ){
+                                updatedfile = this._updateChildPaths( updatedfile );
+                                this._deleteNode( currentfile );
+                            }
+
+                            this._setFile( updatedfile );
+                        }
+                    },
+
+                    /**
+                     * Recursively update the paths of the child nodes
+                     *
+                     * @return object             The updated node
+                     */
+                    _updateChildPaths: function( node ){
+                        if( typeof node.children !== "undefined" ){
+                            var keys = [];
+                            for( var key in node.children ){
+                                keys.push( key );
+                            }
+
+                            // Loop through the children and update the paths
+                            for( var i = 0, length = keys.length; i < length; i++ ){
+                                if( typeof node.children[ keys[ i ] ] !== "undefined" ){
+                                    var childnode = node.children[ keys[ i ] ];
+                                    childnode.path = this._appendSlashToPath( node.path ) + node.name;
+
+                                    node.children[ keys[ i ] ] = this._updateChildPaths( childnode );
+                                }
+                            }
+                        }
+
+                        return node;
+                    },
+
+                    /**
+                     * Appends a slash to a path if the last character isn't a slash
+                     *
+                     * @return string
+                     */
+                    _appendSlashToPath: function( path ){
+                        if( path.substr( path, path.length - 1 ) !== "/" ){
+                            path += "/";
+                        }
+
+                        return path;
+                    },
+
+                    /**
+                     * Delete a node and its children if it exists
+                     *
+                     * @param file              A filenode containing a path and a name
+                     */
+                    _deleteNode: function( file ){
+                        var parent = this._findNodeIfexists( file.path );
+                        if( parent !== false ){
+                            delete parent.children[ change.file.name ];
+                        }
+                    },
+
+                    /**
+                     * Walk through the tree and find the node if it exists
+                     * Returning the node object that was found or an empty object if nothing was found
+                     *
+                     * @return object
+                     */
+                    _findNodeIfExists: function( path ){
+                        var pathnodes = this._extractPathNodes( path );
+
+                        // Get the file node in the nested structure
+                        var node = this._root;
+                        for( var i = 0, length = pathnodes.length; i < length; i++ ){
+                            var pathnode = pathnodes[ i ];
+
+                            if( typeof node.children[ pathnode ] === "undefined") {
+                                node = false;
+                                break;
+                            }
+
+                            node = node.children[ pathnode ];
+                        }
+
+                        return node;
                     },
 
                     /**
