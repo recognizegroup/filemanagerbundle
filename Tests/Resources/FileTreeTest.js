@@ -4,11 +4,13 @@
 describe('FileTree', function() {
     var tree;
     beforeEach(function() {
-        var element = {
-            jstree: function(){ return this }
-        };
 
-        tree = new FileTree( element, {} );
+        tree = new FileTree( {
+            eventHandler: {
+                trigger: function(){},
+                register: function(){}
+            }
+        } );
     });
 
     it('should be able to add a single file to the root', function() {

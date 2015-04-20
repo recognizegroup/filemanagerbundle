@@ -1,11 +1,11 @@
 "use_strict";
 
-var FileTree = function(element, options){
+var FileTree = function(options){
     var defaults = {
         debug: false
     };
     this.options = $.extend(true, defaults, options);
-    this.init( this.options, element );
+    this.init( this.options );
 };
 
 /**
@@ -22,14 +22,18 @@ FileTree.prototype = {
     /** Used for setting the ID of the jstree */
     _walk_itteration: 0,
 
+    _eventHandler: null,
+
     /**
      * Initialize the Tree configuration
      */
-    init: function (config, element) {
-        this.$element = element;
+    init: function (config ) {
 
         if( config !== null && typeof config === 'object' ){
             this._debug = config.debug;
+            this._eventHandler = config.eventHandler;
+
+            this._registerEvents();
         }
 
         this.debug( "Initializing" );
@@ -64,7 +68,7 @@ FileTree.prototype = {
      * @private
      */
     _updateView: function(){
-        this.updateJstree();
+        this._eventHandler.trigger('filemanager:updateview', this.flattenTree() );
     },
 
     /**
@@ -171,7 +175,7 @@ FileTree.prototype = {
         this.debug( this._root );
 
         if( shouldUpdateView ){
-            this.updateJstree();
+            this._updateView();
         }
     },
 
@@ -398,7 +402,7 @@ FileTree.prototype = {
         }
 
         if( shouldUpdateView ){
-            this.updateJstree();
+            this._updateView();
         }
     },
 
@@ -421,16 +425,6 @@ FileTree.prototype = {
     },
 
     /**
-     * Update the state of the jsTree plugin
-     */
-    updateJstree: function(){
-        this.$element.jstree('destroy').jstree({ 'core': {
-            'data' : this.flattenTree( true ),
-            'multiple': false}
-        });
-    },
-
-    /**
      * Displays debug data
      * @param debug_message
      */
@@ -449,5 +443,20 @@ FileTree.prototype = {
      */
     errorLog: function( errormessage ) {
         console.error( errormessage );
+    },
+
+    /**
+     * Register the events
+     *
+     * @private
+     */
+    _registerEvents: function(){
+        var self = this;
+
+        this._eventHandler.register('filemanager:add_and_open', function( eventobj ){
+            self.addFiles( eventobj.contents );
+            self.openPath( eventobj.directory, true );
+        });
+
     }
 };
