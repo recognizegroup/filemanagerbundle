@@ -857,6 +857,7 @@
 				data = {};
 			}
 			data.instance = this;
+
 			this.element.triggerHandler(ev.replace('.jstree','') + '.jstree', data);
 		},
 		/**

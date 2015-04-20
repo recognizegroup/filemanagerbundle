@@ -141,7 +141,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedTestingDirectoryContents(){
         $contents = array();
-        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "", "level2" );
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing", "testing/", "level2" );
 
         return $contents;
     }
@@ -155,7 +155,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedLimitedSearchResults(){
         $contents = array();
-        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "", "level2" );
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2/", "testing/", "level2" );
 
         return $contents;
     }
@@ -163,7 +163,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedNestedSearchContents(){
         $contents = array();
-        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "testing/level2", "testing/level2/level3" );
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "testing/level2/", "level3" );
 
         return $contents;
     }
@@ -174,8 +174,8 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing3", "", "testing3" );
         $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing2", "", "testing2" );
         $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing", "", "testing" );
-        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "testing", "testing/level2" );
-        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3", "testing/level2", "testing/level2/level3" );
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2", "testing/", "level2" );
+        $contents[] = new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3", "testing/level2/", "level3" );
 
         return $contents;
     }

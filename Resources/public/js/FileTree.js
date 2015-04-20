@@ -16,6 +16,8 @@ FileTree.prototype = {
     _root: {
         children: {}
     },
+    _currentPath: "",
+    _currentFiles: [],
 
     /** Used for setting the ID of the jstree */
     _walk_itteration: 0,
@@ -37,39 +39,12 @@ FileTree.prototype = {
     },
 
     /**
-     * Recursively walk over the entire tree and call a function for each file
-     *
-     * @param callback          The function that will be called on every file retrieved
-     * @param nodes             File nodes
-     */
-    walk: function( callback, nodes ){
-        if( typeof nodes === "undefined" ){
-            nodes = this._root.children;
-        }
-
-        for(var folder_name in nodes) {
-            var node = nodes[ folder_name ];
-            this._walk_itteration++;
-
-            callback( node, this._walk_itteration );
-            if( typeof node.children === "object" && node.children !== null ){
-
-                var keys = [];
-                for( var key in node.children ){
-                    keys.push( key );
-                }
-
-                if( keys.length > 0 ){
-                    this.walk( callback, node.children );
-                }
-            }
-        }
-    },
-
-    /**
      * Add new files to the FileTree and check for conflicts
+     *
+     * @param files                 An array containing file objects
+     * @param shouldUpdateView      Boolean: whether to update the view or not after this action
      */
-    addFiles: function( files ){
+    addFiles: function( files, shouldUpdateView ){
         for( var i = 0, length = files.length; i < length; i++ ){
             var file = files[i];
             this._setFile( file );
@@ -78,6 +53,17 @@ FileTree.prototype = {
         this.debug( "Tree structure after updating" );
         this.debug( this._root );
 
+        if( shouldUpdateView == true ){
+            this._updateView();
+        }
+    },
+
+    /**
+     * Update the views linked to the tree data
+     *
+     * @private
+     */
+    _updateView: function(){
         this.updateJstree();
     },
 
@@ -118,12 +104,27 @@ FileTree.prototype = {
             var pathnode = pathnodes[ i ];
 
             if( typeof node.children[ pathnode ] === "undefined") {
-                node.children[ pathnode ] = { children: {} };
+                var newnode = {};
+                newnode.name = pathnode;
+
+                // Build the path
+                var newpath = "";
+                for( var j = 0; j < i; j++ ){
+                    newpath += pathnodes[ j ] + "/";
+                }
+                newnode.path = newpath;
+
+                newnode.children = {};
+
+                node.children[ pathnode ] = newnode;
             }
 
             node = node.children[ pathnode ];
         }
 
+        if( typeof node.children === "undefined"){
+            node.children = {};
+        }
         return node;
     },
 
@@ -133,6 +134,10 @@ FileTree.prototype = {
      * @return []
      */
     _extractPathNodes: function( path ){
+        if( path === false ){
+            path = "";
+        }
+
         var crudepathnodes = path.split('/');
         var pathnodes = [];
         for( var i = 0, length = crudepathnodes.length; i < length; i++ ){
@@ -149,8 +154,11 @@ FileTree.prototype = {
      *      Creating a filenode
      *      Moving treenodes around or renaming a node
      *      Deleting a node and its children
+     *
+     * @param changes               An array containing changes
+     * @param shouldUpdateView      Boolean: whether to update the view or not after this action
      */
-    addChanges: function( changes ){
+    addChanges: function( changes, shouldUpdateView ){
 
         // Loop through the changes and execute them
         if( typeof changes !== "undefined" || !changes ){
@@ -162,7 +170,9 @@ FileTree.prototype = {
         this.debug( "Tree structure after updating" );
         this.debug( this._root );
 
-        this.updateJstree();
+        if( shouldUpdateView ){
+            this.updateJstree();
+        }
     },
 
     /**
@@ -248,6 +258,10 @@ FileTree.prototype = {
      * @return string
      */
     _appendSlashToPath: function( path ){
+        if( typeof path === "undefined"){
+           path = "";
+        }
+
         if( path.length !== 0 && path.substr( path, path.length - 1 ) !== "/"){
             path += "/";
         }
@@ -294,23 +308,116 @@ FileTree.prototype = {
 
     /**
      * Turns the current in memory file tree into a list of files that the jsTree plugin can understand
+     *
+     * @param directoriesOnly           Whether to add files or just directories
      */
-    flattenTree: function(){
-        var jstreedata = [];
-
-        this.walk(function(filenode, itteration){
-            var parent = filenode.path;
-            if( parent == "" ){
-                parent = "#";
-            }
-
-            var jstreenode =  {"id": "js_tree_file_" + itteration, "text": filenode.name, "parent": parent };
-            jstreedata.push( jstreenode );
-        });
-
+    flattenTree: function( directoriesOnly ){
+        var jstreedata = this.toJstreeData(this._root.children, directoriesOnly );
         this._walk_itteration = 0;
 
+        this.debug( "JsTree data updated" );
+        this.debug( jstreedata );
+
         return jstreedata;
+    },
+
+    /**
+     * Recursively walk over the entire tree and call a function for each file
+     *
+     * @param nodes                     The filenodes to parse
+     * @param directoriesOnly           Whether to add files or just directories
+     */
+    toJstreeData: function( nodes, directoriesOnly ){
+        if( typeof nodes === "undefined" ){
+            nodes = this._root.children;
+        }
+
+        var jstreedata = [];
+        for(var folder_name in nodes) {
+            var node = nodes[ folder_name ];
+
+            // Make sure files are filtered out if we only want directories
+            if( !directoriesOnly ||
+                ( directoriesOnly === true && ( typeof node.type === "undefined" || node.type === "dir" ) ) ){
+
+                this._walk_itteration++;
+
+                var jstreenode = { "text": node.name };
+                jstreenode.attr = { "id": "js_tree_file_" + this._walk_itteration };
+
+                // Add the different states
+                jstreenode.state = {
+                    opened: this._isOpenedDirectory( node ),
+                    selected: false,
+                    disabled: ( typeof node.disabled !== "undefined" && node.disabled == true )
+                };
+
+                // Add the children
+                if( typeof node.children === "object" && node.children !== null ){
+                    var keys = [];
+                    for( var key in node.children ){
+                        keys.push( key );
+                    }
+                    if( keys.length > 0 ){
+                        jstreenode.children = this.toJstreeData( node.children, directoriesOnly )
+                    }
+                }
+                jstreedata.push( jstreenode );
+            }
+        }
+
+        return jstreedata;
+    },
+
+    /**
+     * Open the path
+     *
+     * @param path
+     * @param shouldUpdateView      Boolean: whether to update the view or not after this action
+     */
+    openPath: function( path, shouldUpdateView ){
+        this._currentPath = path;
+
+        var node = this._findNodeIfExists( path );
+        if( node === false ){
+            this._currentPath = false;
+            this._currentFiles = [];
+
+        } else {
+            if( path !== "" && node == this._root){
+                this._currentFiles = [];
+
+            } else {
+                var children = [];
+                for( var property in node.children ){
+                    children.push( node.children[ property ] );
+                }
+
+                this._currentFiles = children;
+            }
+        }
+
+        if( shouldUpdateView ){
+            this.updateJstree();
+        }
+    },
+
+    /**
+     * Checks if the node should be opened by comparing the current path to the complete node path
+     *
+     * @param node              The node to check
+     * @private
+     */
+    _isOpenedDirectory: function( node ){
+        var currentPathNodes = this._extractPathNodes( this._currentPath );
+        var checkedPathNodes = this._extractPathNodes( this._appendSlashToPath( node.path ) + node.name );
+
+        var shouldBeOpened = false;
+        for( var i = 0, length = checkedPathNodes.length; i < length; i++ ){
+            shouldBeOpened = currentPathNodes[i] === checkedPathNodes[i];
+        }
+
+        return shouldBeOpened;
     },
 
     /**
@@ -318,7 +425,7 @@ FileTree.prototype = {
      */
     updateJstree: function(){
         this.$element.jstree('destroy').jstree({ 'core': {
-            'data' : this.flattenTree(),
+            'data' : this.flattenTree( true ),
             'multiple': false}
         });
     },
