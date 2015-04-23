@@ -22,6 +22,16 @@ class FilemanagerService {
     }
 
     /**
+     * Set the working directory relative from the default directory
+     *
+     * @param string $relative_path                    The path after the default directory
+     */
+    public function setWorkingDirectory( $relative_path ){
+        $formatted_path = ltrim( rtrim($relative_path, '/'), '/' );
+        $this->working_directory = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path;
+    }
+
+    /**
      * Get the contents as SplFileInfo objects
      *
      * @param string $directory_path            The relative path from the working directory

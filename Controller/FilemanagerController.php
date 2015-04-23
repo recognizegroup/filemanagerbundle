@@ -34,8 +34,17 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
-    public function create(Request $request) {
 
+    public function create(Request $request) {
+        $filemanager = $this->getFilemanager();
+        $filemanager->setWorkingDirectory( $request->get('filemanager_directory') );
+
+        
+
+        $builder = new FilemanagerResponseBuilder();
+        $builder->fail( json_encode( $request->files ), 500);
+        var_dump( $request );
+        return $builder->build();
     }
 
     public function move(Request $request) {

@@ -16,8 +16,8 @@ class FilemanagerResponseBuilder {
     /**
      * Fail the response and return a detailed message
      *
-     * @param $error_message      The error message to display to the requester
-     * @param $statuscode         Optional: the statuscode to return
+     * @param string $error_message      The error message to display to the requester
+     * @param int $statuscode         Optional: the statuscode to return
      *
      * @return FilemanagerResponseBuilder
      */

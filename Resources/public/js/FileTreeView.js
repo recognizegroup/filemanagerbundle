@@ -24,6 +24,7 @@ FileTreeView.prototype = {
     _directoryElement: false,
     _titlebarElement: false,
     _contentElement: false,
+    _uploadLink: false,
 
     /**
      * Initializes the filetreeview
@@ -84,6 +85,14 @@ FileTreeView.prototype = {
                         self._searchEvent( event );
                     }
                 });
+
+            var uploadstring = '<form enctype="multipart/form-data" method="POST" action="/admin/fileapi/create">' +
+                '<input type="hidden" name="filemanager_directory" value="' + current_directory + '" />' +
+                '<input type="file" name="filemanager_upload" />' +
+                '<input type="submit" value="Uploaden" />' +
+                '</form>';
+            var uploadelement = $( uploadstring );
+            uploadelement.appendTo( this._titlebarElement );
         }
     },
 

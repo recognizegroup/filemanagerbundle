@@ -4,7 +4,7 @@ var FilemanagerAPI = function( options) {
     var defaults = {
         debug: false,
         api: {
-            url: location.protocol + '//' + location.host + location.pathname,
+            url: window.location.href,
             paths: {
                 create: "/create",
                 read: "",
@@ -30,6 +30,7 @@ FilemanagerAPI.prototype = {
     _path_delete: "",
     _path_search: "",
     _eventHandler: false,
+    _disableRequests: false,
 
     /**
      * Initialize the API configuration
@@ -43,8 +44,12 @@ FilemanagerAPI.prototype = {
             }
 
             if( config.api !== null && typeof config.api === 'object' ){
-                if( typeof config.api.url !== 'undefined'){
+                if( typeof config.api.url !== 'undefined' && config.api.url != ""){
                     this._url = config.api.url;
+                } else {
+
+                    this._disableRequests = true;
+                    console.error( "NO APILINK FOUND !!!" );
                 }
 
                 if( config.api.paths !== null && typeof config.api.paths === 'object' ) {
@@ -110,6 +115,8 @@ FilemanagerAPI.prototype = {
         // Add the reference to this object to the ajax settings
         // To allow for easy debug messages
         var self = this;
+
+        // TODO ADD EMPTY PROMISE
 
         return $.ajax({
             url: path,
