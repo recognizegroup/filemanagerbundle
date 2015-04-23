@@ -37,12 +37,23 @@ class FilemanagerController extends Controller {
 
     public function create(Request $request) {
         $filemanager = $this->getFilemanager();
-        $filemanager->setWorkingDirectory( $request->get('filemanager_directory') );
-
-        
-
         $builder = new FilemanagerResponseBuilder();
-        $builder->fail( json_encode( $request->files ), 500);
+
+        if( $request->files->has('filemanager_upload') && $request->request->has('filemanager_directory') ){
+
+            $filemanager->setWorkingDirectory( $request->get('filemanager_directory') );
+            $file = $request->files->get( 'filemanager_upload' );
+
+            //$changes = $filemanager->upload( $file );
+        } else if( $request->request->has('directory_name') ) {
+
+            $directoryname = $request->request->get('directory_name');
+            //$changes = $filemanager->createDirectory( $directoryname );
+            
+        } else {
+            $builder->fail( "Invalid request");
+        }
+
         var_dump( $request );
         return $builder->build();
     }
