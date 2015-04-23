@@ -54,7 +54,7 @@ FileTreeView.prototype = {
      * @private
      */
     _formatFilerow: function( file ){
-        return "<p class=\"filemanagerrow\"><span>" + file.path + "</span><span>" + file.name + "</span></p>";
+        return "<p class=\"filemanagerrow\"><span>" + file.path + "</span></p>";
     },
 
     /**
@@ -103,6 +103,7 @@ FileTreeView.prototype = {
                 'data' : jstreedata,
                 'multiple': false}
             }).on('dblclick.jstree', function( event ){
+
                 self._jstreeOpenEvent( event );
             }).on('keyup.jstree', function( event ){
 
@@ -139,12 +140,13 @@ FileTreeView.prototype = {
 
                     }).on('dblclick', { file: file }, function( evt ){
 
-                        var directory = evt.data.file.path + evt.data.file.name;
+                        var directory = evt.data.file.directory;
+                        var path = evt.data.file.path;
                         if( typeof evt.data.file.type == "undefined" || evt.data.file.type == "dir" ) {
-                            var synchronized = self._checkIfSynchronized( evt.data.file );
-                            self._eventHandler.trigger('filemanager:view:open', {directory: directory, isSynchronized: synchronized} );
+                            var synchronized = false;
+                            self._eventHandler.trigger('filemanager:view:open', {directory: path, isSynchronized: synchronized} );
                         } else {
-                            self._eventHandler.trigger('filemanager:view:select', { file: directory });
+                            self._eventHandler.trigger('filemanager:view:select', { file: path });
                         }
                     });
             }
@@ -184,11 +186,6 @@ FileTreeView.prototype = {
         } else {
             this._eventHandler.trigger('filemanager:view:open', { directory: event.data.directory, isSynchronized: false });
         }
-    },
-
-
-    _checkIfSynchronized: function( file ){
-        return typeof file._generated == true || typeof file.type === "dir" || typeof file.type === "undefined";
     },
 
     /**

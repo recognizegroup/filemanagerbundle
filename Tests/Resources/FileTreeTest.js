@@ -41,11 +41,12 @@ describe('FileTree', function() {
     });
 
     it('should be able to add a single file to the root', function() {
-        tree.addFiles([ { path: "", name: "one" } ]);
+        tree.addFiles([ { path: "one", directory: "", name: "one" } ]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
+                    directory: "",
                     name: "one",
                     children: {}
                 }
@@ -56,11 +57,12 @@ describe('FileTree', function() {
     });
 
     it('should be able to add a single file to the root through the addChanges method', function() {
-        tree.addChanges([ { type:"create", file: { path: "", name: "one" } } ]);
+        tree.addChanges([ { type:"create", file: { path: "one", directory:"", name: "one" } } ]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
+                    directory: "",
                     name: "one",
                     children: {}
                 }
@@ -71,15 +73,17 @@ describe('FileTree', function() {
     });
 
     it('should be able to add a nested node to the directory that exists in the root', function() {
-        tree.addFiles([ { path: "", name: "one" }, { path: "one", name: "two"} ]);
+        tree.addFiles([ { directory: "", path: "one", name: "one" }, { path: "one/two", directory: "one", name: "two"}]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
+                    directory: "",
                     name: "one",
                     children: {
                         two: {
-                            path: "one",
+                            directory: "one/",
+                            path: "one/two",
                             name: "two",
                             children: {}
                         }
@@ -92,23 +96,27 @@ describe('FileTree', function() {
     });
 
     it('should be able to add a file to the directory even if the parent directory doesn\'t exist yet', function() {
-        tree.addFiles([ { path: "one/two/three", name: "four" } ]);
+        tree.addFiles([ { path: "one/two/three/four", directory: "one/two/three/", name: "four" } ]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
+                            directory: "one/",
                             name: "two",
                             children: {
                                 three: {
-                                    path: "one/two/",
+                                    path: "one/two/three",
+                                    directory: "one/two/",
                                     name: "three",
                                     children: {
                                         four: {
-                                            path: "one/two/three",
+                                            path: "one/two/three/four",
+                                            directory: "one/two/three/",
                                             name: "four",
                                             children: {}
                                         }
@@ -121,7 +129,7 @@ describe('FileTree', function() {
             }
         };
 
-        expect( filetree_filterUnnecesaryElements( tree._root.children, true ) ).toEqual ( expectedRoot );
+        expect( tree._root ).toEqual ( expectedRoot );
     });
 
     it('should be able to delete a file and its children from the tree', function() {
@@ -141,7 +149,7 @@ describe('FileTree', function() {
             }
         };
 
-        tree.addChanges([ { type: "delete", file: { path: "", name: "one" }, updatedfile: { } } ]);
+        tree.addChanges([ { type: "delete", file: { directory: "", name: "one" }, updatedfile: { } } ]);
         var expectedRoot = {
             children: {
 
@@ -155,11 +163,13 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
+                            directory: "one/",
                             name: "two",
                             children: {}
                         }
@@ -168,16 +178,18 @@ describe('FileTree', function() {
             }
         };
 
-        tree.addChanges([ { type: "update", file: { path: "", name: "one" }, updatedfile: { path: "", name: "one", extraProperty: "yo" } } ]);
+        tree.addChanges([ { type: "update", file: { directory: "", name: "one" }, updatedfile: { directory: "", name: "one", extraProperty: "yo" } } ]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {}
                         }
                     },
@@ -193,16 +205,19 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {
                                 three: {
-                                    path: "one/two",
+                                    path: "one/two/three",
                                     name: "three",
+                                    directory: "one/two/",
                                     children: {}
                                 }
                             }
@@ -212,20 +227,23 @@ describe('FileTree', function() {
             }
         };
 
-        tree.addChanges([ { type: "rename", file: { path: "", name: "one" }, updatedfile: { path: "", name: "newone" } } ]);
+        tree.addChanges([ { type: "rename", file: { directory: "", name: "one" }, updatedfile: { directory: "", name: "newone" } } ]);
         var expectedRoot = {
             children: {
                 newone: {
-                    path: "",
+                    path: "newone",
                     name: "newone",
+                    directory: "",
                     children: {
                         two: {
-                            path: "newone",
+                            path: "newone/two",
+                            directory: "newone/",
                             name: "two",
                             children: {
                                 three: {
-                                    path: "newone/two",
+                                    path: "newone/two/three",
                                     name: "three",
+                                    directory: "newone/two/",
                                     children: {}
                                 }
                             }
@@ -242,15 +260,18 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {
                                 three: {
-                                    path: "one/two",
+                                    path: "one/two/three",
+                                    directory: "one/two/",
                                     name: "three",
                                     children: {}
                                 }
@@ -261,22 +282,25 @@ describe('FileTree', function() {
             }
         };
 
-        tree.addChanges([ { type: "rename", file: { path: "one", name: "two" }, updatedfile: { path: "", name: "two" } } ]);
+        tree.addChanges([ { type: "move", file: { directory: "one/", name: "two" }, updatedfile: { directory: "", name: "two" } } ]);
         var expectedRoot = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
+                    directory: "",
                     name: "one",
                     children: {
 
                     }
                 },
                 two: {
-                    path: "",
+                    path: "two",
+                    directory: "",
                     name: "two",
                     children: {
                         three: {
-                            path: "two",
+                            path: "two/three",
+                            directory: "two/",
                             name: "three",
                             children: {}
                         }
@@ -292,12 +316,14 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {}
                         }
                     }
@@ -308,19 +334,21 @@ describe('FileTree', function() {
         tree.openPath( "one" );
 
         expect( tree._currentPath).toEqual ( "one" );
-        expect( tree._currentFiles).toEqual( [ { path: "one", name: "two", children: {} } ] );
+        expect( tree._currentFiles).toEqual( [ { path: "one/two", directory: "one/", name: "two", children: {} } ] );
     });
 
     it('should be able to open the root folder and get its immediate children', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {}
                         }
                     }
@@ -329,21 +357,22 @@ describe('FileTree', function() {
         };
 
         tree.openPath( "" );
-
         expect( tree._currentPath).toEqual ( "" );
-        expect( tree._currentFiles).toEqual( [ { path: '', name: 'one', children: { two: { path: 'one', name: 'two', children: {  } } } } ] );
+        expect( tree._currentFiles).toEqual( [ { path: 'one', name: 'one', directory: "", children: { two: { path: 'one/two', directory: "one/", name: 'two', children: {  } } } } ] );
     });
 
     it('shouldn\'t get any children if the path doesn\'t exist in the filetree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {}
                         }
                     }
@@ -361,12 +390,14 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             children: {}
                         }
                     }
@@ -412,13 +443,16 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
-                    name: "one"
+                    path: "one",
+                    name: "one",
+                    directory: ""
                 }
             }
         };
 
-        tree.addFiles([{ name: "two", path: "one" }, { name: "three", path: "one/two" }, { name: "four", path: "one/two/three" }]);
+        tree.addFiles([{ name: "two", directory:"one/", path: "one/two" },
+            { name: "three", path: "one/two/three", directory: "one/two/" },
+            { name: "four", path: "one/two/three/four", directory: "one/two/three/" }]);
         tree.openPath("one/two");
 
         var expectedtree = [
@@ -489,12 +523,14 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             type: "file",
                             children: {}
                         }
@@ -527,12 +563,14 @@ describe('FileTree', function() {
         tree._root = {
             children: {
                 one: {
-                    path: "",
+                    path: "one",
                     name: "one",
+                    directory: "",
                     children: {
                         two: {
-                            path: "one",
+                            path: "one/two",
                             name: "two",
+                            directory: "one/",
                             type: "file",
                             disabled: true,
                             children: {}
@@ -576,3 +614,4 @@ describe('FileTree', function() {
         expect( tree.toJstreeData( ) ).toEqual( expectedtree );
     });
 });
+

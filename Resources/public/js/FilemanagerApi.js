@@ -127,7 +127,7 @@ FilemanagerAPI.prototype = {
 
             // Log the failure
         }).fail( function( jqXHR, error, errorMessage ){
-            this.self.debug( { statuscode: jqXHR.status,
+            this.self.errorLog( { statuscode: jqXHR.status,
                 statustext: jqXHR.statusText,
                 response: jqXHR.responseText });
         });
@@ -142,11 +142,10 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_read_directory;
 
         this._sendRequest( url, "GET", { directory: directory } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:add_data', {contents: data.data.contents, directory: directory });
-            }).fail( function( data, status, jqXHR ){
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            })
+            .fail( this._handleApiError );
     },
 
     /**
@@ -159,12 +158,10 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_search;
 
         this._sendRequest( url, "GET", { directory: directory, q: query } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:search_data', {contents: data.data.contents, directory: directory, query: query });
             })
-            .fail(function( data, status, jqXHR ) {
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            .fail( this._handleApiError );
     },
 
     /**
@@ -177,12 +174,10 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_move;
 
         this._sendRequest( url, "POST", { file: file, location: new_location } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
-            .fail(function( data, status, jqXHR ) {
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            .fail( this._handleApiError );
     },
 
     /**
@@ -195,12 +190,10 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_rename;
 
         this._sendRequest( url, "POST", { file: file, name: new_filename } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
-            .fail(function( data, status, jqXHR ) {
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            .fail( this._handleApiError );
     },
 
     /**
@@ -213,12 +206,10 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_create;
 
         this._sendRequest( url, "POST", { type: "directory", location: path, name: name } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
-            .fail(function( data, status, jqXHR ) {
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            .fail( this._handleApiError );
     },
 
     /**
@@ -231,12 +222,21 @@ FilemanagerAPI.prototype = {
         var url = this._url + this._path_delete;
 
         this._sendRequest( url, "POST", { location: path, name: name } )
-            .done(function( data, status, jqXHR) {
+            .success(function( data, status, jqXHR) {
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
-            .fail(function( data, status, jqXHR ) {
-                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
-            });
+            .fail( this._handleApiError );
+    },
+
+    /**
+     * Handles an API error
+     *
+     * @param jqXHR
+     * @private
+     */
+    _handleApiError: function( jqXHR ){
+        var response = JSON.parse( jqXHR.responseText );
+        this.self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: response.status, statuscode: jqXHR.status });
     },
 
     /**

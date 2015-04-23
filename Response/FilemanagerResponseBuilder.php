@@ -95,10 +95,11 @@ class FilemanagerResponseBuilder {
     protected function transformFileToData( SplFileInfo $file ){
         $filedata = array();
         $filedata['name'] = $file->getFilename();
-        $filedata['path'] = $file->getRelativePath();
-        $filedata['extension'] = $file->getExtension();
+        $filedata['directory'] = $file->getRelativePath();
+        $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
-        if( $file->getExtension() === "" ){
+        $filedata['file_extension'] = $file->getExtension();
+        if( $file->isDir() ){
             $filedata['type'] = "dir";
         } else {
             $filedata['type'] = "file";

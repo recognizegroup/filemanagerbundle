@@ -63,16 +63,45 @@ FileTree.prototype = {
     },
 
     /**
+     * Set the current contents visible in the mainview
+     *
+     * @param files
+     */
+    setContents: function( files ){
+        var formattedfiles = [];
+
+        for( var i = 0, length = files.length; i < length; i++ ){
+            var filenode = files[i];
+
+            // Format the path correctly
+            filenode.path = this._formatPath( filenode.path, true );
+            filenode.directory = this._formatPath( filenode.directory );
+            formattedfiles.push( filenode );
+        }
+
+        this._currentFiles = formattedfiles;
+    },
+
+    /**
      * Add or override a filenode
      */
     _setFile: function( filenode ){
+
+        // Add the full path to the file if doesn't exist
+        if( filenode.hasOwnProperty('path') == false ){
+            filenode.path = this._formatPath( filenode.directory ) + filenode.name;
+        }
+
+        // Format the path correctly
+        filenode.path = this._formatPath( filenode.path, true );
+        filenode.directory = this._formatPath( filenode.directory );
 
         // Make sure the children property exists
         if( filenode.hasOwnProperty('children') == false ){
             filenode.children = {};
         }
 
-        var node = this._findNode( filenode.path );
+        var node = this._findNode( filenode.directory );
 
         // Just set the value if the childnode doesn't exist
         if( typeof node.children[ filenode.name ] === "undefined" ){
@@ -132,9 +161,10 @@ FileTree.prototype = {
                 break;
             }
         }
-        node.path = newpath;
+
+        node.directory = newpath;
+        node.path = newpath + nodename;
         node.children = {};
-        node.isSynchronized = false;
 
         return node;
     },
@@ -215,14 +245,15 @@ FileTree.prototype = {
      * @param newfile       The updated file data
      */
     _updateNode: function( file, newfile ){
-        var node = this._findNodeIfExists( file.path );
+        var node = this._findNodeIfExists( file.directory );
 
         if( node !== false || typeof node.children[ file.name ] !== "undefined" ){
             var currentfile = node.children[ file.name ];
-            var oldpath = this._appendSlashToPath( currentfile.path ) + currentfile.name;
+            var oldpath = this._formatPath( currentfile.path );
 
+            newfile.path = newfile.directory + newfile.name;
             var updatedfile = $.extend( true, currentfile, newfile );
-            var newpath = this._appendSlashToPath( newfile.path ) + newfile.name;
+            var newpath = this._formatPath( newfile.path );
 
 
             // Check if the path location has changed
@@ -253,7 +284,9 @@ FileTree.prototype = {
             for( var i = 0, length = keys.length; i < length; i++ ){
                 if( typeof node.children[ keys[ i ] ] !== "undefined" ){
                     var childnode = node.children[ keys[ i ] ];
-                    childnode.path = this._appendSlashToPath( node.path ) + node.name;
+
+                    childnode.directory = this._formatPath( node.path );
+                    childnode.path = this._formatPath( node.path ) + childnode.name;
 
                     node.children[ keys[ i ] ] = this._updateChildPaths( childnode );
                 }
@@ -264,18 +297,27 @@ FileTree.prototype = {
     },
 
     /**
-     * Appends a slash to a path if the last character isn't a slash
+     * Format a path to the correct format
      *
      * @return string
      */
-    _appendSlashToPath: function( path ){
+    _formatPath: function( path, withouttrailingslash ){
         if( typeof path === "undefined"){
            path = "";
         }
 
-        if( path.length !== 0 && path.substr( path, path.length - 1 ) !== "/"){
+        // Remove the first slash
+        if( path.length !== 0 && path.substr( 0, 1 ) == "/") {
+            path = path.substr( 1, path.length - 1 );
+        }
+
+        // Append a new slash
+        if( withouttrailingslash !== true && path.length !== 0 && path.substr( path, path.length - 1 ) != "/"){
             path += "/";
         }
+
+        // Replace slash duplicates with a single slash
+        path = path.replace(/\/\/+/g, '/');
 
         return path;
     },
@@ -286,7 +328,7 @@ FileTree.prototype = {
      * @param file              A filenode containing a path and a name
      */
     _deleteNode: function( file ){
-        var parent = this._findNodeIfExists( file.path );
+        var parent = this._findNodeIfExists( file.directory );
         if( parent !== false ){
             delete parent.children[ file.name ];
         }
@@ -350,13 +392,12 @@ FileTree.prototype = {
             // Make sure files are filtered out if we only want directories
             if( !directoriesOnly ||
                 ( directoriesOnly === true && ( typeof node.type === "undefined" || node.type === "dir" ) ) ){
-
                 this._walk_itteration++;
 
                 var jstreenode = { "text": node.name };
                 jstreenode.li_attr = {
                     id: "js_tree_file_" + this._walk_itteration,
-                    "data-path": this._appendSlashToPath( node.path ) + node.name,
+                    "data-path": node.path,
 
                     // Because we generate nodes based on the path if they don't exist,
                     // We need to add a synchronized tag to make sure data gets retrieved from the server
@@ -411,7 +452,7 @@ FileTree.prototype = {
                     children.push( node.children[ property ] );
                 }
 
-                this._currentFiles = children;
+                this.setContents( children );
             }
         }
 
@@ -428,7 +469,7 @@ FileTree.prototype = {
      */
     _isOpenedDirectory: function( node ){
         var currentPathNodes = this._extractPathNodes( this._currentPath );
-        var checkedPathNodes = this._extractPathNodes( this._appendSlashToPath( node.path ) + node.name );
+        var checkedPathNodes = this._extractPathNodes( this._formatPath( node.path ) );
 
         var shouldBeOpened = false;
         for( var i = 0, length = checkedPathNodes.length; i < length; i++ ){
@@ -501,7 +542,7 @@ FileTree.prototype = {
         });
 
         this._eventHandler.register('filemanager:api:search_data', function( eventobj ){
-            self._currentFiles = eventobj.contents;
+            self.setContents( eventobj.contents );
             self._updateViews(false, true, false);
         });
 
