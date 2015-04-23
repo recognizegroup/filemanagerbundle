@@ -1,5 +1,32 @@
 'use strict';
 
+var filetree_filterUnnecesaryElements = function( treenodes, withtree ){
+    var treedata = {};
+    for(var folder_name in treenodes) {
+        var node = treenodes[ folder_name ];
+
+        var treenode = { "name": node.name, path: node.path, children: {} };
+
+        // Add the children
+        if( typeof node.children === "object" && node.children !== null ){
+
+            var keys = [];
+            for( var key in node.children ){
+                keys.push( key );
+            }
+            if( keys.length > 0 ){
+                treenode.children = filetree_filterUnnecesaryElements( node.children, false );
+            }
+        }
+        treedata[ node.name ] = treenode;
+    }
+
+    if( withtree == true ){
+        treedata = {children: treedata};
+    }
+
+    return treedata;
+};
 
 describe('FileTree', function() {
     var tree;
@@ -25,7 +52,7 @@ describe('FileTree', function() {
             }
         };
 
-        expect( tree._root).toEqual ( expectedRoot );
+        expect( tree._root ).toEqual ( expectedRoot );
     });
 
     it('should be able to add a single file to the root through the addChanges method', function() {
@@ -94,7 +121,7 @@ describe('FileTree', function() {
             }
         };
 
-        expect( tree._root).toEqual ( expectedRoot );
+        expect( filetree_filterUnnecesaryElements( tree._root.children, true ) ).toEqual ( expectedRoot );
     });
 
     it('should be able to delete a file and its children from the tree', function() {
@@ -203,7 +230,7 @@ describe('FileTree', function() {
                                 }
                             }
                         }
-                    },
+                    }
                 }
             }
         };
@@ -350,8 +377,10 @@ describe('FileTree', function() {
         var expectedtree = [
             {
                 text: "one",
-                attr: {
-                    id: "js_tree_file_1"
+                li_attr: {
+                    id: "js_tree_file_1",
+                    "data-path": "one",
+                    "data-synchronized": true
                 },
                 state: {
                     opened: false,
@@ -361,14 +390,16 @@ describe('FileTree', function() {
                 children: [
                     {
                         text: "two",
-                        attr: {
-                            id: "js_tree_file_2"
+                        li_attr: {
+                            id: "js_tree_file_2",
+                            "data-path": "one/two",
+                            "data-synchronized": true
                         },
                         state: {
                             opened: false,
                             selected: false,
                             disabled: false
-                        },
+                        }
                     }
                 ]
             }
@@ -393,8 +424,10 @@ describe('FileTree', function() {
         var expectedtree = [
             {
                 text: "one",
-                attr: {
-                    id: "js_tree_file_1"
+                li_attr: {
+                    id: "js_tree_file_1",
+                    "data-path": "one",
+                    "data-synchronized": true
                 },
                 state: {
                     opened: true,
@@ -404,8 +437,10 @@ describe('FileTree', function() {
                 children: [
                     {
                         text: "two",
-                        attr: {
-                            id: "js_tree_file_2"
+                        li_attr: {
+                            id: "js_tree_file_2",
+                            "data-path": "one/two",
+                            "data-synchronized": true
                         },
                         state: {
                             opened: true,
@@ -415,8 +450,10 @@ describe('FileTree', function() {
                         children:[
                             {
                                 text: "three",
-                                attr: {
-                                    id: "js_tree_file_3"
+                                li_attr: {
+                                    id: "js_tree_file_3",
+                                    "data-path": "one/two/three",
+                                    "data-synchronized": true
                                 },
                                 state: {
                                     opened: false,
@@ -426,8 +463,10 @@ describe('FileTree', function() {
                                 children: [
                                     {
                                         text: "four",
-                                        attr: {
-                                            id: "js_tree_file_4"
+                                        li_attr: {
+                                            id: "js_tree_file_4",
+                                            "data-path": "one/two/three/four",
+                                            "data-synchronized": true
                                         },
                                         state: {
                                             opened: false,
@@ -467,8 +506,10 @@ describe('FileTree', function() {
         var expectedtree = [
             {
                 text: "one",
-                attr: {
-                    id: "js_tree_file_1"
+                li_attr: {
+                    id: "js_tree_file_1",
+                    "data-path": "one",
+                    "data-synchronized": true
                 },
                 state: {
                     opened: false,
@@ -504,8 +545,10 @@ describe('FileTree', function() {
         var expectedtree = [
             {
                 text: "one",
-                attr: {
-                    id: "js_tree_file_1"
+                li_attr: {
+                    id: "js_tree_file_1",
+                    "data-path": "one",
+                    "data-synchronized": true
                 },
                 state: {
                     opened: false,
@@ -515,8 +558,10 @@ describe('FileTree', function() {
                 children: [
                     {
                         text: "two",
-                        attr: {
-                            id: "js_tree_file_2"
+                        li_attr: {
+                            id: "js_tree_file_2",
+                            "data-path": "one/two",
+                            "data-synchronized": true
                         },
                         state: {
                             opened: false,

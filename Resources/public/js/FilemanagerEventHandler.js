@@ -1,9 +1,25 @@
 "use strict";
 
-var FilemanagerEventHandler = function(){};
+var FilemanagerEventHandler = function( options ){
+    var defaults = {
+        debug: false
+    };
+    options = $.extend(true, defaults, options );
+    this.init( options );
+};
 
 FilemanagerEventHandler.prototype = {
     _events: {},
+    _debug: false,
+
+    init: function( config ){
+        if( config !== null && typeof config === 'object' ) {
+            if (typeof config.debug !== 'undefined') {
+                this._debug = config.debug;
+            }
+        }
+    },
+
 
     /**
      * Check if event exists
@@ -26,6 +42,7 @@ FilemanagerEventHandler.prototype = {
      * @param callback
      */
     register: function(event, callback) {
+        this.debug( "Registering " + event );
         this._create(event); // Create when event doesn't exist
         this._events[event].push(callback);
     },
@@ -55,7 +72,7 @@ FilemanagerEventHandler.prototype = {
      * @param event
      */
     trigger: function(event) {
-        console.log("Triggering " + event );
+        this.debug("Triggering " + event );
 
         if(this.hasEvent(event, false)) {
             var args = Array.prototype.slice.call(arguments, 1);
@@ -63,5 +80,13 @@ FilemanagerEventHandler.prototype = {
                 method.apply(method, args);
             }.bind(this));
         }
+    },
+
+    /**
+     * Displays debug data
+     * @param debug_message
+     */
+    debug: function( debug_message ) {
+        if(this._debug) console.log( debug_message );
     }
 };

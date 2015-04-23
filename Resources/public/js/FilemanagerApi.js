@@ -81,31 +81,12 @@ FilemanagerAPI.prototype = {
             }
         }
 
+        this._registerEvents();
+
         this.debug( "Initializing" );
         this.debug( config );
 
         return this;
-    },
-
-    /**
-     * Displays debug data
-     * @param debug_message
-     */
-    debug: function( debug_message ) {
-        if( typeof debug_message === "string" ){
-            debug_message =  "FilemanagerAPI: " + debug_message;
-        }
-
-        if(this._debug) console.log( debug_message );
-    },
-
-    /**
-     * Log an error
-     *
-     * @param errormessage
-     */
-    errorLog: function( errormessage ) {
-        console.error( errormessage );
     },
 
     /**
@@ -162,9 +143,9 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "GET", { directory: directory } )
             .done(function( data, status, jqXHR) {
-                var contents = data.data.contents;
-
-                this.self._eventHandler.trigger('filemanager:add_and_open', {contents: contents, directory: directory });
+                this.self._eventHandler.trigger('filemanager:api:add_data', {contents: data.data.contents, directory: directory });
+            }).fail( function( data, status, jqXHR ){
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
     },
 
@@ -179,10 +160,10 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "GET", { directory: directory, q: query } )
             .done(function( data, status, jqXHR) {
-
+                this.self._eventHandler.trigger('filemanager:api:search_data', {contents: data.data.contents, directory: directory, query: query });
             })
             .fail(function( data, status, jqXHR ) {
-
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
     },
 
@@ -197,10 +178,10 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "POST", { file: file, location: new_location } )
             .done(function( data, status, jqXHR) {
-
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
             .fail(function( data, status, jqXHR ) {
-
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
     },
 
@@ -215,10 +196,10 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "POST", { file: file, name: new_filename } )
             .done(function( data, status, jqXHR) {
-
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
             .fail(function( data, status, jqXHR ) {
-
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
     },
 
@@ -233,10 +214,10 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "POST", { type: "directory", location: path, name: name } )
             .done(function( data, status, jqXHR) {
-
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
             .fail(function( data, status, jqXHR ) {
-
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
     },
 
@@ -251,10 +232,50 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "POST", { location: path, name: name } )
             .done(function( data, status, jqXHR) {
-
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
             })
             .fail(function( data, status, jqXHR ) {
-
+                this.self._eventHandler.trigger('filemanager:api:error', {contents: contents, directory: directory });
             });
+    },
+
+    /**
+     * Displays debug data
+     * @param debug_message
+     */
+    debug: function( debug_message ) {
+        if( typeof debug_message === "string" ){
+            debug_message =  "FilemanagerAPI: " + debug_message;
+        }
+
+        if(this._debug) console.log( debug_message );
+    },
+
+    /**
+     * Log an error
+     *
+     * @param errormessage
+     */
+    errorLog: function( errormessage ) {
+        console.error( errormessage );
+    },
+
+    /**
+     * Register the events
+     *
+     * @private
+     */
+    _registerEvents: function(){
+        var self = this;
+
+        this._eventHandler.register('filemanager:view:open', function( eventobj ){
+            if( eventobj.isSynchronized == false ){
+                self.read( eventobj.directory );
+            }
+        });
+
+        this._eventHandler.register('filemanager:view:search', function( eventobj ){
+            self.search(eventobj.directory, eventobj.query );
+        });
     }
 };

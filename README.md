@@ -1,4 +1,4 @@
-RecognizeWysiwygBundle
+RecognizeFilemanagerBundle
 ========================
 
 A bundle that allows you to quickly render a WYSIWYG editor ( currently supports CKEditor ).
@@ -62,7 +62,6 @@ To set up the testing enviroment you have to do two things
 
 
 [1]:  https://phpunit.de/manual/current/en/installation.html
-[2]:  http://docs.ckeditor.com/#!/api/CKEDITOR.config-cfg-skin
 
 ##Installing the pre-commit hook
 
@@ -84,4 +83,21 @@ If you want to disable the unit tests before a commit, you can use the following
 
 ```sh
 git commit --no-verify -m "Commit message!"
+```
+
+Testing with php and javascript
+------------------------
+
+First, make sure you have npm and grunt-cli installed on your machine.
+
+```sh
+npm install -g grunt-cli
+```
+
+Then, run this command to install all the required packages locally
+
+```sh
+npm install grunt --save-dev
+npm install grunt-contrib-jasmine --save-dev
+npm install jasmine-jquery
 ```

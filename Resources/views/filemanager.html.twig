@@ -12,13 +12,26 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/themes/default/style.css') }}" />
 </head>
 <body>
+
+    <style>
+        .directories { float: left; }
+        .mainview { float:left; }
+        .filemanagerrow:hover {
+            cursor: pointer;
+        }
+        .filemanagerrow.disabled:hover {
+            cursor: not-allowed;
+        }
+
+        p.selected {
+            background: #009900;
+        }
+
+    </style>
     <div class="filetree">
-        <div class="directories">
-
-        </div>
-        <div class="mainview">
-
-        </div>
+        <div class="titlebar"></div>
+        <div class="directories"></div>
+        <div class="mainview"></div>
 
 
         <script type="text/javascript">
@@ -27,8 +40,7 @@
                     if( typeof config === "undefined"){
                         config = {};
                     }
-                    config.eventHandler = new FilemanagerEventHandler();
-
+                    config.eventHandler = new FilemanagerEventHandler( config );
                     this.data('treeview', new FileTreeView( config ) );
                     this.data('tree', new FileTree( config ) );
                     this.data('api', new FilemanagerAPI( config ) );

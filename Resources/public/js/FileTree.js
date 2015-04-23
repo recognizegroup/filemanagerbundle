@@ -58,17 +58,8 @@ FileTree.prototype = {
         this.debug( this._root );
 
         if( shouldUpdateView == true ){
-            this._updateView();
+            this._updateViews( true, false, false );
         }
-    },
-
-    /**
-     * Update the views linked to the tree data
-     *
-     * @private
-     */
-    _updateView: function(){
-        this._eventHandler.trigger('filemanager:updateview', this.flattenTree() );
     },
 
     /**
@@ -108,19 +99,7 @@ FileTree.prototype = {
             var pathnode = pathnodes[ i ];
 
             if( typeof node.children[ pathnode ] === "undefined") {
-                var newnode = {};
-                newnode.name = pathnode;
-
-                // Build the path
-                var newpath = "";
-                for( var j = 0; j < i; j++ ){
-                    newpath += pathnodes[ j ] + "/";
-                }
-                newnode.path = newpath;
-
-                newnode.children = {};
-
-                node.children[ pathnode ] = newnode;
+                node.children[ pathnode ] = this._generateNode( pathnode, pathnodes );
             }
 
             node = node.children[ pathnode ];
@@ -133,12 +112,40 @@ FileTree.prototype = {
     },
 
     /**
+     * Generate a node from a path - Still needs to be synchronized if more data of this node is needed
+     *
+     * @param nodename              The node to end on
+     * @param pathnodes             The pagenodes of the object
+     * @returns {*}                 Node object
+     * @private
+     */
+    _generateNode: function( nodename, pathnodes ){
+        var node = {};
+        node.name = nodename;
+
+        // Build the path
+        var newpath = "";
+        for( var i = 0; i < pathnodes.length; i++ ){
+            newpath += pathnodes[ i ] + "/";
+
+            if( pathnodes[i + 1] == nodename ){
+                break;
+            }
+        }
+        node.path = newpath;
+        node.children = {};
+        node.isSynchronized = false;
+
+        return node;
+    },
+
+    /**
      * Extract the actual path nodes without empty strings caused by multiple backslashes
      *
      * @return []
      */
     _extractPathNodes: function( path ){
-        if( path === false ){
+        if( typeof path !== 'string' ){
             path = "";
         }
 
@@ -175,7 +182,7 @@ FileTree.prototype = {
         this.debug( this._root );
 
         if( shouldUpdateView ){
-            this._updateView();
+            this._updateViews( true, true, true );
         }
     },
 
@@ -347,7 +354,14 @@ FileTree.prototype = {
                 this._walk_itteration++;
 
                 var jstreenode = { "text": node.name };
-                jstreenode.attr = { "id": "js_tree_file_" + this._walk_itteration };
+                jstreenode.li_attr = {
+                    id: "js_tree_file_" + this._walk_itteration,
+                    "data-path": this._appendSlashToPath( node.path ) + node.name,
+
+                    // Because we generate nodes based on the path if they don't exist,
+                    // We need to add a synchronized tag to make sure data gets retrieved from the server
+                    "data-synchronized": typeof node._generated === "undefined"
+                };
 
                 // Add the different states
                 jstreenode.state = {
@@ -402,7 +416,7 @@ FileTree.prototype = {
         }
 
         if( shouldUpdateView ){
-            this._updateView();
+            this._updateViews( true, true, true );
         }
     },
 
@@ -422,6 +436,30 @@ FileTree.prototype = {
         }
 
         return shouldBeOpened;
+    },
+
+    /**
+     * Update the views linked to the tree data
+     *
+     * @param directories               The list of directories
+     * @param content                   The list of files and directories in the currently opened path
+     * @param path                      The indicator where the user is now
+     *
+     * @private
+     */
+    _updateViews: function( directories, content, path ){
+
+        if( directories == true ){
+            this._eventHandler.trigger('filemanager:model:directories_changed', this.flattenTree( true ) );
+        }
+
+        if( content == true ){
+            this._eventHandler.trigger('filemanager:model:content_changed', this._currentFiles );
+        }
+
+        if( path == true ){
+            this._eventHandler.trigger('filemanager:model:path_changed', this._currentPath );
+        }
     },
 
     /**
@@ -453,10 +491,26 @@ FileTree.prototype = {
     _registerEvents: function(){
         var self = this;
 
-        this._eventHandler.register('filemanager:add_and_open', function( eventobj ){
+        this._eventHandler.register('filemanager:api:add_data', function( eventobj ){
             self.addFiles( eventobj.contents );
             self.openPath( eventobj.directory, true );
         });
 
+        this._eventHandler.register('filemanager:api:update_data', function( eventobj ){
+            self.addChanges( eventobj.contents, true );
+        });
+
+        this._eventHandler.register('filemanager:api:search_data', function( eventobj ){
+            self._currentFiles = eventobj.contents;
+            self._updateViews(false, true, false);
+        });
+
+        this._eventHandler.register('filemanager:view:open', function( eventobj ){
+
+            // Only open the directory if the data already exists
+            if( eventobj.isSynchronized ){
+                self.openPath( eventobj.directory, true );
+            }
+        });
     }
 };
