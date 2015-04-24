@@ -2,6 +2,7 @@
 namespace Recognize\FilemanagerBundle\Response;
 
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\HttpFoundation\File\File;
 
 /**
  * Container for file changes happened through the FilemanagerAPI
@@ -9,18 +10,29 @@ use Symfony\Component\Finder\SplFileInfo;
  * Class FileChanges
  * @package Recognize\FilemanagerBundle\Response
  */
-class FileChanges implements \JsonSerializable {
+class FileChanges {
 
     protected $type;
+
+    /** @var SplFileInfo */
     protected $oldfile;
+
+    /** @var SplFileInfo */
     protected $newfile = null;
 
-    public function __construct( $type, $oldfile ){
+    /**
+     * @param string $type                  The type of change done - For example rename
+     * @param SplFileInfo $oldfile
+     */
+    public function __construct( $type, SplFileInfo $oldfile ){
         $this->type = $type;
         $this->oldfile = $oldfile;
     }
 
-    public function setFileAfterChanges( $file ){
+    /**
+     * @param SplFileInfo $file
+     */
+    public function setFileAfterChanges( SplFileInfo $file ){
         $this->newfile = $file;
     }
 
@@ -58,22 +70,15 @@ class FileChanges implements \JsonSerializable {
         return $filedata;
     }
 
-    /**
-     * (PHP 5 &gt;= 5.4.0)<br/>
-     * Specify data which should be serialized to JSON
-     *
-     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
-     * @return mixed data which can be serialized by <b>json_encode</b>,
-     * which is a value of any type other than a resource.
-     */
-    public function jsonSerialize() {
+    public function toArray(){
         $data = array();
         $data['type'] = $this->type;
-        $data['file'] = $this->transformFileToData( $this->oldfile );
+        $data['file'] = $this->transformFileToData( $this->oldfile->getFileInfo() );
 
         if( $this->newfile !== null ){
-            $data['updatedfile'] = $this->transformFileToData( $this->newfile );
+            $data['updatedfile'] = $this->transformFileToData( $this->newfile->getFileInfo() );
         }
         return $data;
     }
+
 }

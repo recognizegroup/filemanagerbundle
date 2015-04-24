@@ -189,7 +189,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         file_put_contents( $tempfilepath, "TEST CONTENTS");
         $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
 
-        $filemanagerservice->setWorkingDirectory("testing");
+        $filemanagerservice->goToDeeperDirectory("testing");
         $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile" );
         $this->assertEquals( $this->getExpectedUploadedFileInTesting(), $changes->getFile() );
     }
@@ -274,11 +274,11 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     }
 
     protected function getExpectedUploadedFile(){
-        return new File( new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testfile.txt", "", "testfile.txt" ) );
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testfile.txt", "", "testfile.txt" );
     }
 
     protected function getExpectedUploadedFileInTesting(){
-        return new File( new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/testfile.txt", "testing", "testfile.txt" ) );
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/testfile.txt", "testing/", "testfile.txt" );
     }
 
 }

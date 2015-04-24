@@ -61,6 +61,20 @@ class FilemanagerResponseBuilder {
     }
 
     /**
+     * Add a file change to the response
+     *
+     * @param FileChanges $filechange
+     */
+    public function addChange( $filechange ){
+        if( isset($this->config['data']['changes']) == false ){
+            $this->config['data']['changes'] = array();
+        }
+
+        $this->config['data']['changes'][] = $filechange->toArray();
+        return $this;
+    }
+
+    /**
      * Set the translation function that will be called right before the response is made
      *
      * @param callable $translate

@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class FilemanagerService {
 
     private $working_directory;
+    protected $current_directory;
 
     public function __construct( array $configuration ){
         if( isset( $configuration['default_directory'] ) ){
@@ -22,6 +23,8 @@ class FilemanagerService {
         } else {
             throw new \RuntimeException( "Default upload and file management directory should be set! " );
         }
+
+        $this->current_directory = $this->working_directory;
     }
 
     /**
@@ -29,9 +32,9 @@ class FilemanagerService {
      *
      * @param string $relative_path                    The path after the default directory
      */
-    public function setWorkingDirectory( $relative_path ){
+    public function goToDeeperDirectory( $relative_path ){
         $formatted_path = ltrim( rtrim($relative_path, '/'), '/' );
-        $this->working_directory = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path;
+        $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path;
     }
 
     /**
@@ -45,7 +48,7 @@ class FilemanagerService {
      */
     public function getDirectoryContents( $directory_path = "", $depth = 0 ){
         $finder = new Finder();
-        $path = $this->working_directory . DIRECTORY_SEPARATOR . $directory_path;
+        $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
 
         // We have to prepend the less than sign to get all the contents from the nested directories
         if( $depth !== 0 ){
@@ -67,7 +70,7 @@ class FilemanagerService {
      */
     public function searchDirectoryContents( $directory_path = "", $search_value, $current_directory_only = false ){
         $finder = new Finder();
-        $path = $this->working_directory . DIRECTORY_SEPARATOR . $directory_path;
+        $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
 
         $search_filter = function( SplFileInfo $file ) use ($search_value) {
             if( preg_match($search_value, $file->getFilename()) ){
@@ -143,11 +146,11 @@ class FilemanagerService {
     public function rename( $relative_path_to_file, $new_name ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->working_directory)->path("/^" . $relative_path_to_file . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $relative_path_to_file . "$/" );
 
         if( $finder->count() > 0 ){
 
-            $filepath = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
+            $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
             $newfilepath = $oldfile->getPath() . DIRECTORY_SEPARATOR . $new_name;
@@ -209,11 +212,18 @@ class FilemanagerService {
     public function saveUploadedFile( UploadedFile $file, $new_filename ){
         $fs = new Filesystem();
 
-        $absolute_path = $this->working_directory . DIRECTORY_SEPARATOR . $new_filename . "." . $file->getExtension();
+        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename . "." . $file->getExtension();
         if( $fs->exists( $absolute_path ) == false ){
-            $movedfile = $file->move( $this->working_directory, $new_filename . "." . $file->getExtension() );
+            $file->move( $this->current_directory, $new_filename . "." . $file->getExtension() );
 
-            return new FileChanges( "create", $movedfile );
+            $finder = new Finder();
+            $finder->in( $this->current_directory )->path("/^" . $new_filename . "." . $file->getExtension() . "$/");
+            if( $finder->count() > 0 ){
+                $movedfile = $this->getFirstFileInFinder( $finder );
+                return new FileChanges( "create", $movedfile );
+            } else {
+                throw new FileException("File not created");
+            }
         } else {
             throw new ConflictException();
         }

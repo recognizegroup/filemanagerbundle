@@ -4,6 +4,7 @@ namespace Recognize\FilemanagerBundle\Controller;
 use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
 class FilemanagerController extends Controller {
@@ -34,7 +35,6 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
-
     public function create(Request $request) {
         $filemanager = $this->getFilemanager();
         $builder = new FilemanagerResponseBuilder();
@@ -42,19 +42,22 @@ class FilemanagerController extends Controller {
         if( $request->files->has('filemanager_upload') && $request->request->has('filemanager_directory') ){
 
             $filemanager->setWorkingDirectory( $request->get('filemanager_directory') );
-            $file = $request->files->get( 'filemanager_upload' );
 
-            //$changes = $filemanager->upload( $file );
+            /** @var UploadedFile $file */
+            $file = $request->files->get( 'filemanager_upload' );
+            $changes = $filemanager->saveUploadedFile( $file, $file->getClientOriginalName() );
+            $builder->addChange( $changes );
+
         } else if( $request->request->has('directory_name') ) {
 
             $directoryname = $request->request->get('directory_name');
-            //$changes = $filemanager->createDirectory( $directoryname );
+            $changes = $filemanager->createDirectory( $directoryname );
+            $builder->addChange( $changes );
 
         } else {
             $builder->fail( "Invalid request");
         }
 
-        var_dump( $request );
         return $builder->build();
     }
 
