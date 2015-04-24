@@ -49,7 +49,7 @@ class FilemanagerController extends Controller {
 
             $directoryname = $request->request->get('directory_name');
             //$changes = $filemanager->createDirectory( $directoryname );
-            
+
         } else {
             $builder->fail( "Invalid request");
         }

@@ -7,6 +7,9 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Tests\File\UploadedFileTest;
 
 class FilemanagerServiceTest extends FilesystemTestCase {
 
@@ -124,6 +127,88 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     }
 
 
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testCreateDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->createDirectory("New directory");
+
+        $this->assertEquals( $this->getExpectedCreatedDirectory(), $changes->getFile() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \Recognize\FilemanagerBundle\Exception\ConflictException
+     */
+    public function testConflictingDirectoryCreation(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->createDirectory("testing");
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testUnexpectedErrorDirectoryCreation(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR . 'testing.txt', "TEST CONTENTS");
+
+
+        $changes = $filemanagerservice->createDirectory("testing.txt/derp");
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testUploadFile(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
+
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile" );
+        $this->assertEquals( $this->getExpectedUploadedFile(), $changes->getFile() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testUploadToTestingDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
+
+        $filemanagerservice->setWorkingDirectory("testing");
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile" );
+        $this->assertEquals( $this->getExpectedUploadedFileInTesting(), $changes->getFile() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testOverrideUpload(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
+
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile" );
+    }
+
     protected function fillTempDirectory(){
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing2" , 0777);
@@ -183,4 +268,17 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     protected function getExpectedRenamedDirectory(){
         return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing4", "", "testing4" );
     }
+
+    protected function getExpectedCreatedDirectory(){
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "New directory", "", "New directory" );
+    }
+
+    protected function getExpectedUploadedFile(){
+        return new File( new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testfile.txt", "", "testfile.txt" ) );
+    }
+
+    protected function getExpectedUploadedFileInTesting(){
+        return new File( new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/testfile.txt", "testing", "testfile.txt" ) );
+    }
+
 }

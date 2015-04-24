@@ -3,11 +3,14 @@ namespace Recognize\FilemanagerBundle\Service;
 
 use InvalidArgumentException;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
+use Recognize\FilemanagerBundle\Response\FileChanges;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FilemanagerService {
 
@@ -142,8 +145,6 @@ class FilemanagerService {
         $finder = new Finder();
         $finder->in($this->working_directory)->path("/^" . $relative_path_to_file . "$/" );
 
-        $filechanges = array();
-
         if( $finder->count() > 0 ){
 
             $filepath = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
@@ -157,19 +158,64 @@ class FilemanagerService {
                 throw new ConflictException();
             }
 
-            $filechanges[] = $oldfile;
-            $filechanges[] = $newfile;
-
+            $filechanges = new FileChanges("rename", $oldfile);
+            $filechanges->setFileAfterChanges( $newfile );
             $fs->rename( $filepath, $newfilepath );
 
+            return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
         }
-
-        return $filechanges;
     }
 
-    public function move(){
+    /**
+     * Creates a new directory in the current working directory
+     *
+     * @param UploadedFile $file
+     */
+    public function createDirectory( $directory_name ){
+        $fs = new Filesystem();
 
+        $absolute_directory_path = $this->working_directory . DIRECTORY_SEPARATOR . $directory_name;
+        if( $fs->exists( $absolute_directory_path ) == false ){
+            try {
+                $fs->mkdir( $absolute_directory_path, 0755 );
+
+                $finder = new Finder();
+                $finder->in($this->working_directory)->path("/^" . $directory_name . "$/" );
+                if( $finder->count() > 0 ){
+                    $created_directory = $this->getFirstFileInFinder( $finder );
+                    $filechanges = new FileChanges("create", $created_directory);
+
+                    return $filechanges;
+                } else {
+                    throw new IOException( "Failed to create directory " . $directory_name );
+                }
+
+            } catch( IOException $e ){
+                throw new IOException("Failed to create directory " . $directory_name );
+            }
+        } else {
+            throw new ConflictException();
+        }
+    }
+
+    /**
+     * Saves the uploaded file into the current working directory
+     *
+     * @param UploadedFile $file
+     * @param string $new_filename                  The name of the new file without the extension
+     */
+    public function saveUploadedFile( UploadedFile $file, $new_filename ){
+        $fs = new Filesystem();
+
+        $absolute_path = $this->working_directory . DIRECTORY_SEPARATOR . $new_filename . "." . $file->getExtension();
+        if( $fs->exists( $absolute_path ) == false ){
+            $movedfile = $file->move( $this->working_directory, $new_filename . "." . $file->getExtension() );
+
+            return new FileChanges( "create", $movedfile );
+        } else {
+            throw new ConflictException();
+        }
     }
 }
