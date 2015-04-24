@@ -212,9 +212,9 @@ FilemanagerAPI.prototype = {
     createDirectory: function( path, name ){
         var url = this._url + this._path_create;
 
-        this._sendRequest( url, "POST", { type: "directory", location: path, name: name } )
+        this._sendRequest( url, "POST", { type: "directory", filemanager_directory: path, directory_name: name } )
             .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: [ data.data.changes ], directory: path });
             })
             .fail( this._handleApiError );
     },

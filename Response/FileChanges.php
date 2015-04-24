@@ -73,10 +73,10 @@ class FileChanges {
     public function toArray(){
         $data = array();
         $data['type'] = $this->type;
-        $data['file'] = $this->transformFileToData( $this->oldfile->getFileInfo() );
+        $data['file'] = $this->transformFileToData( $this->oldfile );
 
         if( $this->newfile !== null ){
-            $data['updatedfile'] = $this->transformFileToData( $this->newfile->getFileInfo() );
+            $data['updatedfile'] = $this->transformFileToData( $this->newfile );
         }
         return $data;
     }

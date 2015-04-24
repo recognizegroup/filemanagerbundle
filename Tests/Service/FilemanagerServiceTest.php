@@ -174,7 +174,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         file_put_contents( $tempfilepath, "TEST CONTENTS");
         $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
 
-        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile" );
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile.txt" );
         $this->assertEquals( $this->getExpectedUploadedFile(), $changes->getFile() );
     }
 
@@ -190,7 +190,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
 
         $filemanagerservice->goToDeeperDirectory("testing");
-        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile" );
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile.txt" );
         $this->assertEquals( $this->getExpectedUploadedFileInTesting(), $changes->getFile() );
     }
 
@@ -206,7 +206,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         file_put_contents( $tempfilepath, "TEST CONTENTS");
         $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
 
-        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile" );
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile.txt" );
     }
 
     protected function fillTempDirectory(){

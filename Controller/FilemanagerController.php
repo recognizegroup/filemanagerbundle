@@ -16,16 +16,27 @@ class FilemanagerController extends Controller {
         return $this->get('recognize.file_manager');
     }
 
+    /**
+     * Read from the directory
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
         $contents = $filemanager->getDirectoryContents( $request->get('directory') );
-
 
         $builder = new FilemanagerResponseBuilder();
         $builder->addFiles( $contents );
         return $builder->build();
     }
 
+    /**
+     * Recursively search the directory
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
 
@@ -35,22 +46,30 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
+
+    /**
+     * Upload a file or create a directory into the current directory
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function create(Request $request) {
         $filemanager = $this->getFilemanager();
         $builder = new FilemanagerResponseBuilder();
 
         if( $request->files->has('filemanager_upload') && $request->request->has('filemanager_directory') ){
 
-            $filemanager->setWorkingDirectory( $request->get('filemanager_directory') );
+            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
 
             /** @var UploadedFile $file */
             $file = $request->files->get( 'filemanager_upload' );
             $changes = $filemanager->saveUploadedFile( $file, $file->getClientOriginalName() );
             $builder->addChange( $changes );
 
-        } else if( $request->request->has('directory_name') ) {
+        } else if( $request->request->has('directory_name') && $request->request->has('filemanager_directory') ) {
 
             $directoryname = $request->request->get('directory_name');
+            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
             $changes = $filemanager->createDirectory( $directoryname );
             $builder->addChange( $changes );
 

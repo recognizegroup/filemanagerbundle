@@ -28,13 +28,13 @@ class FilemanagerService {
     }
 
     /**
-     * Set the working directory relative from the default directory
+     * Set the directory from which files will be retrieved - Keeping the relative path the same as the working directory
      *
      * @param string $relative_path                    The path after the default directory
      */
     public function goToDeeperDirectory( $relative_path ){
         $formatted_path = ltrim( rtrim($relative_path, '/'), '/' );
-        $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $relative_path;
+        $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
     }
 
     /**
@@ -55,9 +55,15 @@ class FilemanagerService {
             $depth = "<" . $depth;
         }
 
+        try {
+            $finder->depth( $depth )->in( $path );
+            return $this->finderToFilesArray( $finder );
 
-        $finder->depth( $depth )->in( $path );
-        return $this->finderToFilesArray( $finder );
+        } catch( InvalidArgumentException $e ){
+            $path_from_workingdir = substr( $this->current_directory, strlen( $this->working_directory )  );
+
+            throw new InvalidArgumentException("Directory '" . $path_from_workingdir . $directory_path . "' does not exist");
+        }
     }
 
     /**
@@ -179,13 +185,13 @@ class FilemanagerService {
     public function createDirectory( $directory_name ){
         $fs = new Filesystem();
 
-        $absolute_directory_path = $this->working_directory . DIRECTORY_SEPARATOR . $directory_name;
+        $absolute_directory_path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_name;
         if( $fs->exists( $absolute_directory_path ) == false ){
             try {
                 $fs->mkdir( $absolute_directory_path, 0755 );
 
                 $finder = new Finder();
-                $finder->in($this->working_directory)->path("/^" . $directory_name . "$/" );
+                $finder->in($this->current_directory)->path("/^" . $directory_name . "$/" );
                 if( $finder->count() > 0 ){
                     $created_directory = $this->getFirstFileInFinder( $finder );
                     $filechanges = new FileChanges("create", $created_directory);
@@ -212,16 +218,20 @@ class FilemanagerService {
     public function saveUploadedFile( UploadedFile $file, $new_filename ){
         $fs = new Filesystem();
 
-        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename . "." . $file->getExtension();
+        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
         if( $fs->exists( $absolute_path ) == false ){
-            $file->move( $this->current_directory, $new_filename . "." . $file->getExtension() );
+            try {
+                $file->move( $this->current_directory, $new_filename );
 
-            $finder = new Finder();
-            $finder->in( $this->current_directory )->path("/^" . $new_filename . "." . $file->getExtension() . "$/");
-            if( $finder->count() > 0 ){
-                $movedfile = $this->getFirstFileInFinder( $finder );
-                return new FileChanges( "create", $movedfile );
-            } else {
+                $finder = new Finder();
+                $finder->in( $this->current_directory )->path("/^" . $new_filename . "$/");
+                if( $finder->count() > 0 ){
+                    $movedfile = $this->getFirstFileInFinder( $finder );
+                    return new FileChanges( "create", $movedfile );
+                } else {
+                    throw new FileException("File not created");
+                }
+            } catch( FileException $e ){
                 throw new FileException("File not created");
             }
         } else {
