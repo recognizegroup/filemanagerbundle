@@ -1062,6 +1062,7 @@
     font-size: 20px;
 }
 
-.filetree .mainview .selected {
+.filetree .mainview .selected,
+.filetree .mainview *:focus {
     background: #FF0000;
 }

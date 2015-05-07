@@ -1,5 +1,5 @@
 file:
   name: Bestandsnaam
   size: Bestandsgrootte
-  modified_date: Aanpasdatum
+  date_modified: Aanpasdatum
 upload: Uploaden

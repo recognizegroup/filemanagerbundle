@@ -26,6 +26,12 @@ FileTreeView.prototype = {
     _contentElement: false,
     _uploadLink: false,
 
+
+    // Keyboard accessability
+    _keepFocusOnSearchbar: false,
+    _keepFocusOnDirectories: false,
+    _keepFocusOnTitlebar: false,
+
     /**
      * Initializes the filetreeview
      *
@@ -104,19 +110,38 @@ FileTreeView.prototype = {
                 .on('click', function(event){
                     var higherdirectory = self._getHigherDirectory( current_directory );
                     self._eventHandler.trigger('filemanager:view:open', { directory: higherdirectory, isSynchronized: true });
+
+                }).on('keydown', function(event){
+
+                    // ENTER
+                    if( event.keyCode == 13 ){
+                        event.preventDefault();
+
+                        // Force the active state on enter
+                        $( event.target).addClass('active').trigger('mousedown');
+                    }
+
+                }).on('keyup', function(event){
+                    if( event.keyCode == 13 ){
+
+                        // Make sure to keep the focus on the upper directory on refresh
+                        self._keepFocusOnTitlebar = true;
+                        $( event.currentTarget).removeClass('active').trigger('click');
+                    }
                 });
 
             var searchinputstring = '<input type="search" name="filemanager_search" />';
             var searchinput = $( searchinputstring );
             searchinput.on('search', { directory: current_directory }, function( event ){
                     self._searchEvent( event );
+
+                    self._keepFocusOnSearchbar = true;
                 }).on('keyup', { directory: current_directory }, function( event ){
 
                     // Search on Enter
                     if( event.keyCode == 13 ){
                         self._searchEvent( event );
-                        $(this).blur();
-                        document.body.style.zoom = "100%";
+                        self._keepFocusOnSearchbar = true;
                     }
                 });
             var searchelement = this._formatSearchelement( searchinput );
@@ -129,6 +154,17 @@ FileTreeView.prototype = {
                 '</form>';
             var uploadelement = $( uploadstring );
             uploadelement.appendTo( this._titlebarElement );
+
+
+            // Keyboard focus handling
+            if( self._keepFocusOnTitlebar == true ){
+                directoryelement.focus();
+                self._keepFocusOnTitlebar = false;
+                self._keepFocusOnSearchbar = false;
+
+            } else if ( self._keepFocusOnSearchbar == true ){
+                searchinput.focus();
+            }
         }
     },
 
@@ -172,23 +208,50 @@ FileTreeView.prototype = {
             // Clear the view before filling it
             this._contentElement.empty();
 
+            // Sort the content so that the folders are on top
+            content.sort( function( a, b ){
+                var atype = a.type;
+                var btype = b.type;
+
+                if( atype == "dir" && btype != "dir"){
+                    return -1;
+                } else if( atype != "dir" && btype == "dir" ){
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+
             for( var i = 0, length = content.length; i < length; i++ ){
-                var file = content[i];
+
+                var file = $.extend({}, content[i]);
+                file.size = this._filesizeFormat( file.size );
                 var filerow = this._formatFilerow( file );
 
                 var rowelement = $(filerow)
+                    .attr("tabindex", "0")
                     .appendTo( this._contentElement )
-                    .on('click',{ file: file }, function( evt ){
-                        $( evt.currentTarget).toggleClass('selected');
+                    .on('click',{ file: file }, function( evt ) {
+                        $(evt.currentTarget).toggleClass('selected');
 
                         // On mobile, a click is a double click
-                        if( $(window).width() <= 768 ){
-                            self._openContentEvent( evt );
+                        if ($(window).width() <= 768) {
+                            self._openContentEvent(evt);
+                        }
+                    }).on('keyup', { file: file }, function( event ){
+
+                        // ENTER
+                        if( event.keyCode == 13){
+                            self._openContentEvent( event );
+
+                            // Make sure to keep the focus on the upper directory on refresh
+                            self._keepFocusOnTitlebar = true;
                         }
 
                     }).on('dblclick', { file: file }, function( evt ){
                         self._openContentEvent( evt );
                     });
+
             }
         }
     },
@@ -270,6 +333,36 @@ FileTreeView.prototype = {
         }
 
         return path;
+    },
+
+    /**
+     * Returns a human readable string for the byte amount of a file
+     *
+     * @param bytes
+     * @returns {string}
+     * @private
+     */
+    _filesizeFormat: function( bytes ){
+        var kbsize = 1024;
+        var mbsize = 1024 * kbsize;
+        var gbsize = 1024 * mbsize;
+
+        var filesize = "";
+        if( isNaN( bytes ) == false ){
+            bytes = parseInt( bytes );
+
+            if( bytes < kbsize ){
+                filesize = bytes + " B";
+            } else if (bytes < mbsize ){
+                filesize = (bytes / kbsize).toFixed(1) + " KB";
+            } else if (bytes < gbsize ){
+                filesize = (bytes / mbsize).toFixed(1) + " MB";
+            } else {
+                filesize = (bytes / gbsize).toFixed(1) + " GB";
+            }
+        }
+
+        return filesize;
     },
 
     /**

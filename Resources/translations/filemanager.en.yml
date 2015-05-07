@@ -1,5 +1,5 @@
 file:
   name: File name
   size: File size
-  modified_date: Modified date
+  date_modified: Modified date
 upload: Upload
