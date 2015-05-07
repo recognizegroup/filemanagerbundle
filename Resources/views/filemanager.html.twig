@@ -9,6 +9,7 @@
     <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/FileTree.js') }}"></script>
     <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/FilemanagerApi.js') }}"></script>
     <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/FileTreeView.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('bundles/recognizefilemanager/js/filemanager.jquery.js') }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ asset('bundles/recognizefilemanager/themes/default/style.css') }}" />
 </head>
 <body>
@@ -35,29 +36,7 @@
 
 
         <script type="text/javascript">
-            (function() {
-                $.fn.filemanager = function( config ) {
-                    if( typeof config === "undefined"){
-                        config = {};
-                    }
-                    config.eventHandler = new FilemanagerEventHandler( config );
-
-                    if( config.api !== null && typeof config.api === 'object' ) {
-                        if (typeof config.api.url !== 'undefined' && config.api.url != "") {
-                            this.data('treeview', new FileTreeView( config ) );
-                            this.data('api', new FilemanagerAPI( config ) );
-                            this.data('tree', new FileTree( config ) );
-                        } else {
-                            console.error("Filemanager: NO APILINK FOUND - Aborting creation");
-                        }
-                    }
-
-                    return this;
-                };
-
-            })( jQuery );
-
-            $('.filetree').filemanager({ debug: true, api: { url: "http://recocms/admin/fileapi", startingDirectory: "" } });
+            $('.filetree').filemanager({ debug: true, api: { url: window.location.origin + "/admin/fileapi", startingDirectory: "" } });
         </script>
     </div>
 </body>

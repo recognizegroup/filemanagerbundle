@@ -44,6 +44,14 @@ FileTreeView.prototype = {
             this._formatFilerow = config.filerowFormat;
         }
 
+        if( typeof config.titledirectoryFormat === "function" ){
+            this._formatTitleDirectory = config.titledirectoryFormat;
+        }
+
+        if( typeof config.searchelementFormat === "function" ){
+            this._formatSearchelement = config.searchelementFormat;
+        }
+
         this._registerEvents();
     },
 
@@ -59,6 +67,28 @@ FileTreeView.prototype = {
     },
 
     /**
+     * Formats the search element in the titlebar
+     *
+     * @param searchelement                 An html element with the input field
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatSearchelement: function( searchelement ){
+        return searchelement;
+    },
+
+    /**
+     * Formats the data of the current directory into an HTML element - Can be replaced using the config variables
+     *
+     * @param current_directory             The current directory
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatTitleDirectory: function( current_directory ){
+        return "<p class=\"filemanagerrow\"><span>" + current_directory + "</span></p>";
+    },
+
+    /**
      * Destroy and recreate the titlebar view
      */
     refreshTitlebar: function( current_directory ){
@@ -69,22 +99,28 @@ FileTreeView.prototype = {
         if( this._titlebarElement.length > 0 ){
             this._titlebarElement.empty();
 
-            var directorystring = '<p class="topdir">' + current_directory + '</p>';
-            var directoryelement = $( directorystring );
-            directoryelement.appendTo( this._titlebarElement );
+            var directoryelement = $( this._formatTitleDirectory( current_directory ) );
+            directoryelement.appendTo( this._titlebarElement )
+                .on('click', function(event){
+                    var higherdirectory = self._getHigherDirectory( current_directory );
+                    self._eventHandler.trigger('filemanager:view:open', { directory: higherdirectory, isSynchronized: true });
+                });
 
-            var searchstring = '<input type="search" name="filemanager_search" />';
-            var searchelement = $( searchstring );
-            searchelement.appendTo( this._titlebarElement )
-                .on('search', { directory: current_directory }, function( event ){
+            var searchinputstring = '<input type="search" name="filemanager_search" />';
+            var searchinput = $( searchinputstring );
+            searchinput.on('search', { directory: current_directory }, function( event ){
                     self._searchEvent( event );
                 }).on('keyup', { directory: current_directory }, function( event ){
 
                     // Search on Enter
                     if( event.keyCode == 13 ){
                         self._searchEvent( event );
+                        $(this).blur();
+                        document.body.style.zoom = "100%";
                     }
                 });
+            var searchelement = this._formatSearchelement( searchinput );
+            searchelement.appendTo( this._titlebarElement );
 
             var uploadstring = '<form enctype="multipart/form-data" method="POST" action="/admin/fileapi/create">' +
                 '<input type="hidden" name="filemanager_directory" value="' + current_directory + '" />' +
@@ -136,7 +172,6 @@ FileTreeView.prototype = {
             // Clear the view before filling it
             this._contentElement.empty();
 
-
             for( var i = 0, length = content.length; i < length; i++ ){
                 var file = content[i];
                 var filerow = this._formatFilerow( file );
@@ -146,19 +181,32 @@ FileTreeView.prototype = {
                     .on('click',{ file: file }, function( evt ){
                         $( evt.currentTarget).toggleClass('selected');
 
+                        // On mobile, a click is a double click
+                        if( $(window).width() <= 768 ){
+                            self._openContentEvent( evt );
+                        }
 
                     }).on('dblclick', { file: file }, function( evt ){
-
-                        var directory = evt.data.file.directory;
-                        var path = evt.data.file.path;
-                        if( typeof evt.data.file.type == "undefined" || evt.data.file.type == "dir" ) {
-                            var synchronized = false;
-                            self._eventHandler.trigger('filemanager:view:open', {directory: path, isSynchronized: synchronized} );
-                        } else {
-                            self._eventHandler.trigger('filemanager:view:select', { file: path });
-                        }
+                        self._openContentEvent( evt );
                     });
             }
+        }
+    },
+
+    /**
+     * Open a directory from the mainview
+     *
+     * @param event
+     * @private
+     */
+    _openContentEvent: function( event ){
+        var directory = event.data.file.directory;
+        var path = event.data.file.path;
+        if( typeof event.data.file.type == "undefined" || event.data.file.type == "dir" ) {
+            var synchronized = false;
+            this._eventHandler.trigger('filemanager:view:open', {directory: path, isSynchronized: synchronized} );
+        } else {
+            this._eventHandler.trigger('filemanager:view:select', { file: path });
         }
     },
 
@@ -195,6 +243,33 @@ FileTreeView.prototype = {
         } else {
             this._eventHandler.trigger('filemanager:view:open', { directory: event.data.directory, isSynchronized: false });
         }
+    },
+
+    /**
+     * Gets the directory above the directory using its path
+     *
+     * @param directory_path
+     * @returns {string}
+     * @private
+     */
+    _getHigherDirectory: function( directory_path ){
+        var pathnodes = directory_path.split('/');
+
+        // Filter out all the spaces
+        pathnodes = pathnodes.filter( function(value){
+            return value != "";
+        });
+
+        var path = "";
+        for( var i = 0, length = pathnodes.length - 1; i < length; i++ ){
+            path += pathnodes[i];
+
+            if( i !== length - 1 ){
+                path += "/";
+            }
+        }
+
+        return path;
     },
 
     /**
