@@ -75,6 +75,25 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $this->assertEquals( array(), $files );
     }
 
+    /**
+     * @expectedException \RunTimeException
+     */
+    public function testDisallowedDotDirectoriesOnRead(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $filemanagerservice->getDirectoryContents("testing/../", "testing2");
+    }
+
+    /**
+     * @expectedException \RunTimeException
+     */
+    public function testDisallowedDotDirectoriesOnSearch(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $filemanagerservice->searchDirectoryContents("testing/../", "testing2");
+    }
 
     public function testPartialFilenameAndNestedSearching(){
         $filemanagerservice = $this->getFilemanagerService();

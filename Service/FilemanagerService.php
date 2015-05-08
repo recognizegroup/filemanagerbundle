@@ -3,12 +3,15 @@ namespace Recognize\FilemanagerBundle\Service;
 
 use InvalidArgumentException;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
+use Recognize\FilemanagerBundle\Exception\DotfilesNotAllowedException;
 use Recognize\FilemanagerBundle\Response\FileChanges;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Form\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -31,10 +34,33 @@ class FilemanagerService {
      * Set the directory from which files will be retrieved - Keeping the relative path the same as the working directory
      *
      * @param string $relative_path                    The path after the default directory
+     * @throws DotFilesNotAllowedException
      */
     public function goToDeeperDirectory( $relative_path ){
         $formatted_path = ltrim( rtrim($relative_path, '/'), '/' );
-        $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
+        $path = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
+
+        if( $this->hasDotFiles($this->current_directory) == false ){
+            $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
+        } else {
+            throw new DotfilesNotAllowedException();
+        }
+    }
+
+    /**
+     * Test if the path contains dots - Allowing dots makes moving above the working directory possible
+     * Which is a security issue
+     *
+     * @param $path
+     */
+    protected function hasDotFiles( $path ){
+        $pathnodes = explode( DIRECTORY_SEPARATOR, $path );
+
+        for( $i = 0, $length = count($pathnodes); $i < $length; $i++ ){
+            if( $pathnodes[$i] == ".." || $pathnodes[$i] == ".") return true;
+        }
+
+        return false;
     }
 
     /**
@@ -50,19 +76,24 @@ class FilemanagerService {
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
 
-        // We have to prepend the less than sign to get all the contents from the nested directories
-        if( $depth !== 0 ){
-            $depth = "<" . $depth;
-        }
+        if( $this->hasDotFiles( $path ) == false ) {
 
-        try {
-            $finder->depth( $depth )->in( $path );
-            return $this->finderToFilesArray( $finder );
+            // We have to prepend the less than sign to get all the contents from the nested directories
+            if ($depth !== 0) {
+                $depth = "<" . $depth;
+            }
 
-        } catch( InvalidArgumentException $e ){
-            $path_from_workingdir = substr( $this->current_directory, strlen( $this->working_directory )  );
+            try {
+                $finder->depth($depth)->in($path);
+                return $this->finderToFilesArray($finder);
 
-            throw new InvalidArgumentException("Directory '" . $path_from_workingdir . $directory_path . "' does not exist");
+            } catch (InvalidArgumentException $e) {
+                $path_from_workingdir = substr($this->current_directory, strlen($this->working_directory));
+
+                throw new InvalidArgumentException("Directory '" . $path_from_workingdir . $directory_path . "' does not exist");
+            }
+        } else {
+            throw new DotfilesNotAllowedException();
         }
     }
 
@@ -77,22 +108,26 @@ class FilemanagerService {
     public function searchDirectoryContents( $directory_path = "", $search_value, $current_directory_only = false ){
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
+        if( $this->hasDotFiles( $path ) == false ){
 
-        $search_filter = function( SplFileInfo $file ) use ($search_value) {
-            if( preg_match($search_value, $file->getFilename()) ){
-                return true;
-            } else {
-                return false;
+            $search_filter = function( SplFileInfo $file ) use ($search_value) {
+                if( preg_match($search_value, $file->getFilename()) ){
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+
+            $finder->in( $path );
+            if( $current_directory_only !== false ){
+                $finder->depth( 0 );
             }
-        };
+            $finder->filter( $search_filter );
 
-        $finder->in( $path );
-        if( $current_directory_only !== false ){
-            $finder->depth( 0 );
+            return $this->finderToFilesArray( $finder );
+        } else {
+            throw new DotfilesNotAllowedException();
         }
-        $finder->filter( $search_filter );
-
-        return $this->finderToFilesArray( $finder );
     }
 
     /**

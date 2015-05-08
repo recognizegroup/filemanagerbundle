@@ -1064,7 +1064,7 @@
 
 .filetree .mainview .selected,
 .filetree .mainview *.focussed,
-.filetree .mainview tbody tr:focus {
+.filetree .mainview *:focus {
     background: #EE5757;
 }
 
@@ -1075,4 +1075,21 @@
 
 .filetree .jstree-hovered {
     background: #EE5757;
+}
+
+.filetree .titlebar .upload-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.filetree .titlebar .upload-container input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
 }

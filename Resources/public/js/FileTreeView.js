@@ -58,6 +58,10 @@ FileTreeView.prototype = {
             this._formatSearchelement = config.searchelementFormat;
         }
 
+        if( typeof config.uploadbuttonFormat === "function" ){
+            this._formatUploadButton = config.uploadbuttonFormat;
+        }
+
         this._registerEvents();
     },
 
@@ -92,6 +96,16 @@ FileTreeView.prototype = {
      */
     _formatTitleDirectory: function( current_directory ){
         return "<p class=\"filemanagerrow\"><span>" + current_directory + "</span></p>";
+    },
+
+    /**
+     * Outputs the button that should be in the form
+     *
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatUploadButton: function(){
+        return '<a class="btn filemanager_uploading">Uploaden' + '<input type="file" name="filemanager_upload"/>' + "</a>";
     },
 
     /**
@@ -149,10 +163,11 @@ FileTreeView.prototype = {
 
             var uploadstring = '<form enctype="multipart/form-data" method="POST" action="/admin/fileapi/create">' +
                 '<input type="hidden" name="filemanager_directory" value="' + current_directory + '" />' +
-                '<input type="file" name="filemanager_upload" />' +
-                '<input type="submit" value="Uploaden" />' +
+                this._formatUploadButton() +
                 '</form>';
+
             var uploadelement = $( uploadstring );
+            uploadelement.addClass('upload-container');
             uploadelement.appendTo( this._titlebarElement );
 
 
