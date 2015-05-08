@@ -160,6 +160,18 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     /**
      * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testCreateDottedDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->createDirectory("..");
+        $this->assertEquals( $this->getExpectedCreatedDirectory(), $changes->getFile() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
      * @expectedException \Recognize\FilemanagerBundle\Exception\ConflictException
      */
     public function testConflictingDirectoryCreation(){

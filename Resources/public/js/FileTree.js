@@ -215,6 +215,9 @@ FileTree.prototype = {
         this.debug( "Tree structure after updating" );
         this.debug( this._root );
 
+        this.debug( "Updating the current files" );
+        this.openPath( this._currentPath, false );
+        this.debug( this._currentFiles );
         if( shouldUpdateView ){
             this._updateViews( true, true, true );
         }

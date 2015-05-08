@@ -214,7 +214,18 @@ FilemanagerAPI.prototype = {
 
         this._sendRequest( url, "POST", { type: "directory", filemanager_directory: path, directory_name: name } )
             .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: [ data.data.changes ], directory: path });
+
+                // Make sure our changes are in the correct format
+                var changes = [];
+                if( typeof data.data.changes == "object"){
+                    for( var key in data.data.changes ){
+                        changes.push( data.data.changes[key] );
+                    }
+                } else {
+                    changes = data.data.changes;
+                }
+
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
             })
             .fail( this._handleApiError );
     },
@@ -283,6 +294,10 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.register('filemanager:view:search', function( eventobj ){
             self.search(eventobj.directory, eventobj.query );
+        });
+
+        this._eventHandler.register('filemanager:view:create', function( eventobj ){
+            self.createDirectory( eventobj.directory, eventobj.name );
         });
     }
 };

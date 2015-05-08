@@ -144,6 +144,13 @@ FileTreeView.prototype = {
                     }
                 });
 
+            var createbuttonstring = "<a>Create directory</a>";
+            var createdirectorybutton = $( createbuttonstring );
+            createdirectorybutton.on('click', { directory: current_directory }, function( event ){
+                self._createDirectory( event.data.directory );
+            });
+            createdirectorybutton.appendTo( this._titlebarElement );
+
             var searchinputstring = '<input type="search" name="filemanager_search" />';
             var searchinput = $( searchinputstring );
             searchinput.on('search', { directory: current_directory }, function( event ){
@@ -169,7 +176,6 @@ FileTreeView.prototype = {
             var uploadelement = $( uploadstring );
             uploadelement.addClass('upload-container');
             uploadelement.appendTo( this._titlebarElement );
-
 
             // Keyboard focus handling
             if( self._keepFocusOnTitlebar == true ){
@@ -209,6 +215,48 @@ FileTreeView.prototype = {
                 }
             });
         }
+    },
+
+    /**
+     * Create a directory creation row in the content
+     * Which creates a new directory when the enter key is pressed
+     */
+    _createDirectory: function( path ){
+        var createdirectorystring = '<input type="text" name="directory_name"/></form>';
+
+        // Render a row in the contents with the filename as an inputfield
+        var directory = {
+            name: createdirectorystring,
+            type: "dir",
+            date_modified: "",
+            size: "",
+            children: {}
+        };
+        var createdirectoryrow = $( this._formatFilerow( directory ) );
+
+        // Add an enter event to the input
+        var self = this;
+        var createdirectoryelement = createdirectoryrow.find('input[name=directory_name]');
+        createdirectoryelement.on("keydown", {directory: path }, function( event ){
+
+            // ENTER
+            if( event.keyCode == 13 ){
+                if( event.target.value != "" ){
+                    self._eventHandler.trigger('filemanager:view:create', { directory: event.data.directory, name: event.target.value });
+                }
+
+                // Remove the directory element on enter
+                self._contentElement.children().eq(0).remove();
+            }
+        }).on("blur", function( event ){
+
+            // Remove the directory element when the textfield loses focus
+            self._contentElement.children().eq(0).remove();
+        });
+
+
+        this._contentElement.prepend( createdirectoryrow );
+        createdirectoryelement.focus();
     },
 
     /**

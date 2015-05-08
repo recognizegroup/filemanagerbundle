@@ -220,27 +220,31 @@ class FilemanagerService {
     public function createDirectory( $directory_name ){
         $fs = new Filesystem();
 
-        $absolute_directory_path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_name;
-        if( $fs->exists( $absolute_directory_path ) == false ){
-            try {
-                $fs->mkdir( $absolute_directory_path, 0755 );
+        if( $this->hasDotFiles($directory_name) == false ){
+            $absolute_directory_path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_name;
+            if( $fs->exists( $absolute_directory_path ) == false ){
+                try {
+                    $fs->mkdir( $absolute_directory_path, 0755 );
 
-                $finder = new Finder();
-                $finder->in($this->current_directory)->path("/^" . $directory_name . "$/" );
-                if( $finder->count() > 0 ){
-                    $created_directory = $this->getFirstFileInFinder( $finder );
-                    $filechanges = new FileChanges("create", $created_directory);
+                    $finder = new Finder();
+                    $finder->in($this->current_directory)->path("/^" . $directory_name . "$/" );
+                    if( $finder->count() > 0 ){
+                        $created_directory = $this->getFirstFileInFinder( $finder );
+                        $filechanges = new FileChanges("create", $created_directory);
 
-                    return $filechanges;
-                } else {
-                    throw new IOException( "Failed to create directory " . $directory_name );
+                        return $filechanges;
+                    } else {
+                        throw new IOException( "Failed to create directory " . $directory_name );
+                    }
+
+                } catch( IOException $e ){
+                    throw new IOException("Failed to create directory " . $directory_name );
                 }
-
-            } catch( IOException $e ){
-                throw new IOException("Failed to create directory " . $directory_name );
+            } else {
+                throw new ConflictException();
             }
         } else {
-            throw new ConflictException();
+            throw new DotfilesNotAllowedException();
         }
     }
 
