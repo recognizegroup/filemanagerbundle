@@ -18,6 +18,8 @@ FileTree.prototype = {
     },
     _currentPath: "",
     _currentFiles: [],
+    _currentContentSort: this._naturalFilemanagerSort,
+
 
     /** Used for setting the ID of the jstree */
     _walk_itteration: 0,
@@ -480,6 +482,50 @@ FileTree.prototype = {
     },
 
     /**
+     * The natural sorting function where folders are kept on top and the ordering is alphabetical
+     *
+     * @param a
+     * @param b
+     * @returns {number}
+     * @private
+     */
+    _naturalFilemanagerSort: function( a, b ){
+        var atype = a.type;
+        var btype = b.type;
+
+        if( atype == "dir" && btype != "dir"){
+            return -1;
+        } else if( atype != "dir" && btype == "dir" ){
+            return 1;
+        } else {
+            if( String( a.name).toLowerCase() < String( b.name).toLowerCase() ) return -1;
+            if( String( a.name).toLowerCase() > String( b.name).toLowerCase()) return 1;
+            return 0;
+        }
+    },
+
+    /**
+     * Sort the current files using the sort function
+     *
+     * @param sortfunction
+     */
+    sortContent: function( sortfunction ){
+        if( typeof sortfunction === "function" ) {
+            this._currentContentSort = sortfunction;
+            this._updateViews(false, true, false);
+        } else {
+            this.errorLog("The input is not a valid sort function");
+        }
+    },
+
+    /**
+     * Reset the sorting
+     */
+    resetSort: function(){
+        this.sortContent( this._naturalFilemanagerSort );
+    },
+
+    /**
      * Update the views linked to the tree data
      *
      * @param directories               The list of directories
@@ -495,6 +541,7 @@ FileTree.prototype = {
         }
 
         if( content == true ){
+            this._currentFiles.sort( this._currentContentSort );
             this._eventHandler.trigger('filemanager:model:content_changed', this._currentFiles );
         }
 

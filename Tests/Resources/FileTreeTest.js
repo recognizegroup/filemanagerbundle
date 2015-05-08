@@ -613,5 +613,31 @@ describe('FileTree', function() {
 
         expect( tree.toJstreeData( ) ).toEqual( expectedtree );
     });
+
+    it('should be able to sort the current files', function() {
+        tree._currentFiles = [{
+            path: "two",
+            name: "two",
+            directory: ""
+        },{
+            path: "two/one",
+            name: "one",
+            directory: "two/"
+        }];
+
+        tree.sortContent( function(a, b ){ return -1; });
+        var expectedContent = [{
+            path: "two/one",
+            name: "one",
+            directory: "two/"
+        },{
+            path: "two",
+            name: "two",
+            directory: ""
+        }];
+
+        expect( tree._currentFiles ).toEqual ( expectedContent );
+    });
+
 });
 

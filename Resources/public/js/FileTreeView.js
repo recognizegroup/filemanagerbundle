@@ -197,7 +197,7 @@ FileTreeView.prototype = {
     },
 
     /**
-     * The current sorting function
+     * The natural sorting function where folders are kept on top and the ordering is alphabetical
      *
      * @param a
      * @param b
