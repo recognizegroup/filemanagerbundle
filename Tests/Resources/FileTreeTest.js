@@ -614,7 +614,46 @@ describe('FileTree', function() {
         expect( tree.toJstreeData( ) ).toEqual( expectedtree );
     });
 
-    it('should be able to sort the current files', function() {
+    it('should be able to sort the current files in a normal filemanager manner', function() {
+        tree._currentFiles = [{
+            path: "b",
+            name: "b",
+            directory: "",
+            type: "dir"
+        },{
+            path: "a/a",
+            name: "a",
+            directory: "",
+            type: "file"
+        },{
+            path: "a",
+            name: "a",
+            directory: "",
+            type: "dir"
+        }];
+
+        tree._updateViews( false, true, false );
+        var expectedContent = [{
+            path: "a",
+            name: "a",
+            directory: "",
+            type: "dir"
+        },{
+            path: "b",
+            name: "b",
+            directory: "",
+            type: "dir"
+        },{
+            path: "a/a",
+            name: "a",
+            directory: "",
+            type: "file"
+        }];
+
+        expect( tree._currentFiles ).toEqual( expectedContent );
+    });
+
+    it('should be able to set a custom sort to the current files', function() {
         tree._currentFiles = [{
             path: "two",
             name: "two",
@@ -625,7 +664,7 @@ describe('FileTree', function() {
             directory: "two/"
         }];
 
-        tree.sortContent( function(a, b ){ return -1; });
+        tree.sortContent( function( a, b ){ return -1; });
         var expectedContent = [{
             path: "two/one",
             name: "one",
@@ -634,6 +673,46 @@ describe('FileTree', function() {
             path: "two",
             name: "two",
             directory: ""
+        }];
+
+        expect( tree._currentFiles ).toEqual ( expectedContent );
+    });
+
+    it('should be able to reset the sorting function', function() {
+        tree._currentFiles = [{
+            path: "b",
+            name: "b",
+            directory: "",
+            type: "dir"
+        }, {
+            path: "a",
+            name: "a",
+            directory: "",
+            type: "dir"
+        },{
+            path: "a/a",
+            name: "a",
+            directory: "",
+            type: "file"
+        }];
+
+        tree.sortContent( function(a, b ){ return -1; });
+        tree.resetSort();
+        var expectedContent = [{
+            path: "a",
+            name: "a",
+            directory: "",
+            type: "dir"
+        },{
+            path: "b",
+            name: "b",
+            directory: "",
+            type: "dir"
+        },{
+            path: "a/a",
+            name: "a",
+            directory: "",
+            type: "file"
         }];
 
         expect( tree._currentFiles ).toEqual ( expectedContent );

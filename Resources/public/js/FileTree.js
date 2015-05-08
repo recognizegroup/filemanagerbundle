@@ -18,8 +18,8 @@ FileTree.prototype = {
     },
     _currentPath: "",
     _currentFiles: [],
-    _currentContentSort: this._naturalFilemanagerSort,
-
+    _currentContentSort: null,
+    _reverse: false,
 
     /** Used for setting the ID of the jstree */
     _walk_itteration: 0,
@@ -37,6 +37,8 @@ FileTree.prototype = {
 
             this._registerEvents();
         }
+
+        this._currentContentSort = this._naturalFilemanagerSort;
 
         this.debug( "Initializing" );
         this.debug( config );
@@ -506,16 +508,25 @@ FileTree.prototype = {
 
     /**
      * Sort the current files using the sort function
+     * Also toggles the sorting if the same sort function is set
      *
      * @param sortfunction
      */
     sortContent: function( sortfunction ){
-        if( typeof sortfunction === "function" ) {
-            this._currentContentSort = sortfunction;
-            this._updateViews(false, true, false);
-        } else {
-            this.errorLog("The input is not a valid sort function");
+        if( typeof sortfunction !== "function" ) {
+            sortfunction = this._naturalFilemanagerSort;
         }
+
+        // Toggle the sorting order
+        if( String(this._currentContentSort) == String(sortfunction) ){
+            this._reverse = !this._reverse;
+        } else {
+            this._reverse = false;
+        }
+        this._currentContentSort = sortfunction;
+
+        this._updateViews(false, true, false);
+
     },
 
     /**
@@ -535,13 +546,15 @@ FileTree.prototype = {
      * @private
      */
     _updateViews: function( directories, content, path ){
-
         if( directories == true ){
             this._eventHandler.trigger('filemanager:model:directories_changed', this.flattenTree( true ) );
         }
 
         if( content == true ){
             this._currentFiles.sort( this._currentContentSort );
+            if( this._reverse ){
+                this._currentFiles.reverse();
+            }
             this._eventHandler.trigger('filemanager:model:content_changed', this._currentFiles );
         }
 

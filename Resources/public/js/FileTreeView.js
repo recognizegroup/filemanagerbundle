@@ -197,29 +197,6 @@ FileTreeView.prototype = {
     },
 
     /**
-     * The natural sorting function where folders are kept on top and the ordering is alphabetical
-     *
-     * @param a
-     * @param b
-     * @returns {number}
-     * @private
-     */
-    _sortingFunction: function( a, b ){
-        var atype = a.type;
-        var btype = b.type;
-
-        if( atype == "dir" && btype != "dir"){
-            return -1;
-        } else if( atype != "dir" && btype == "dir" ){
-            return 1;
-        } else {
-            if( String( a.name).toLowerCase() < String( b.name).toLowerCase() ) return -1;
-            if( String( a.name).toLowerCase() > String( b.name).toLowerCase()) return 1;
-            return 0;
-        }
-    },
-
-    /**
      * Destroy and recreate the main file views
      *
      * @param content
@@ -230,9 +207,6 @@ FileTreeView.prototype = {
 
             // Clear the view before filling it
             this._contentElement.empty();
-
-            // Sort the content so that the folders are on top
-            content.sort( self._sortingFunction );
 
             for( var i = 0, length = content.length; i < length; i++ ){
 
