@@ -1063,6 +1063,14 @@
 }
 
 .filetree .mainview .selected,
-.filetree .mainview *:focus {
-    background: #FF0000;
+.filetree .mainview *.focussed{
+    background: #EE5757;
+}
+
+.filetree .mainview tbody tr:hover {
+    cursor: pointer;
+}
+
+.filetree .jstree-hovered {
+    background: #EE5757;
 }

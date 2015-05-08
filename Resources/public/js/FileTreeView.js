@@ -197,6 +197,29 @@ FileTreeView.prototype = {
     },
 
     /**
+     * The current sorting function
+     *
+     * @param a
+     * @param b
+     * @returns {number}
+     * @private
+     */
+    _sortingFunction: function( a, b ){
+        var atype = a.type;
+        var btype = b.type;
+
+        if( atype == "dir" && btype != "dir"){
+            return -1;
+        } else if( atype != "dir" && btype == "dir" ){
+            return 1;
+        } else {
+            if( String( a.name).toLowerCase() < String( b.name).toLowerCase() ) return -1;
+            if( String( a.name).toLowerCase() > String( b.name).toLowerCase()) return 1;
+            return 0;
+        }
+    },
+
+    /**
      * Destroy and recreate the main file views
      *
      * @param content
@@ -209,18 +232,7 @@ FileTreeView.prototype = {
             this._contentElement.empty();
 
             // Sort the content so that the folders are on top
-            content.sort( function( a, b ){
-                var atype = a.type;
-                var btype = b.type;
-
-                if( atype == "dir" && btype != "dir"){
-                    return -1;
-                } else if( atype != "dir" && btype == "dir" ){
-                    return 1;
-                } else {
-                    return 0;
-                }
-            });
+            content.sort( self._sortingFunction );
 
             for( var i = 0, length = content.length; i < length; i++ ){
 
@@ -229,7 +241,6 @@ FileTreeView.prototype = {
                 var filerow = this._formatFilerow( file );
 
                 var rowelement = $(filerow)
-                    .attr("tabindex", "0")
                     .appendTo( this._contentElement )
                     .on('click',{ file: file }, function( evt ) {
                         $(evt.currentTarget).toggleClass('selected');
