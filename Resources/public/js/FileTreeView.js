@@ -62,6 +62,11 @@ FileTreeView.prototype = {
             this._formatUploadButton = config.uploadbuttonFormat;
         }
 
+        if( typeof config.createdirectoryFormat === "function" ){
+            this._formatCreatedirectoryButton = config.createdirectoryFormat;
+        }
+
+
         this._registerEvents();
     },
 
@@ -109,6 +114,16 @@ FileTreeView.prototype = {
     },
 
     /**
+     * Outputs the button that creates a new directory row in the content area
+     *
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatCreatedirectoryButton: function(){
+        return "<a>Create directory</a>";
+    },
+
+    /**
      * Destroy and recreate the titlebar view
      */
     refreshTitlebar: function( current_directory ){
@@ -144,7 +159,7 @@ FileTreeView.prototype = {
                     }
                 });
 
-            var createbuttonstring = "<a>Create directory</a>";
+            var createbuttonstring = this._formatCreatedirectoryButton();
             var createdirectorybutton = $( createbuttonstring );
             createdirectorybutton.on('click', { directory: current_directory }, function( event ){
                 self._createDirectory( event.data.directory );
