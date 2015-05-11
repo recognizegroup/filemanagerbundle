@@ -17,13 +17,9 @@
     </testsuites>
 
     <filter>
-        <whitelist>
-            <directory>Tests</directory>
-        </whitelist>
+        <blacklist>
+            <directory suffix=".php">Tests</directory>
+        </blacklist>
     </filter>
-
-    <php>
-        <server name="KERNEL_DIR" value="../../../app/" />
-    </php>
 
 </phpunit>

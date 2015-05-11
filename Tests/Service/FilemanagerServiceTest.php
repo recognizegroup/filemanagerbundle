@@ -118,7 +118,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $filemanagerservice = $this->getFilemanagerService();
         $this->fillTempDirectory();
 
-        $filemanagerservice->rename("testing", "testing4");
+        $changes = $filemanagerservice->rename("testing", "testing4");
         $files = $filemanagerservice->searchDirectoryContents( "", "/testing4/" );
         $this->assertEquals($this->getExpectedRenamedDirectory(), $files[0] );
     }

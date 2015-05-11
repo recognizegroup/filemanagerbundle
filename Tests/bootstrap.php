@@ -1,17 +1,24 @@
 <?php
 
-// Get the autoload if this is a dependency
-$dependencyfile = dirname(dirname(dirname(dirname(__FILE__)))) . '/vendor/autoload.php';
-$file = $dependencyfile;
+// Make sure the bootstrapping process is only run once
+if( defined('IS_TEST_BOOTED') == false ) {
+    define('IS_TEST_BOOTED', true);
 
-if (!file_exists($dependencyfile)) {
-
-    // Get the autoload if it's in the src folder
-    $sourcefile = dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/vendor/autoload.php';
-    if(file_exists($sourcefile) ){
-        $file = $sourcefile;
-    } else {
-        throw new RuntimeException('Install dependencies to run test suite.');
+    function loadAutoLoad($level = 0, $path = __FILE__) {
+        $path = dirname($path);
+        $dependencyfile = $path . '/app/autoload.php';
+        if (!file_exists($dependencyfile)) {
+            if ($level < 20) {
+                return loadAutoLoad($level + 1, $path);
+            } else {
+                throw new RuntimeException('Autoload not found');
+            }
+        } else {
+            return $path;
+        }
     }
+
+    $rootpath = loadAutoLoad();
+    $autoload = require_once($rootpath . '/app/autoload.php');
+    $_SERVER['KERNEL_DIR'] = $rootpath . '/app/';
 }
-$autoload = require_once $file;
