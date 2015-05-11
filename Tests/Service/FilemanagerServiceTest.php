@@ -3,13 +3,9 @@ namespace Recognize\FilemanagerBundle\Tests\Service;
 
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\Tests\File\UploadedFileTest;
 
 class FilemanagerServiceTest extends FilesystemTestCase {
 
@@ -240,6 +236,53 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile.txt" );
     }
 
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testMovingDirectoryDeeper(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->move("testing3", "testing12");
+        $files = $filemanagerservice->searchDirectoryContents( "", "/testing3/" );
+        $this->assertEquals($this->getExpectedMovedDownDirectory(), $files[0] );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testMovingDirectoryHigher(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->move("testing/level2/level3", "testing");
+        $files = $filemanagerservice->searchDirectoryContents( "testing", "/level3/" );
+        $this->assertEquals($this->getExpectedMovedUpDirectory(), $files[0] );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testMovingToExistingDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->move("testing3", "");
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testMovingNonexistingDirectory(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->move("notafile", "");
+    }
+
+
     protected function fillTempDirectory(){
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing2" , 0777);
@@ -310,6 +353,14 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedUploadedFileInTesting(){
         return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/testfile.txt", "testing/", "testfile.txt" );
+    }
+
+    protected function getExpectedMovedDownDirectory(){
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing12/testing3", "testing12/", "testing3" );
+    }
+
+    protected function getExpectedMovedUpDirectory(){
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/level3", "testing/", "level3" );
     }
 
 }

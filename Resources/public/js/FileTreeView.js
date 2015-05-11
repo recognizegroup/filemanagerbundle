@@ -386,11 +386,10 @@ FileTreeView.prototype = {
             if( event.keyCode == 13 ){
                 if( event.target.value != "" ){
                     self._renameEvent( event );
-                    console.log( "Rename to " + event.target.value );
                 }
 
                 // Replace the inputrow with the regular filerow
-                self._contentElement.find(renameelement).remove();
+                self._contentElement.find( renameelement ).remove();
                 self._contentElement.find( filerow ).show();
 
             }

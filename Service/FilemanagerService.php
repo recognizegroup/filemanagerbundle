@@ -187,7 +187,7 @@ class FilemanagerService {
     public function rename( $relative_path_to_file, $new_name ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->current_directory)->path("/^" . $relative_path_to_file . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $relative_path_to_file ) . "$/" );
 
         if( $finder->count() > 0 ){
 
@@ -212,6 +212,51 @@ class FilemanagerService {
             return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
+        }
+    }
+
+    /**
+     * Moves a directory or a file
+     *
+     * @param string $relative_path_to_file            The relative path from the working directory to the directory or the file
+     * @param string $newpath                          The new directory or file location
+     *
+     * @throws FileNotFoundException                   When the file or directory to be renamed does not exist
+     * @throws IOException                             When target file or directory already exists
+     * @throws IOException                             When origin cannot be renamed
+     */
+    public function move( $relative_path_to_file, $newpath ){
+        $fs = new Filesystem();
+        $finder = new Finder();
+        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $relative_path_to_file ) . "$/" );
+
+        if( $finder->count() > 0 ){
+
+            $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
+            $oldfile = $this->getFirstFileInFinder( $finder );
+
+            $newrelativepath = $this->current_directory . DIRECTORY_SEPARATOR . $newpath;
+            $newfilepath = $newrelativepath . DIRECTORY_SEPARATOR . $oldfile->getFilename();
+            $newfile = new SplFileInfo( $newfilepath, $newrelativepath, $oldfile->getFilename() );
+
+            // Prevent files from being overwritten
+            if( $fs->exists( $newfilepath ) ){
+                throw new ConflictException();
+            } else {
+                // Make sure the directories exist
+                $fs->mkdir( $newrelativepath, 0755 );
+            }
+
+            $filechanges = new FileChanges("move", $oldfile);
+            $filechanges->setFileAfterChanges( $newfile );
+            $fs->rename( $filepath, $newfilepath );
+
+            // Update the modified date
+            $fs->touch( $newfilepath );
+
+            return $filechanges;
+        } else {
+            throw new FileNotFoundException("The file or directory that should be moved doesn't exist");
         }
     }
 
@@ -279,5 +324,14 @@ class FilemanagerService {
         } else {
             throw new ConflictException();
         }
+    }
+
+    /**
+     * Escape forward slashes in a path
+     *
+     * @param $string
+     */
+    protected function escapeSlashes( $string ){
+        return str_replace("/", "\/", $string);
     }
 }

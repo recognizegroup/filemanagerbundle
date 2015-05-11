@@ -174,15 +174,27 @@ FilemanagerAPI.prototype = {
     /**
      * Send a move request to the server
      *
-     * @param file                          The path to the file including the filename
+     * @param directory                     The directory from the file to move
+     * @param filepath                      The path to the file including the filename
      * @param new_location                  The new location of the file
      */
-    move: function( file, new_location ){
+    move: function( directory, filepath, new_location ){
         var url = this._url + this._path_move;
 
-        this._sendRequest( url, "POST", { file: file, location: new_location } )
+        this._sendRequest( url, "POST", { filemanager_filepath: filepath, filemanager_newdirectory: new_location } )
             .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
+
+                // Make sure our changes are in the correct format
+                var changes = [];
+                if( typeof data.data.changes == "object"){
+                    for( var key in data.data.changes ){
+                        changes.push( data.data.changes[key] );
+                    }
+                } else {
+                    changes = data.data.changes;
+                }
+
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: new_location });
             })
             .fail( this._handleApiError );
     },
@@ -190,14 +202,14 @@ FilemanagerAPI.prototype = {
     /**
      * Send a rename request to the server
      *
-     * @param file                          The path to the file including the filename
+     * @param directory                     The directory in which the file resides
+     * @param filename                      The filename of the file to rename
      * @param new_filename                  The new location of the file
      */
-    rename: function( file, new_filename ){
+    rename: function( directory, filename, new_filename ){
         var url = this._url + this._path_rename;
 
-        var directory = file.directory;
-        this._sendRequest( url, "POST", { filemanager_directory: directory, filemanager_filename: file.name, filemanager_newfilename: new_filename } )
+        this._sendRequest( url, "POST", { filemanager_directory: directory, filemanager_filename: filename, filemanager_newfilename: new_filename } )
             .success(function( data, status, jqXHR) {
 
                 // Make sure our changes are in the correct format
@@ -314,7 +326,7 @@ FilemanagerAPI.prototype = {
         });
 
         this._eventHandler.register('filemanager:view:rename', function( eventobj ){
-            self.rename( eventobj.file, eventobj.newname );
+            self.rename( eventobj.file.directory, eventobj.file.name, eventobj.newname );
         });
     }
 };

@@ -81,8 +81,29 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
+    /**
+     * Move a file or a directory
+     *
+     * @param Request $request
+     */
     public function move(Request $request) {
-        return new Response();
+        $filemanager = $this->getFilemanager();
+        $builder = new FilemanagerResponseBuilder();
+
+        if( $request->request->has('filemanager_filepath')
+            && $request->request->has('filemanager_newdirectory') ){
+
+            $oldfilepath = $request->get('filemanager_filepath');
+            $newdirectory = $request->get('filemanager_newdirectory');
+            $changes = $filemanager->move( $oldfilepath, $newdirectory );
+
+            $builder->addChange( $changes );
+
+        } else {
+            $builder->fail( "Invalid request");
+        }
+
+        return $builder->build();
     }
 
     /**
