@@ -63,9 +63,13 @@ class FileChanges {
         }
 
         $date = new \DateTime();
-        $date->setTimestamp( $file->getMTime() );
+        if( $file->isFile() || $file->isDir() ){
+            $date->setTimestamp( $file->getMTime() );
+            $filedata['size'] = $file->getSize();
+        } else {
+            $filedata['size'] = 0;
+        }
         $filedata['date_modified'] = $date->format("Y-m-d H:i:s");
-        $filedata['size'] = $file->getSize();
 
         return $filedata;
     }

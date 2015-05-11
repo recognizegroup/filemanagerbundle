@@ -196,9 +196,22 @@ FilemanagerAPI.prototype = {
     rename: function( file, new_filename ){
         var url = this._url + this._path_rename;
 
-        this._sendRequest( url, "POST", { file: file, name: new_filename } )
+        var directory = file.directory;
+        this._sendRequest( url, "POST", { filemanager_directory: directory, filemanager_filename: file.name, filemanager_newfilename: new_filename } )
             .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
+
+                // Make sure our changes are in the correct format
+                var changes = [];
+                if( typeof data.data.changes == "object"){
+                    for( var key in data.data.changes ){
+                        changes.push( data.data.changes[key] );
+                    }
+                } else {
+                    changes = data.data.changes;
+                }
+
+
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: directory });
             })
             .fail( this._handleApiError );
     },
@@ -298,6 +311,10 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.register('filemanager:view:create', function( eventobj ){
             self.createDirectory( eventobj.directory, eventobj.name );
+        });
+
+        this._eventHandler.register('filemanager:view:rename', function( eventobj ){
+            self.rename( eventobj.file, eventobj.newname );
         });
     }
 };

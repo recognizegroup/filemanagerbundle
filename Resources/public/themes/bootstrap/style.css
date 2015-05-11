@@ -1103,6 +1103,11 @@
     padding-right: 10px;
 }
 
+.filetree .search-col input {
+    top: 2px;
+    position: relative;
+}
+
 .filetree tbody .form-control {
     width: 80%;
 }

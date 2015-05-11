@@ -84,13 +84,34 @@ class FilemanagerController extends Controller {
 
     }
 
+    /**
+     * Rename a file or a directory
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+
     public function rename(Request $request) {
         $filemanager = $this->getFilemanager();
+        $builder = new FilemanagerResponseBuilder();
 
-        $oldfile = "";
-        $newfile = "1";
+        if( $request->request->has('filemanager_filename')
+            && $request->request->has('filemanager_newfilename')
+            && $request->request->has('filemanager_directory') ){
 
-        $changes = $filemanager->rename( $oldfile, $newfile );
+            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
+
+            $oldfilename = $request->get('filemanager_filename');
+            $newfilename = $request->get('filemanager_newfilename');
+            $changes = $filemanager->rename( $oldfilename, $newfilename );
+
+            $builder->addChange( $changes );
+
+        } else {
+            $builder->fail( "Invalid request");
+        }
+
+        return $builder->build();
     }
 
     public function delete(Request $request) {

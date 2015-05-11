@@ -366,10 +366,10 @@ FileTreeView.prototype = {
     },
 
     /**
-     * Turns row
+     * Turns the current filerow into a row with an inputfield instead of the filename
      *
      * @param selector          The css class of the filerow to swap
-     * @param file
+     * @param file              The file linked to the filerow
      */
     createRenamerow: function( selector, file ){
         var filerow = this._contentElement.find( selector );
@@ -380,11 +380,12 @@ FileTreeView.prototype = {
         copiedfile.name = '<input type="text" name="file_name" value="' + file.name + '"/>';
         var renameelement = $( self._formatRenamerow( copiedfile ) );
         var renameinput = renameelement.find('input');
-        renameinput.on("keydown", {directory: file.path }, function( event ){
+        renameinput.on("keydown", {file: file }, function( event ){
 
             // ENTER
             if( event.keyCode == 13 ){
                 if( event.target.value != "" ){
+                    self._renameEvent( event );
                     console.log( "Rename to " + event.target.value );
                 }
 
@@ -456,6 +457,21 @@ FileTreeView.prototype = {
             this._eventHandler.trigger('filemanager:view:search', { directory: event.data.directory, query: querystring });
         } else {
             this._eventHandler.trigger('filemanager:view:open', { directory: event.data.directory, isSynchronized: false });
+        }
+    },
+
+    /**
+     * Rename a file or directory
+     *
+     * @param event
+     * @private
+     */
+    _renameEvent: function( event ){
+        var newname = event.target.value;
+
+        // Only rename if the value isn't empty
+        if( newname != "" ){
+            this._eventHandler.trigger('filemanager:view:rename', { file: event.data.file, newname: newname });
         }
     },
 
