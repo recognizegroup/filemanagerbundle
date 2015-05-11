@@ -274,7 +274,7 @@ class FilemanagerService {
     public function delete( $filename ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->current_directory)->path("/^" . $filename . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $filename ) . "$/" );
 
         if( $finder->count() > 0 ){
 
@@ -287,7 +287,7 @@ class FilemanagerService {
 
             return $filechanges;
         } else {
-            throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
+            throw new FileNotFoundException("The file or directory that should be deleted doesn't exist");
         }
     }
 

@@ -147,7 +147,8 @@ class FilemanagerController extends Controller {
 
         if( $request->request->has('filemanager_directory') && $request->request->has('filemanager_filename') ){
             $filemanager->goToDeeperDirectory( $request->request->get('filemanager_directory') );
-            $filename = $request->request->has('filemanager_filename');
+
+            $filename = $request->request->get('filemanager_filename');
 
             $changes = $filemanager->delete( $filename );
             $builder->addChange( $changes );

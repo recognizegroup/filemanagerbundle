@@ -264,9 +264,20 @@ FilemanagerAPI.prototype = {
     delete: function( path, name ){
         var url = this._url + this._path_delete;
 
-        this._sendRequest( url, "POST", { location: path, name: name } )
+        this._sendRequest( url, "POST", { filemanager_directory: path, filemanager_filename: name } )
             .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: contents, directory: directory });
+
+                // Make sure our changes are in the correct format
+                var changes = [];
+                if( typeof data.data.changes == "object"){
+                    for( var key in data.data.changes ){
+                        changes.push( data.data.changes[key] );
+                    }
+                } else {
+                    changes = data.data.changes;
+                }
+
+                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
             })
             .fail( this._handleApiError );
     },
