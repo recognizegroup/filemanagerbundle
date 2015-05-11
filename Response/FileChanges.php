@@ -16,6 +16,7 @@ class FileChanges {
 
     /** @var SplFileInfo */
     protected $oldfile;
+    protected $preloaded_oldfile = null;
 
     /** @var SplFileInfo */
     protected $newfile = null;
@@ -27,6 +28,14 @@ class FileChanges {
     public function __construct( $type, SplFileInfo $oldfile ){
         $this->type = $type;
         $this->oldfile = $oldfile;
+    }
+
+    /**
+     * We should be able to preload the file to be changed before the change takes place
+     * To make sure we still have data even if the file is deleted or moved
+     */
+    public function preloadOldfileData(){
+        $this->preloaded_oldfile = $this->transformFileToData( $this->oldfile );
     }
 
     /**
@@ -83,7 +92,11 @@ class FileChanges {
     public function toArray(){
         $data = array();
         $data['type'] = $this->type;
-        $data['file'] = $this->transformFileToData( $this->oldfile );
+        if( $this->preloaded_oldfile == null ){
+            $data['file'] = $this->transformFileToData( $this->oldfile );
+        } else {
+            $data['file'] = $this->preloaded_oldfile;
+        }
 
         if( $this->newfile !== null ){
             $data['updatedfile'] = $this->transformFileToData( $this->newfile );

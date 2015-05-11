@@ -203,6 +203,7 @@ class FilemanagerService {
             }
 
             $filechanges = new FileChanges("rename", $oldfile);
+            $filechanges->preloadOldfileData();
             $filechanges->setFileAfterChanges( $newfile );
             $fs->rename( $filepath, $newfilepath );
 
@@ -248,6 +249,7 @@ class FilemanagerService {
             }
 
             $filechanges = new FileChanges("move", $oldfile);
+            $filechanges->preloadOldfileData();
             $filechanges->setFileAfterChanges( $newfile );
             $fs->rename( $filepath, $newfilepath );
 
@@ -257,6 +259,35 @@ class FilemanagerService {
             return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be moved doesn't exist");
+        }
+    }
+
+    /**
+     * Delete a file in the current directory
+     *
+     * @param string $filename                         The file name to be removed from the current directory
+     *
+     * @throws FileNotFoundException                   When the file or directory to be renamed does not exist
+     * @throws IOException                             When target file or directory already exists
+     * @throws IOException                             When origin cannot be renamed
+     */
+    public function delete( $filename ){
+        $fs = new Filesystem();
+        $finder = new Finder();
+        $finder->in($this->current_directory)->path("/^" . $filename . "$/" );
+
+        if( $finder->count() > 0 ){
+
+            $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $filename;
+            $oldfile = $this->getFirstFileInFinder( $finder );
+
+            $filechanges = new FileChanges("delete", $oldfile);
+            $filechanges->preloadOldfileData();
+            $fs->remove( $filepath );
+
+            return $filechanges;
+        } else {
+            throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
         }
     }
 

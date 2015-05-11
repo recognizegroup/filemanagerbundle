@@ -282,6 +282,44 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $changes = $filemanagerservice->move("notafile", "");
     }
 
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testDeletingFile(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR . 'testing.txt', "TEST CONTENTS");
+
+        $changes = $filemanagerservice->delete("testing.txt" );
+        $this->assertEquals( $this->getExpectedDeletedFile(), $this->filterUnreliableFiledataFromChanges( $changes->toArray() ) );
+        $this->assertTrue( count( $filemanagerservice->searchDirectoryContents("", "/testing.txt/") ) == 0 );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \RuntimeException
+     */
+    public function testDeletingNonexistingFile(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $changes = $filemanagerservice->delete("thisfiledoesnotexist");
+    }
+
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testDeletingDirectoryWithFiles(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR .  'testing/testing.txt', "TEST CONTENTS");
+
+        $changes = $filemanagerservice->delete("testing" );
+        $this->assertEquals( $this->getExpectedDeletedDirectory(), $this->filterUnreliableFiledataFromChanges( $changes->toArray() ) );
+        $this->assertTrue( count( $filemanagerservice->searchDirectoryContents("", "/testing.txt/") ) == 0 );
+    }
+
 
     protected function fillTempDirectory(){
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);
@@ -361,6 +399,47 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedMovedUpDirectory(){
         return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testing/level3", "testing/", "level3" );
+    }
+
+    protected function getExpectedDeletedFile(){
+        return array("type" => "delete", "file" => array("file_extension" => "txt",
+            "name" => "testing.txt", "path" => "testing.txt", "directory" => "", "type" => "file") );
+    }
+
+    protected function getExpectedDeletedDirectory(){
+        return array("type" => "delete", "file" => array("file_extension" => "",
+            "name" => "testing", "path" => "testing", "directory" => "", "type" => "dir") );
+    }
+
+    /**
+     * Make sure we filter the time and filesize data to make the tests less unreliable
+     *
+     * @param array $changes
+     * @return mixed
+     */
+    protected function filterUnreliableFiledataFromChanges( $changes ){
+
+        if( isset( $changes['file'] ) ){
+            if( isset( $changes['file']['size'] ) ){
+                unset( $changes['file']['size'] );
+            }
+
+            if( isset( $changes['file']['date_modified'] ) ){
+                unset( $changes['file']['date_modified'] );
+            }
+        }
+
+        if( isset( $changes['updatedfile'] ) ){
+            if( isset( $changes['updatedfile']['size'] ) ){
+                unset( $changes['updatedfile']['size'] );
+            }
+
+            if( isset( $changes['updatedfile']['date_modified'] ) ){
+                unset( $changes['updatedfile']['date_modified'] );
+            }
+        }
+
+        return $changes;
     }
 
 }

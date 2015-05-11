@@ -112,7 +112,6 @@ class FilemanagerController extends Controller {
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-
     public function rename(Request $request) {
         $filemanager = $this->getFilemanager();
         $builder = new FilemanagerResponseBuilder();
@@ -136,8 +135,28 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
+    /**
+     * Delete a file or a directory including its contents
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function delete(Request $request) {
+        $filemanager = $this->getFilemanager();
+        $builder = new FilemanagerResponseBuilder();
 
+        if( $request->request->has('filemanager_directory') && $request->request->has('filemanager_filename') ){
+            $filemanager->goToDeeperDirectory( $request->request->get('filemanager_directory') );
+            $filename = $request->request->has('filemanager_filename');
+
+            $changes = $filemanager->delete( $filename );
+            $builder->addChange( $changes );
+
+        } else {
+            $builder->fail( "Invalid request");
+        }
+
+        return $builder->build();
     }
 
 }
