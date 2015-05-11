@@ -1068,6 +1068,10 @@
     background: #EE5757;
 }
 
+.filetree .mainview input:focus {
+    background: #FFFFFF;
+}
+
 .filetree .mainview tbody tr:hover,
 .filetree .mainview thead th:hover {
     cursor: pointer;
@@ -1092,4 +1096,13 @@
     cursor: pointer;
     opacity: 0;
     filter: alpha(opacity=0);
+}
+
+.filetree tbody i {
+    padding: 3px;
+    padding-right: 10px;
+}
+
+.filetree tbody .form-control {
+    width: 80%;
 }

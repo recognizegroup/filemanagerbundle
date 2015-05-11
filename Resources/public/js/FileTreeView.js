@@ -50,6 +50,10 @@ FileTreeView.prototype = {
             this._formatFilerow = config.filerowFormat;
         }
 
+        if( typeof config.renamerowFormat === "function" ){
+            this._formatRenamerow = config.renamerowFormat;
+        }
+
         if( typeof config.titledirectoryFormat === "function" ){
             this._formatTitleDirectory = config.titledirectoryFormat;
         }
@@ -79,6 +83,17 @@ FileTreeView.prototype = {
      */
     _formatFilerow: function( file ){
         return "<p class=\"filemanagerrow\"><span>" + file.path + "</span></p>";
+    },
+
+    /**
+     * Formats the row where inline editting is taking place
+     *
+     * @param input                          A file object
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatRenamerow: function( file ){
+        return "<p class=\"filemanagerrow\"><span>" + file.name + "</span></p>";
     },
 
     /**
@@ -237,7 +252,7 @@ FileTreeView.prototype = {
      * Which creates a new directory when the enter key is pressed
      */
     _createDirectory: function( path ){
-        var createdirectorystring = '<input type="text" name="directory_name"/></form>';
+        var createdirectorystring = '<input type="text" name="directory_name"/>';
 
         // Render a row in the contents with the filename as an inputfield
         var directory = {
@@ -247,7 +262,7 @@ FileTreeView.prototype = {
             size: "",
             children: {}
         };
-        var createdirectoryrow = $( this._formatFilerow( directory ) );
+        var createdirectoryrow = $( this._formatRenamerow( directory ) );
 
         // Add an enter event to the input
         var self = this;
@@ -269,7 +284,6 @@ FileTreeView.prototype = {
             self._contentElement.children().eq(0).remove();
         });
 
-
         this._contentElement.prepend( createdirectoryrow );
         createdirectoryelement.focus();
     },
@@ -286,13 +300,18 @@ FileTreeView.prototype = {
             // Clear the view before filling it
             this._contentElement.empty();
 
+            // Clear all the context menus
+            $.contextMenu( 'destroy' );
+
             for( var i = 0, length = content.length; i < length; i++ ){
 
                 var file = $.extend({}, content[i]);
                 file.size = this._filesizeFormat( file.size );
                 var filerow = this._formatFilerow( file );
+                var rowclass = 'filerow-' + i;
 
                 var rowelement = $(filerow)
+                    .addClass( rowclass )
                     .appendTo( this._contentElement )
                     .on('click',{ file: file }, function( evt ) {
                         $(evt.currentTarget).toggleClass('selected');
@@ -315,8 +334,73 @@ FileTreeView.prototype = {
                         self._openContentEvent( evt );
                     });
 
+                self._addContextmenuToRow( "." + rowclass, file );
             }
         }
+    },
+
+    /**
+     * Add a contextual menu that opens on the right click to a filerow
+     *
+     * @param selector             The css class of the filerow
+     * @param file                 The file object
+     * @private
+     */
+    _addContextmenuToRow: function( selector, file ){
+        var self = this;
+
+        $.contextMenu({
+            selector: selector,
+            file: file,
+            callback: function(key, options) {
+                switch( key ){
+                    case "rename":
+                        self.createRenamerow( options.selector, options.file );
+                        break;
+                }
+            },
+            items: {
+                "rename": {name: "Rename", icon: "edit"}
+            }
+        });
+    },
+
+    /**
+     * Turns row
+     *
+     * @param selector          The css class of the filerow to swap
+     * @param file
+     */
+    createRenamerow: function( selector, file ){
+        var filerow = this._contentElement.find( selector );
+        var self = this;
+
+        var copiedfile = $.extend({}, file );
+        copiedfile.name = '<input type="text" name="file_name" value="' + file.name + '"/>';
+        var renameelement = $( self._formatRenamerow( copiedfile ) );
+        var renameinput = renameelement.find('input');
+        renameinput.on("keydown", {directory: file.path }, function( event ){
+
+            // ENTER
+            if( event.keyCode == 13 ){
+                if( event.target.value != "" ){
+                    console.log( "Rename to " + event.target.value );
+                }
+
+                // Replace the inputrow with the regular filerow
+                self._contentElement.find(renameelement).replaceWith( filerow );
+            }
+        }).on("blur", function( event ){
+
+            // Replace the inputrow with the regular filerow
+            self._contentElement.find(renameelement).replaceWith( filerow );
+        });
+
+        self._contentElement.find( filerow ).replaceWith( renameelement );
+
+        // Reset the input to make sure the blinking caret gets set at the end of the input on focus
+        var value =  renameinput.val();
+        renameinput.val('').focus().val( value );
     },
 
     /**
