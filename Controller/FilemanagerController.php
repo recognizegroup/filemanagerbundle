@@ -4,6 +4,7 @@ namespace Recognize\FilemanagerBundle\Controller;
 use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -81,7 +82,7 @@ class FilemanagerController extends Controller {
     }
 
     public function move(Request $request) {
-
+        return new Response();
     }
 
     /**

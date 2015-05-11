@@ -69,11 +69,17 @@ class FileChanges {
         } else {
             $filedata['size'] = 0;
         }
+
         $filedata['date_modified'] = $date->format("Y-m-d H:i:s");
 
         return $filedata;
     }
 
+    /**
+     * Turn the filechanges into an array that can be JSON encoded
+     *
+     * @return array
+     */
     public function toArray(){
         $data = array();
         $data['type'] = $this->type;

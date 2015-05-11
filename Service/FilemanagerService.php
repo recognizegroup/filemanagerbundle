@@ -206,6 +206,9 @@ class FilemanagerService {
             $filechanges->setFileAfterChanges( $newfile );
             $fs->rename( $filepath, $newfilepath );
 
+            // Update the modified date
+            $fs->touch( $newfilepath );
+
             return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
