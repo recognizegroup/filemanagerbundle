@@ -376,6 +376,7 @@ FileTreeView.prototype = {
         var self = this;
 
         var copiedfile = $.extend({}, file );
+
         copiedfile.name = '<input type="text" name="file_name" value="' + file.name + '"/>';
         var renameelement = $( self._formatRenamerow( copiedfile ) );
         var renameinput = renameelement.find('input');
@@ -388,15 +389,18 @@ FileTreeView.prototype = {
                 }
 
                 // Replace the inputrow with the regular filerow
-                self._contentElement.find(renameelement).replaceWith( filerow );
+                self._contentElement.find(renameelement).remove();
+                self._contentElement.find( filerow ).show();
+
             }
         }).on("blur", function( event ){
 
             // Replace the inputrow with the regular filerow
-            self._contentElement.find(renameelement).replaceWith( filerow );
+            self._contentElement.find(renameelement).remove();
+            self._contentElement.find( filerow ).show();
         });
 
-        self._contentElement.find( filerow ).replaceWith( renameelement );
+        self._contentElement.find( filerow).hide().after( renameelement );
 
         // Reset the input to make sure the blinking caret gets set at the end of the input on focus
         var value =  renameinput.val();
