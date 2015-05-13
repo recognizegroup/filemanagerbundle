@@ -27,13 +27,12 @@ class RecognizeFilemanagerExtensionTest extends \PHPUnit_Framework_TestCase{
         $this->extension->load(array(), $container = $this->getContainer());
 
         $this->assertTrue($container->hasParameter($this->root . ".config"));
-        $config = $container->getParameter($this->root . ".config");
+        $container = $container->getParameter($this->root . ".config");
     }
 
     public function testAlias(){
         $this->assertEquals( "recognize_filemanager", $this->extension->getAlias() );
     }
-
 
     public function getContainer(){
         $container = new ContainerBuilder();

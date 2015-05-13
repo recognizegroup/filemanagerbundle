@@ -2,9 +2,11 @@
 namespace Recognize\FilemanagerBundle\Service;
 
 use InvalidArgumentException;
+use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Exception\DotfilesNotAllowedException;
 use Recognize\FilemanagerBundle\Response\FileChanges;
+use Recognize\FilemanagerBundle\Security\FileSecurityContextInterface;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -14,13 +16,20 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Form\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class FilemanagerService {
 
     private $working_directory;
     protected $current_directory;
 
-    public function __construct( array $configuration ){
+    /**
+     * @var FileSecurityContextInterface
+     */
+    private $security_context;
+
+    public function __construct( array $configuration, FileSecurityContextInterface $security_context ){
         if( isset( $configuration['default_directory'] ) ){
             $this->working_directory = $configuration['default_directory'];
         } else {
@@ -28,6 +37,7 @@ class FilemanagerService {
         }
 
         $this->current_directory = $this->working_directory;
+        $this->security_context = $security_context;
     }
 
     /**
@@ -76,24 +86,28 @@ class FilemanagerService {
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
 
-        if( $this->hasDotFiles( $path ) == false ) {
+        if( $this->security_context->isGranted("open", $path ) ){
+            if( $this->hasDotFiles( $path ) == false ) {
 
-            // We have to prepend the less than sign to get all the contents from the nested directories
-            if ($depth !== 0) {
-                $depth = "<" . $depth;
-            }
+                // We have to prepend the less than sign to get all the contents from the nested directories
+                if ($depth !== 0) {
+                    $depth = "<" . $depth;
+                }
 
-            try {
-                $finder->depth($depth)->in($path);
-                return $this->finderToFilesArray($finder);
+                try {
+                    $finder->depth($depth)->in($path);
+                    return $this->finderToFilesArray($finder);
 
-            } catch (InvalidArgumentException $e) {
-                $path_from_workingdir = substr($this->current_directory, strlen($this->working_directory));
+                } catch (InvalidArgumentException $e) {
+                    $path_from_workingdir = substr($this->current_directory, strlen($this->working_directory));
 
-                throw new InvalidArgumentException("Directory '" . $path_from_workingdir . $directory_path . "' does not exist");
+                    throw new InvalidArgumentException("Directory '" . $path_from_workingdir . $directory_path . "' does not exist");
+                }
+            } else {
+                throw new DotfilesNotAllowedException();
             }
         } else {
-            throw new DotfilesNotAllowedException();
+            throw new AccessDeniedException();
         }
     }
 
@@ -194,23 +208,27 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            $newfilepath = $oldfile->getPath() . DIRECTORY_SEPARATOR . $new_name;
-            $newfile = new SplFileInfo( $newfilepath, $oldfile->getRelativePath(), $new_name );
+            if( $this->security_context->isGranted("rename", $filepath ) ){
+                $newfilepath = $oldfile->getPath() . DIRECTORY_SEPARATOR . $new_name;
+                $newfile = new SplFileInfo( $newfilepath, $oldfile->getRelativePath(), $new_name );
 
-            // Prevent files from being overwritten
-            if( $fs->exists( $newfilepath ) ){
-                throw new ConflictException();
+                // Prevent files from being overwritten
+                if( $fs->exists( $newfilepath ) ){
+                    throw new ConflictException();
+                }
+
+                $filechanges = new FileChanges("rename", $oldfile);
+                $filechanges->preloadOldfileData();
+                $filechanges->setFileAfterChanges( $newfile );
+                $fs->rename( $filepath, $newfilepath );
+
+                // Update the modified date
+                $fs->touch( $newfilepath );
+
+                return $filechanges;
+            } else {
+                throw new AccessDeniedException();
             }
-
-            $filechanges = new FileChanges("rename", $oldfile);
-            $filechanges->preloadOldfileData();
-            $filechanges->setFileAfterChanges( $newfile );
-            $fs->rename( $filepath, $newfilepath );
-
-            // Update the modified date
-            $fs->touch( $newfilepath );
-
-            return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be renamed doesn't exist");
         }
@@ -236,27 +254,31 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            $newrelativepath = $this->current_directory . DIRECTORY_SEPARATOR . $newpath;
-            $newfilepath = $newrelativepath . DIRECTORY_SEPARATOR . $oldfile->getFilename();
-            $newfile = new SplFileInfo( $newfilepath, $newrelativepath, $oldfile->getFilename() );
+            if( $this->security_context->isGranted("move", $filepath ) ) {
+                $newrelativepath = $this->current_directory . DIRECTORY_SEPARATOR . $newpath;
+                $newfilepath = $newrelativepath . DIRECTORY_SEPARATOR . $oldfile->getFilename();
+                $newfile = new SplFileInfo($newfilepath, $newrelativepath, $oldfile->getFilename());
 
-            // Prevent files from being overwritten
-            if( $fs->exists( $newfilepath ) ){
-                throw new ConflictException();
+                // Prevent files from being overwritten
+                if ($fs->exists($newfilepath)) {
+                    throw new ConflictException();
+                } else {
+                    // Make sure the directories exist
+                    $fs->mkdir($newrelativepath, 0755);
+                }
+
+                $filechanges = new FileChanges("move", $oldfile);
+                $filechanges->preloadOldfileData();
+                $filechanges->setFileAfterChanges($newfile);
+                $fs->rename($filepath, $newfilepath);
+
+                // Update the modified date
+                $fs->touch($newfilepath);
+
+                return $filechanges;
             } else {
-                // Make sure the directories exist
-                $fs->mkdir( $newrelativepath, 0755 );
+                throw new AccessDeniedException();
             }
-
-            $filechanges = new FileChanges("move", $oldfile);
-            $filechanges->preloadOldfileData();
-            $filechanges->setFileAfterChanges( $newfile );
-            $fs->rename( $filepath, $newfilepath );
-
-            // Update the modified date
-            $fs->touch( $newfilepath );
-
-            return $filechanges;
         } else {
             throw new FileNotFoundException("The file or directory that should be moved doesn't exist");
         }
@@ -281,11 +303,15 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $filename;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            $filechanges = new FileChanges("delete", $oldfile);
-            $filechanges->preloadOldfileData();
-            $fs->remove( $filepath );
+            if( $this->security_context->isGranted("delete", $filepath ) ) {
+                $filechanges = new FileChanges("delete", $oldfile);
+                $filechanges->preloadOldfileData();
+                $fs->remove($filepath);
 
-            return $filechanges;
+                return $filechanges;
+            } else {
+                throw new AccessDeniedException();
+            }
         } else {
             throw new FileNotFoundException("The file or directory that should be deleted doesn't exist");
         }
@@ -302,22 +328,27 @@ class FilemanagerService {
         if( $this->hasDotFiles($directory_name) == false ){
             $absolute_directory_path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_name;
             if( $fs->exists( $absolute_directory_path ) == false ){
-                try {
-                    $fs->mkdir( $absolute_directory_path, 0755 );
 
-                    $finder = new Finder();
-                    $finder->in($this->current_directory)->path("/^" . $directory_name . "$/" );
-                    if( $finder->count() > 0 ){
-                        $created_directory = $this->getFirstFileInFinder( $finder );
-                        $filechanges = new FileChanges("create", $created_directory);
+                if( $this->security_context->isGranted("create", $this->current_directory ) ) {
+                    try {
+                        $fs->mkdir($absolute_directory_path, 0755);
 
-                        return $filechanges;
-                    } else {
-                        throw new IOException( "Failed to create directory " . $directory_name );
+                        $finder = new Finder();
+                        $finder->in($this->current_directory)->path("/^" . $directory_name . "$/");
+                        if ($finder->count() > 0) {
+                            $created_directory = $this->getFirstFileInFinder($finder);
+                            $filechanges = new FileChanges("create", $created_directory);
+
+                            return $filechanges;
+                        } else {
+                            throw new IOException("Failed to create directory " . $directory_name);
+                        }
+
+                    } catch (IOException $e) {
+                        throw new IOException("Failed to create directory " . $directory_name);
                     }
-
-                } catch( IOException $e ){
-                    throw new IOException("Failed to create directory " . $directory_name );
+                } else {
+                    throw new AccessDeniedException();
                 }
             } else {
                 throw new ConflictException();
@@ -336,24 +367,28 @@ class FilemanagerService {
     public function saveUploadedFile( UploadedFile $file, $new_filename ){
         $fs = new Filesystem();
 
-        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
-        if( $fs->exists( $absolute_path ) == false ){
-            try {
-                $file->move( $this->current_directory, $new_filename );
+        if( $this->security_context->isGranted("upload", $this->current_directory ) ) {
+            $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
+            if ($fs->exists($absolute_path) == false) {
+                try {
+                    $file->move($this->current_directory, $new_filename);
 
-                $finder = new Finder();
-                $finder->in( $this->current_directory )->path("/^" . $new_filename . "$/");
-                if( $finder->count() > 0 ){
-                    $movedfile = $this->getFirstFileInFinder( $finder );
-                    return new FileChanges( "create", $movedfile );
-                } else {
+                    $finder = new Finder();
+                    $finder->in($this->current_directory)->path("/^" . $new_filename . "$/");
+                    if ($finder->count() > 0) {
+                        $movedfile = $this->getFirstFileInFinder($finder);
+                        return new FileChanges("create", $movedfile);
+                    } else {
+                        throw new FileException("File not created");
+                    }
+                } catch (FileException $e) {
                     throw new FileException("File not created");
                 }
-            } catch( FileException $e ){
-                throw new FileException("File not created");
+            } else {
+                throw new ConflictException();
             }
         } else {
-            throw new ConflictException();
+            throw new AccessDeniedException();
         }
     }
 

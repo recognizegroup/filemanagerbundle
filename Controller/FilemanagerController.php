@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Controller;
 
+use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;

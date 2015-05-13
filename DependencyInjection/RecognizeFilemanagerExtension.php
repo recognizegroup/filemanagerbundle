@@ -25,7 +25,7 @@ class RecognizeFilemanagerExtension extends Extension {
         $container->setParameter('recognize_filemanager.config', $config);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('config.yml');
+        $loader->load('services.yml');
     }
 
     /**

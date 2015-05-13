@@ -4,6 +4,7 @@ namespace Recognize\FilemanagerBundle\Tests\Response;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
+use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +17,7 @@ class FileChangesTest extends FilesystemTestCase {
     public function setUp(){
         parent::setUp();
 
-        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace) );
+        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext() );
 
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "Old directory" , 0777);
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "New directory" , 0777);

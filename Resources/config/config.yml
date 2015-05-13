@@ -1,4 +1,9 @@
-services:
-    recognize.file_manager:
-        class: Recognize\FilemanagerBundle\Service\FilemanagerService
-        arguments: [ %recognize_filemanager.config% ]
+recognize_filemanager:
+    security:
+        actions:
+            open: [ ROLE_USER ]
+            upload: [ ROLE_USER ]
+            create: [ ROLE_ADMIN ]
+            move: [ ROLE_ADMIN ]
+            rename: [ ROLE_ADMIN ]
+            delete: [ ROLE_ADMIN ]

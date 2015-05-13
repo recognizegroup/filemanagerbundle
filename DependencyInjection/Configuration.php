@@ -21,11 +21,26 @@ class Configuration implements ConfigurationInterface {
         // Load the default values
         $yaml = new Parser();
         $defaultconfig = $yaml->parse( file_get_contents(__DIR__.'/../Resources/config/config.yml') );
+        $actiondefaults = $defaultconfig['recognize_filemanager']['security']['actions'];
 
         $rootNode = $treeBuilder->root('recognize_filemanager');
         $rootNode
             ->children()
                 ->scalarNode('default_directory')->defaultValue('')->end()
+                ->arrayNode('security')
+                    ->children()
+                        ->arrayNode('actions')
+                            ->children()
+                                ->arrayNode('open')->prototype('scalar')->defaultValue( $actiondefaults['open'] )->end()->end()
+                                ->arrayNode('upload')->prototype('scalar')->defaultValue( $actiondefaults['upload'] )->end()->end()
+                                ->arrayNode('create')->prototype('scalar')->defaultValue( $actiondefaults['create'] )->end()->end()
+                                ->arrayNode('rename')->prototype('scalar')->defaultValue( $actiondefaults['rename'] )->end()->end()
+                                ->arrayNode('move')->prototype('scalar')->defaultValue( $actiondefaults['move'] )->end()->end()
+                                ->arrayNode('delete')->prototype('scalar')->defaultValue( $actiondefaults['delete'] )->end()->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 

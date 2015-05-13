@@ -339,5 +339,9 @@ FilemanagerAPI.prototype = {
         this._eventHandler.register('filemanager:view:rename', function( eventobj ){
             self.rename( eventobj.file.directory, eventobj.file.name, eventobj.newname );
         });
+
+        this._eventHandler.register('filemanager:view:delete', function( eventobj ){
+            self.delete( eventobj.file.directory, eventobj.file.name );
+        });
     }
 };

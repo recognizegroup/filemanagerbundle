@@ -357,10 +357,14 @@ FileTreeView.prototype = {
                     case "rename":
                         self.createRenamerow( options.selector, options.file );
                         break;
+                    case "delete":
+                        self._eventHandler.trigger('filemanager:view:delete', { file: options.file });
+                        break;
                 }
             },
             items: {
-                "rename": {name: "Rename", icon: "edit"}
+                "rename": {name: "Rename", icon: "edit"},
+                "delete": {name: "Delete", icon: "delete"}
             }
         });
     },
