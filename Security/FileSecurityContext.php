@@ -21,11 +21,14 @@ use Symfony\Component\Security\Core\SecurityContextInterface;
  */
 class FileSecurityContext implements FileSecurityContextInterface {
 
+    private $config;
     private $always_authenticate = false;
 
     private $security_context;
     private $acl_provider;
     private $rolemasks = array();
+
+    private $authorization_checker = null;
 
     /**
      * @param array $configuration
@@ -34,13 +37,14 @@ class FileSecurityContext implements FileSecurityContextInterface {
     public function __construct( array $configuration, AclProviderInterface $aclprovider,
                                  SecurityContextInterface $context, $always_authenticate = false ) {
 
+        $this->config = $configuration;
         $this->always_authenticate = $always_authenticate;
         if( !$always_authenticate ){
             if( isset( $configuration['security'] ) ){
                 $actions = $configuration['security']['actions'];
                 $this->yamlActionsToACEs( $actions );
 
-                // If no security is set, grant access to everything
+            // If no security is set, grant access to everything
             } else {
                 $this->$always_authenticate = true;
             }
@@ -160,18 +164,13 @@ class FileSecurityContext implements FileSecurityContextInterface {
                 // If no ACLs could be found for the directory, apply the YAML based security
                 } catch( \Exception $e ){
 
-                    $granted = false;
-                    $required_mask = $this->getMaskFromValues( array( strtolower( $action ) ) );
-                    for( $i = 0, $length = count( $roles ); $i < $length; $i++ ){
-                        $role = $roles[$i];
-                        if( isset( $this->rolemasks[ $role ] ) && 0 !== ($this->rolemasks[ $role ] & $required_mask) ){
-                            $granted = true;
-                            break;
-                        }
-
+                    if( $this->authorization_checker == null ){
+                        $this->authorization_checker = new ConfigurationAuthorizationChecker(
+                            $this->config['security']['actions'] );
                     }
 
-                    return $granted;
+                    $this->authorization_checker->setCurrentRoles( $roles );
+                    return $this->authorization_checker->isGranted( $action );
                 }
 
             // Non logged in users DONT get access
