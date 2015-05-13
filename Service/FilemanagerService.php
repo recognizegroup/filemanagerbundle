@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Service;
 
+use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
@@ -25,11 +26,17 @@ class FilemanagerService {
     protected $current_directory;
 
     /**
+     * @var FiledataSynchronizerInterface
+     */
+    protected $synchronizer;
+
+    /**
      * @var FileSecurityContextInterface
      */
     private $security_context;
 
-    public function __construct( array $configuration, FileSecurityContextInterface $security_context ){
+    public function __construct( array $configuration, FileSecurityContextInterface $security_context,
+                                 FiledataSynchronizerInterface $synchronizer ){
         if( isset( $configuration['default_directory'] ) ){
             $this->working_directory = $configuration['default_directory'];
         } else {
@@ -38,6 +45,7 @@ class FilemanagerService {
 
         $this->current_directory = $this->working_directory;
         $this->security_context = $security_context;
+        $this->synchronizer = $synchronizer;
     }
 
     /**
@@ -171,9 +179,19 @@ class FilemanagerService {
         $path = $file->getPath() . DIRECTORY_SEPARATOR;
         $absolutepath = $path . $file->getFilename();
 
-        $count = 1;
-        $relativePath = str_replace($this->working_directory . DIRECTORY_SEPARATOR, "", $path, $count );
+        $relativePath = $this->absolutePathToRelativePath( $path );
         return new SplFileInfo( $absolutepath, $relativePath, $file->getFilename() );
+    }
+
+    /**
+     * Remove the working directory from the current directory
+     *
+     * @param $path
+     * @return mixed
+     */
+    protected function absolutePathToRelativePath( $path ){
+        $count = 1;
+        return str_replace($this->working_directory . DIRECTORY_SEPARATOR, "", $path, $count );
     }
 
     /**
@@ -220,7 +238,15 @@ class FilemanagerService {
                 $filechanges = new FileChanges("rename", $oldfile);
                 $filechanges->preloadOldfileData();
                 $filechanges->setFileAfterChanges( $newfile );
-                $fs->rename( $filepath, $newfilepath );
+
+                try {
+                    $fs->rename( $filepath, $newfilepath );
+
+                    // Synchronize the filesystem in the database
+                    $this->synchronizer->synchronize( $filechanges, $this->working_directory );
+                } catch( IOException $e ){
+                    throw new IOException("Could not rename file");
+                }
 
                 // Update the modified date
                 $fs->touch( $newfilepath );
@@ -306,9 +332,17 @@ class FilemanagerService {
             if( $this->security_context->isGranted("delete", $filepath ) ) {
                 $filechanges = new FileChanges("delete", $oldfile);
                 $filechanges->preloadOldfileData();
-                $fs->remove($filepath);
 
-                return $filechanges;
+                try {
+                    $fs->remove($filepath);
+
+                    // Synchronize the filesystem in the database
+                    $this->synchronizer->synchronize( $filechanges, $this->working_directory );
+
+                    return $filechanges;
+                } catch( IOException $e ){
+                    throw new IOException("Couldn't delete file");
+                }
             } else {
                 throw new AccessDeniedException();
             }
@@ -330,6 +364,7 @@ class FilemanagerService {
             if( $fs->exists( $absolute_directory_path ) == false ){
 
                 if( $this->security_context->isGranted("create", $this->current_directory ) ) {
+
                     try {
                         $fs->mkdir($absolute_directory_path, 0755);
 
@@ -338,6 +373,9 @@ class FilemanagerService {
                         if ($finder->count() > 0) {
                             $created_directory = $this->getFirstFileInFinder($finder);
                             $filechanges = new FileChanges("create", $created_directory);
+
+                            // Synchronize the filesystem in the database
+                            $this->synchronizer->synchronize( $filechanges, $this->working_directory );
 
                             return $filechanges;
                         } else {

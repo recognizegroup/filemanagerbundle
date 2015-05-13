@@ -26,8 +26,6 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
     private $security_context;
     private $acl_provider;
-    private $rolemasks = array();
-
     private $authorization_checker = null;
 
     /**
@@ -40,12 +38,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
         $this->config = $configuration;
         $this->always_authenticate = $always_authenticate;
         if( !$always_authenticate ){
-            if( isset( $configuration['security'] ) ){
-                $actions = $configuration['security']['actions'];
-                $this->yamlActionsToACEs( $actions );
-
-            // If no security is set, grant access to everything
-            } else {
+            if( isset( $configuration['security'] ) == false ){
                 $this->$always_authenticate = true;
             }
         }
@@ -55,82 +48,13 @@ class FileSecurityContext implements FileSecurityContextInterface {
     }
 
     /**
-     * Parses an array of actions with the allowed roles into ACEs that are used by the security context
-     *
-     * @param $actions
-     */
-    protected function yamlActionsToACEs( $actions ){
-        $roles = array();
-
-        // Turn the action: [roles] into role: [actions]
-        $action_names = array_keys( $actions );
-        for( $i = 0, $length = count($action_names); $i < $length; $i++ ){
-            $allowed_action = $action_names[ $i ];
-
-            $allowed_roles = $actions[ $allowed_action ];
-            for( $j = 0, $jlength = count( $allowed_roles); $j < $jlength; $j++ ){
-                $allowed_role = $allowed_roles[$j];
-
-                if( isset( $roles[ $allowed_role ]) == false ){
-                    $roles[ $allowed_role ] = array();
-                }
-
-                $roles[ $allowed_role ][] = $allowed_action;
-            }
-        }
-
-        // Turn the actions into bitmasks
-        $role_names = array_keys( $roles );
-        for( $i = 0, $length = count( $role_names ); $i < $length; $i++ ){
-            $this->rolemasks[ $role_names[$i] ] = $this->getMaskFromValues( $roles[ $role_names[$i] ] );
-        }
-    }
-
-    /**
-     * Turn a list of actions into a bitmask for the ACL system
-     *
-     * @param $values
-     * @return int
-     */
-    protected function getMaskFromValues( $values ){
-        $maskbuilder = new DirectoryMaskBuilder();
-        for( $i = 0, $length = count( $values); $i < $length; $i++ ){
-            switch( strtolower( $values[$i] ) ){
-                case "open":
-                    $maskbuilder->add( DirectoryMaskBuilder::OPEN );
-                    break;
-                case "upload":
-                    $maskbuilder->add( DirectoryMaskBuilder::UPLOAD );
-                    break;
-                case "create":
-                    $maskbuilder->add( DirectoryMaskBuilder::CREATE );
-                    break;
-                case "rename":
-                    $maskbuilder->add( DirectoryMaskBuilder::RENAME );
-                    break;
-                case "move":
-                    $maskbuilder->add( DirectoryMaskBuilder::MOVE );
-                    break;
-                case "delete":
-                    $maskbuilder->add( DirectoryMaskBuilder::DELETE );
-                    break;
-                case "mask_owner":
-                    $maskbuilder->add( MaskBuilder::MASK_OWNER );
-                    break;
-            }
-        }
-
-        return $maskbuilder->get();
-    }
-
-    /**
      * Check if an action is granted
      *
      * @param string $action                   The action to check
-     * @param string $directory                The directory to apply the action to
+     * @param string $path                     The directory path to apply the action to
      * @return boolean
      */
-    public function isGranted( $action, $directory ){
+    public function isGranted( $action, $path ){
         if( $this->always_authenticate == false ){
 
             $token = $this->security_context->getToken();
@@ -151,9 +75,11 @@ class FileSecurityContext implements FileSecurityContextInterface {
                 $directoryobject = new Directory();
                 $directoryobject->setId( 22 );
 
-                $parentdirectory = new Directory();
-                $parentdirectory->setId( 2 );
-                $directoryobject->setParentDirectory( $parentdirectory );
+                if( strpos( $path, "css" ) !== false ){
+                    $parentdirectory = new Directory();
+                    $parentdirectory->setId( 1 );
+                    $directoryobject->setParentDirectory( $parentdirectory );
+                }
 
 
                 // Make sure to run the directories through the database ACLs first

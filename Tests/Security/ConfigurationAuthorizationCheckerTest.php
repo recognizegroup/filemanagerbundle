@@ -63,7 +63,7 @@ class ConfigurationAuthorizationCheckerTest extends \PHPUnit_Framework_TestCase 
     public function testMultipleRoleAllowedOpen(){
         $roles = array("ROLE_ADMIN");
         $checker = new ConfigurationAuthorizationChecker( array("open" => $roles));
-        $checker->setCurrentRoles( array("ROLE_USER", "ROLE_ADMIN") );
+        $checker->setCurrentRoles( array("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN") );
 
         $this->assertTrue( $checker->isGranted("open") );
     }

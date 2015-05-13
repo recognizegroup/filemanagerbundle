@@ -5,6 +5,7 @@ use MyProject\Proxies\__CG__\OtherProject\Proxies\__CG__\stdClass;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
+use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
@@ -24,7 +25,8 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
         parent::setUp();
 
         $this->builder = new FilemanagerResponseBuilder();
-        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext() );
+        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace),
+            new MockFileSecurityContext(), new MockFiledataSynchronizer() );
 
         // Fill the test directory
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "testing" . DIRECTORY_SEPARATOR . "level2" . DIRECTORY_SEPARATOR . "level3" , 0777, true);

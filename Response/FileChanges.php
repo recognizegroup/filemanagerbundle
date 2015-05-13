@@ -104,4 +104,13 @@ class FileChanges {
         return $data;
     }
 
+    /**
+     * Get the type of change done to the database
+     *
+     * @return mixed
+     */
+    public function getType(){
+        return $this->type;
+    }
+
 }

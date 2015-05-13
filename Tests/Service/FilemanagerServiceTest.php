@@ -3,6 +3,7 @@ namespace Recognize\FilemanagerBundle\Tests\Service;
 
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
+use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
@@ -18,11 +19,11 @@ class FilemanagerServiceTest extends FilesystemTestCase {
      * @expectedException Exception
      */
     public function testSafetyMechanism(){
-        return new FilemanagerService( array(), new MockFileSecurityContext() );
+        return new FilemanagerService( array(), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
     }
 
     protected function getFilemanagerService(){
-        return new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext() );
+        return new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
     }
 
     public function testEmptyDirectoryListing(){

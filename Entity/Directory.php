@@ -1,6 +1,9 @@
 <?php
 namespace Recognize\FilemanagerBundle\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+
+
 /**
  * Class Directory
  * @package Recognize\FilemanagerBundle\Entity
@@ -61,7 +64,8 @@ class Directory {
      * @param $working_directory
      */
     public function setWorkingDirectory( $working_directory ){
-        $this->working_directory = $working_directory;
+
+        $this->working_directory = $this->addtrailingSlash( $working_directory );
     }
 
     /**
@@ -70,7 +74,8 @@ class Directory {
      * @param $path
      */
     public function setRelativePath( $path ){
-        $this->relative_path = $path;
+
+        $this->relative_path = $this->addtrailingSlash( $path );
     }
 
     /**
@@ -103,7 +108,7 @@ class Directory {
     }
 
     public function getAbsolutePath(){
-        return $this->working_directory . DIRECTORY_SEPARATOR . $this->relative_path;
+        return $this->addTrailingSlash( $this->working_directory ) . $this->addTrailingSlash( $this->relative_path ) . $this->name;
     }
 
     /**
@@ -115,4 +120,17 @@ class Directory {
         return $this->parent;
     }
 
+    /**
+     * Add a trailing slash to a path
+     *
+     * @param $path
+     * @return string
+     */
+    protected function addTrailingSlash( $path ){
+        if( $path != "" &&  substr( $path, -1, 1) !== DIRECTORY_SEPARATOR){
+            $path .= DIRECTORY_SEPARATOR;
+        }
+
+        return $path;
+    }
 }
