@@ -298,6 +298,9 @@ class FilemanagerService {
                 $filechanges->setFileAfterChanges($newfile);
                 $fs->rename($filepath, $newfilepath);
 
+                // Synchronize the filesystem in the database
+                $this->synchronizer->synchronize( $filechanges, $this->working_directory );
+
                 // Update the modified date
                 $fs->touch($newfilepath);
 
