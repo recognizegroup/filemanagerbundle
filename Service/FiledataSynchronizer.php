@@ -77,11 +77,6 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
 
         $this->em->commit();
         $this->em->flush();
-
-        $directories = $this->directoryRepository->findDirectoryByLocation( $working_directory, $file['directory'], $file['name'] );
-        if( count( $directories ) > 0 ){
-            $this->aclservice->grantAccessToDirectory( $directories[0], array("ROLE_USER"), array("OPEN") );
-        }
     }
 
     /**
