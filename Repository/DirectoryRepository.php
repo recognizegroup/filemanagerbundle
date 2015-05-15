@@ -3,6 +3,8 @@
 namespace Recognize\FilemanagerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Recognize\FilemanagerBundle\Entity\Directory;
+use Recognize\FilemanagerBundle\Utils\PathUtils;
 
 
 /**
@@ -11,20 +13,35 @@ use Doctrine\ORM\EntityRepository;
 class DirectoryRepository extends EntityRepository {
 
     /**
-     * Add a trailing slash to a path
+     * Get the parent of the directory using its working directory and relative path
      *
-     * @param $path
-     * @return string
+     * @param $working_directory
+     * @param $relative_path
+     * @return array
      */
-    protected function addTrailingSlash( $path ){
-        if( $path != "" &&  substr( $path, -1, 1) !== DIRECTORY_SEPARATOR){
-            $path .= DIRECTORY_SEPARATOR;
+    public function findParentDirectory( $working_directory, $relative_path ){
+
+        $parent_relativepath = PathUtils::moveUpPath( $relative_path );
+        $parent_name = PathUtils::getLastNode( $relative_path );
+
+        $qb = $this->createQueryBuilder('d');
+        $qb->where("d.working_directory = :working_directory AND d.relative_path = :relative_path AND d.name = :name")
+            ->setParameters(
+                array(
+                    "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
+                    "relative_path" => $parent_relativepath,
+                    "name" => $parent_name
+                )
+            );
+
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        if( count($results ) == 0 ){
+            return $this->getEmptyDirectory( $working_directory, $parent_relativepath, $parent_name );
+        } else {
+            return $results[ 0 ];
         }
-
-        return $path;
     }
-
-
 
     /**
      * Get a directory using its working directory, relative path and name
@@ -40,8 +57,8 @@ class DirectoryRepository extends EntityRepository {
         $qb->where("d.working_directory = :working_directory AND d.relative_path = :relative_path AND d.name = :name")
             ->setParameters(
                 array(
-                    "working_directory" => $this->addTrailingSlash( $working_directory ),
-                    "relative_path" => $this->addTrailingSlash( $relative_path ),
+                    "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
+                    "relative_path" => PathUtils::addTrailingSlash( $relative_path ),
                     "name" => $name
                 )
             );
@@ -65,8 +82,8 @@ class DirectoryRepository extends EntityRepository {
         $qb->where("d.working_directory = :working_directory AND d.relative_path LIKE :relative_path")
             ->setParameters(
                 array(
-                    "working_directory" => $this->addTrailingSlash( $working_directory ),
-                    "relative_path" => $this->addTrailingSlash( $relative_path ) . $name . DIRECTORY_SEPARATOR . "%"
+                    "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
+                    "relative_path" => PathUtils::addTrailingSlash( $relative_path ) . $name . DIRECTORY_SEPARATOR . "%"
                 )
             );
 
@@ -76,5 +93,19 @@ class DirectoryRepository extends EntityRepository {
         return $query->getResult();
     }
 
+    /**
+     * Make a directory without an ID using the paths
+     *
+     * @param $working_directory                The working directory
+     * @param $relative_path                    The relative path from the working directory
+     * @param $name                             The name of the directory
+     */
+    public function getEmptyDirectory( $working_directory, $relative_path, $name ){
+        $directory = new Directory();
+        $directory->setWorkingDirectory( $working_directory );
+        $directory->setRelativePath( $relative_path );
+        $directory->setDirectoryName( $name );
 
+        return $directory;
+    }
 }

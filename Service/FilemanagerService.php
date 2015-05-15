@@ -8,6 +8,7 @@ use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Exception\DotfilesNotAllowedException;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Security\FileSecurityContextInterface;
+use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -37,6 +38,7 @@ class FilemanagerService {
 
     public function __construct( array $configuration, FileSecurityContextInterface $security_context,
                                  FiledataSynchronizerInterface $synchronizer ){
+
         if( isset( $configuration['default_directory'] ) ){
             $this->working_directory = $configuration['default_directory'];
         } else {
@@ -94,7 +96,7 @@ class FilemanagerService {
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
 
-        if( $this->security_context->isGranted("open", $path ) ){
+        if( $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $path) ) ){
             if( $this->hasDotFiles( $path ) == false ) {
 
                 // We have to prepend the less than sign to get all the contents from the nested directories
@@ -130,25 +132,30 @@ class FilemanagerService {
     public function searchDirectoryContents( $directory_path = "", $search_value, $current_directory_only = false ){
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
-        if( $this->hasDotFiles( $path ) == false ){
+        if( $this->security_context->isGranted("open", $path ) ) {
+            if ($this->hasDotFiles($path) == false) {
 
-            $search_filter = function( SplFileInfo $file ) use ($search_value) {
-                if( preg_match($search_value, $file->getFilename()) ){
-                    return true;
-                } else {
-                    return false;
+                $search_filter = function (SplFileInfo $file) use ($search_value) {
+                    if (preg_match($search_value, $file->getFilename())) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                };
+
+                $finder->in($path);
+                if ($current_directory_only !== false) {
+                    $finder->depth(0);
                 }
-            };
+                $finder->filter($search_filter);
 
-            $finder->in( $path );
-            if( $current_directory_only !== false ){
-                $finder->depth( 0 );
+                $with_permissions = true;
+                return $this->finderToFilesArray($finder, $with_permissions);
+            } else {
+                throw new DotfilesNotAllowedException();
             }
-            $finder->filter( $search_filter );
-
-            return $this->finderToFilesArray( $finder );
         } else {
-            throw new DotfilesNotAllowedException();
+            throw new AccessDeniedException();
         }
     }
 
@@ -156,13 +163,21 @@ class FilemanagerService {
      * Turn the contents of the Finder object into an array
      *
      * @param Finder $finder
+     * @param $with_permissions                Whether or not we should use permissions for every file
      * @return array
      */
-    protected function finderToFilesArray( Finder $finder ){
+    protected function finderToFilesArray( Finder $finder, $with_permissions = false ){
         $files = array();
+
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
-            $files[] = $this->transformFileRelativePath( $file );
+            $transformed_file = $this->transformFileRelativePath( $file );
+
+            // Make sure we are allowed to reach the file if we are using permissions
+            if( $with_permissions == false || $this->security_context->isGranted("open",
+                    $this->working_directory, $transformed_file->getRelativePath() ) ){
+                $files[] = $transformed_file;
+            }
         }
 
         return $files;
@@ -226,7 +241,7 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            if( $this->security_context->isGranted("rename", $filepath ) ){
+            if( $this->security_context->isGranted("rename", $this->working_directory, $this->absolutePathToRelativePath( $filepath) ) ){
                 $newfilepath = $oldfile->getPath() . DIRECTORY_SEPARATOR . $new_name;
                 $newfile = new SplFileInfo( $newfilepath, $oldfile->getRelativePath(), $new_name );
 
@@ -280,7 +295,7 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $relative_path_to_file;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            if( $this->security_context->isGranted("move", $filepath ) ) {
+            if( $this->security_context->isGranted("move", $this->working_directory, $this->absolutePathToRelativePath( $filepath) ) ) {
                 $newrelativepath = $this->current_directory . DIRECTORY_SEPARATOR . $newpath;
                 $newfilepath = $newrelativepath . DIRECTORY_SEPARATOR . $oldfile->getFilename();
                 $newfile = new SplFileInfo($newfilepath, $newrelativepath, $oldfile->getFilename());
@@ -366,7 +381,7 @@ class FilemanagerService {
             $absolute_directory_path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_name;
             if( $fs->exists( $absolute_directory_path ) == false ){
 
-                if( $this->security_context->isGranted("create", $this->current_directory ) ) {
+                if( $this->security_context->isGranted("create", $this->working_directory, $this->absolutePathToRelativePath( $this->current_directory) ) ) {
 
                     try {
                         $fs->mkdir($absolute_directory_path, 0755);
@@ -408,7 +423,7 @@ class FilemanagerService {
     public function saveUploadedFile( UploadedFile $file, $new_filename ){
         $fs = new Filesystem();
 
-        if( $this->security_context->isGranted("upload", $this->current_directory ) ) {
+        if( $this->security_context->isGranted("upload", $this->working_directory, $this->absolutePathToRelativePath( $this->current_directory ) ) ) {
             $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
             if ($fs->exists($absolute_path) == false) {
                 try {

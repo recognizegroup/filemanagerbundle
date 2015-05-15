@@ -37,7 +37,7 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
         // Turn the actions into bitmasks
         $role_names = array_keys( $roles );
         for( $i = 0, $length = count( $role_names ); $i < $length; $i++ ){
-            $this->rolemasks[ $role_names[$i] ] = $this->getMaskFromValues( $roles[ $role_names[$i] ] );
+            $this->rolemasks[ $role_names[$i] ] = DirectoryMaskBuilder::getMaskFromValues( $roles[ $role_names[$i] ] );
         }
     }
 
@@ -50,43 +50,6 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
         $this->roles = $roles;
     }
 
-    /**
-     * Turn a list of actions into a bitmask for the ACL system
-     *
-     * @param $values
-     * @return int
-     */
-    protected function getMaskFromValues( $values ){
-        $maskbuilder = new DirectoryMaskBuilder();
-        for( $i = 0, $length = count( $values); $i < $length; $i++ ){
-            switch( strtolower( $values[$i] ) ){
-                case "open":
-                    $maskbuilder->add( DirectoryMaskBuilder::OPEN );
-                    break;
-                case "upload":
-                    $maskbuilder->add( DirectoryMaskBuilder::UPLOAD );
-                    break;
-                case "create":
-                    $maskbuilder->add( DirectoryMaskBuilder::CREATE );
-                    break;
-                case "rename":
-                    $maskbuilder->add( DirectoryMaskBuilder::RENAME );
-                    break;
-                case "move":
-                    $maskbuilder->add( DirectoryMaskBuilder::MOVE );
-                    break;
-                case "delete":
-                    $maskbuilder->add( DirectoryMaskBuilder::DELETE );
-                    break;
-                case "mask_owner":
-                    $maskbuilder->add( MaskBuilder::MASK_OWNER );
-                    break;
-            }
-        }
-
-        return $maskbuilder->get();
-    }
-
 
     /**
      * Checks if the attributes are granted against the current authentication token and optionally supplied object.
@@ -97,9 +60,8 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
      * @return bool
      */
     public function isGranted($attributes, $object = null) {
-
         $granted = false;
-        $required_mask = $this->getMaskFromValues( array( strtolower( $attributes ) ) );
+        $required_mask = DirectoryMaskBuilder::getMaskFromValues( array( strtolower( $attributes ) ) );
         for( $i = 0, $length = count( $this->roles ); $i < $length; $i++ ){
 
             $role = $this->roles[$i];

@@ -87,7 +87,6 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
 
             $old_relative_path = $this->addTrailingSlash( $changes_array['file']['directory'] );
             $old_relative_path .= $this->addTrailingSlash( $changes_array['file']['name'] );
-
             $new_relative_path = $this->addTrailingSlash( $changes_array['updatedfile']['directory'] );
             $new_relative_path .= $this->addTrailingSlash( $changes_array['updatedfile']['name'] );
 
