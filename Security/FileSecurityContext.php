@@ -8,6 +8,7 @@ use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Acl\Domain\RoleSecurityIdentity;
 use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
 use Symfony\Component\Security\Acl\Exception\AclNotFoundException;
+use Symfony\Component\Security\Acl\Model\AclInterface;
 use Symfony\Component\Security\Acl\Model\AclProviderInterface;
 use Symfony\Component\Security\Acl\Model\SecurityIdentityInterface;
 use Symfony\Component\Security\Acl\Permission\MaskBuilder;
@@ -26,7 +27,6 @@ class FileSecurityContext implements FileSecurityContextInterface {
     private $config;
     private $always_authenticate = false;
 
-    private $security_context;
     private $acl_provider;
     private $authorization_checker = null;
 
@@ -47,7 +47,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
      * @throws \Symfony\Component\Security\Acl\Exception\InvalidDomainObjectException
      */
     public function __construct( array $configuration, AclProviderInterface $aclprovider,
-                                 SecurityContextInterface $context, DirectoryRepository $directoryRepository,
+                                 TokenStorageInterface $tokenstorage, DirectoryRepository $directoryRepository,
                                  $always_authenticate = false ) {
         $this->config = $configuration;
         $this->always_authenticate = $always_authenticate;
@@ -58,11 +58,10 @@ class FileSecurityContext implements FileSecurityContextInterface {
         }
 
         $this->directoryRepository = $directoryRepository;
-        $this->acl_provider = $aclprovider;
-        $this->security_context = $context;
+        $this->acl_provider = $aclprovider;;
         $this->permission_cache = new FilePermissionCache();
 
-        $token = $this->security_context->getToken();
+        $token = $tokenstorage->getToken();
         $securityidentities = array();
         $roles = array();
         if( $token !== null ) {
@@ -95,6 +94,9 @@ class FileSecurityContext implements FileSecurityContextInterface {
         if( $this->always_authenticate == false ){
             $absolute_path = PathUtils::addTrailingSlash( $working_directory ) . PathUtils::addTrailingSlash( $relativepath );
             $directory_relativepath = PathUtils::moveUpPath( $relativepath );
+            if( $directory_relativepath == "/" ){
+                $directory_relativepath = "";
+            }
             $directory_name = PathUtils::getLastNode( $relativepath );
 
             // Utilize the cache if the path is set
@@ -142,8 +144,11 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
         // Make sure to run the directories through the database ACLs first
         try {
-            $domainidentity = $this->getDomainObjectWithACLs( $directory, $this->securityidentities );
-            $granted = $this->security_context->isGranted( $action, $domainidentity );
+            $acl = $this->getDirectoryACLs( $directory, $this->securityidentities );
+
+            // Check the ACLs that are found
+            $actionmasks = array( DirectoryMaskBuilder::getMaskFromValues( array( $action ) ) );
+            return $acl->isGranted( $actionmasks, $this->securityidentities );
 
         // If no ACLs could be found for the directory, apply the YAML based security
         } catch( \Exception $e ){
@@ -167,26 +172,25 @@ class FileSecurityContext implements FileSecurityContextInterface {
      *
      * @param Directory $directory
      * @param SecurityIdentityInterface[] $securityidentities
-     * @return ObjectIdentity
+     * @return AclInterface
      *
      * @throws AclNotFoundException
      * @throws \Symfony\Component\Security\Acl\Exception\InvalidDomainObjectException
      */
-    protected function getDomainObjectWithACLs( Directory $directory, $securityidentities ){
+    protected function getDirectoryACLs( Directory $directory, $securityidentities ){
         $this->permission_cache->stagePath( PathUtils::addTrailingSlash( $directory->getAbsolutePath() ) );
 
-        if( $directory->getId() != null || $directory->getId() != 0 ){
+        if( $directory->getId() != null && $directory->getId() != 0 ){
             $domainidentity = ObjectIdentity::fromDomainObject( $directory );
 
             try {
-                $this->acl_provider->findAcl( $domainidentity, $securityidentities );
-                return $domainidentity;
+                return $this->acl_provider->findAcl( $domainidentity, $securityidentities );
 
             } catch( AclNotFoundexception $e ){
-                return $this->getParentDirectoryDomainObjectWithACLs( $directory, $securityidentities );
+                return $this->getParentDirectoryACLs( $directory, $securityidentities );
             }
         } else {
-            return $this->getParentDirectoryDomainObjectWithACLs( $directory, $securityidentities );
+            return $this->getParentDirectoryACLs( $directory, $securityidentities );
         }
     }
 
@@ -195,12 +199,12 @@ class FileSecurityContext implements FileSecurityContextInterface {
      *
      * @param Directory $directory
      * @param SecurityIdentityInterface[] $securityidentities
-     * @return ObjectIdentity
+     * @return AclInterface
      *
      * @throws AclNotFoundException
      * @throws \Symfony\Component\Security\Acl\Exception\InvalidDomainObjectException
      */
-    protected function getParentDirectoryDomainObjectWithACLs( Directory $directory, $securityidentities ){
+    protected function getParentDirectoryACLs( Directory $directory, $securityidentities ){
 
         // Check if we are in the working directory
         if( ( $directory->getAbsolutePath() ) != PathUtils::removeMultipleSlashes( $directory->getWorkingDirectory() ) ){
@@ -211,7 +215,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
                     $directory->getRelativePath() );
             }
 
-            return $this->getDomainObjectWithACLs( $parent_directory, $securityidentities );
+            return $this->getDirectoryACLs( $parent_directory, $securityidentities );
 
         } else {
             throw new AclNotFoundException();

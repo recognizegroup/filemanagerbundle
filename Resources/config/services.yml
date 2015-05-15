@@ -12,11 +12,11 @@ services:
         arguments: [ %recognize_filemanager.config%, @recognize.file_security_context, @recognize.filedata_synchronizer ]
     recognize.filedata_synchronizer:
         class: Recognize\FilemanagerBundle\Service\FiledataSynchronizer
-        arguments: [ @doctrine.orm.entity_manager, @recognize.filemanager_directory_repository ]
+        arguments: [ @doctrine.orm.entity_manager, @recognize.filemanager_directory_repository, @recognize.file_acl_manager ]
 
     recognize.file_acl_manager:
         class: Recognize\FilemanagerBundle\Service\FileACLManagerService
-        arguments: [ @security.acl.provider, @security.token_storage, @doctrine.orm.entity_manager, @security.context, %recognize_filemanager.config% ]
+        arguments: [ @security.acl.provider, @security.token_storage, @doctrine.orm.entity_manager, @security.context ]
     recognize.file_security_context:
         class: Recognize\FilemanagerBundle\Security\FileSecurityContext
-        arguments: [ %recognize_filemanager.config%, @security.acl.provider, @security.context, @recognize.filemanager_directory_repository ]
+        arguments: [ %recognize_filemanager.config%, @security.acl.provider, @security.token_storage, @recognize.filemanager_directory_repository ]

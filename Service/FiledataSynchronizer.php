@@ -5,6 +5,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Repository\DirectoryRepository;
 use Recognize\FilemanagerBundle\Response\FileChanges;
+use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Finder\SplFileInfo;
 
 class FiledataSynchronizer implements FiledataSynchronizerInterface {
@@ -19,9 +20,15 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
      */
     private $directoryRepository;
 
-    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository ){
+    /**
+     * @var FileACLManagerService
+     */
+    private $aclservice;
+
+    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository, FileACLManagerService $aclservice ){
         $this->em = $em;
         $this->directoryRepository = $directoryRepository;
+        $this->aclservice = $aclservice;
     }
 
     /**
@@ -62,14 +69,19 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             // Create a new directory
             $directory = new Directory();
             $directory->setWorkingDirectory( $working_directory );
-            $directory->setDirectoryName( $file['name'] );
             $directory->setRelativePath( $file['directory'] );
+            $directory->setDirectoryName( $file['name'] );
 
             $this->em->persist( $directory );
         }
 
         $this->em->commit();
         $this->em->flush();
+
+        $directories = $this->directoryRepository->findDirectoryByLocation( $working_directory, $file['directory'], $file['name'] );
+        if( count( $directories ) > 0 ){
+            $this->aclservice->grantAccessToDirectory( $directories[0], array("ROLE_USER"), array("OPEN") );
+        }
     }
 
     /**
@@ -85,10 +97,10 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         $this->em->beginTransaction();
         if( $file['type'] == "dir" ){
 
-            $old_relative_path = $this->addTrailingSlash( $changes_array['file']['directory'] );
-            $old_relative_path .= $this->addTrailingSlash( $changes_array['file']['name'] );
-            $new_relative_path = $this->addTrailingSlash( $changes_array['updatedfile']['directory'] );
-            $new_relative_path .= $this->addTrailingSlash( $changes_array['updatedfile']['name'] );
+            $old_relative_path = PathUtils::addTrailingSlash( $changes_array['file']['directory'] );
+            $old_relative_path .= PathUtils::addTrailingSlash( $changes_array['file']['name'] );
+            $new_relative_path = PathUtils::addTrailingSlash( $changes_array['updatedfile']['directory'] );
+            $new_relative_path .= PathUtils::addTrailingSlash( $changes_array['updatedfile']['name'] );
 
 
             // Get the directory that is renamed in the database
@@ -97,7 +109,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
 
                 /** @var Directory $directory */
                 $directory = $directories[ $i ];
-                $directory->setRelativePath( $this->addTrailingSlash( $changes_array['updatedfile']['directory'] ) );
+                $directory->setRelativePath( PathUtils::addTrailingSlash( $changes_array['updatedfile']['directory'] ) );
                 $directory->setDirectoryName( $changes_array['updatedfile']['name'] );
                 $this->em->persist( $directory );
             }
@@ -146,12 +158,14 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             // Get all the directories that match this pattern
             $directories = $this->directoryRepository->findDirectoryByLocation( $working_directory, $file['directory'], $file['name'] );
             for( $i = 0, $length = count($directories); $i < $length; $i++ ){
+                $this->aclservice->clearAccessRightsForDirectory( $directories[$i] );
                 $this->em->remove( $directories[$i] );
             }
 
             // Get all the directories below the current directory
             $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation( $working_directory, $file['directory'], $file['name']);
             for( $i = 0, $length = count($childdirectories); $i < $length; $i++ ){
+                $this->aclservice->clearAccessRightsForDirectory( $directories[$i] );
                 $this->em->remove( $childdirectories[$i] );
             }
 
@@ -160,20 +174,5 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         $this->em->commit();
         $this->em->flush();
     }
-
-    /**
-     * Add a trailing slash to a path
-     *
-     * @param $path
-     * @return string
-     */
-    protected function addTrailingSlash( $path ){
-        if( $path != "" &&  substr( $path, -1, 1) !== DIRECTORY_SEPARATOR){
-            $path .= DIRECTORY_SEPARATOR;
-        }
-
-        return $path;
-    }
-
 
 }

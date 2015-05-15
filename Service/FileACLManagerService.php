@@ -1,11 +1,13 @@
 <?php
 namespace Recognize\FilemanagerBundle\Service;
 
+use Doctrine\Common\Proxy\Exception\InvalidArgumentException;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\ORM\EntityManager;
 use Exception;
 use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Security\DirectoryMaskBuilder;
+use Symfony\Component\Security\Acl\Domain\Entry;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Acl\Domain\RoleSecurityIdentity;
 use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
@@ -23,8 +25,6 @@ use Symfony\Component\Security\Core\SecurityContextInterface;
  * @package Recognize\FilemanagerBundle\Service
  */
 class FileACLManagerService {
-
-    private $working_directory;
 
     /**
      * @var MutableAclProviderInterface
@@ -54,16 +54,15 @@ class FileACLManagerService {
     protected $basedirectory;
 
     /**
-     *
+     * Manages the ACLs for the directories in the database
      *
      * @param MutableAclProviderInterface $aclProvider
      * @param TokenStorageInterface $tokenStorage
      * @param EntityManager $em
-     * @param array $configuration
      * @throws \Symfony\Component\Security\Acl\Exception\InvalidDomainObjectException
      */
     public function __construct(MutableAclProviderInterface $aclProvider, TokenStorageInterface $tokenStorage,
-                                EntityManager $em, SecurityContextInterface $context, array $configuration) {
+                                EntityManager $em, SecurityContextInterface $context) {
 
         $this->securitycontext = $context;
         $this->aclProvider = $aclProvider;
@@ -80,77 +79,54 @@ class FileACLManagerService {
         }
         $this->securityIdentities = $securityidentities;
 
-
         $this->basedirectory = new ObjectIdentity('class', 'Recognize\\FilemanagerBundle\\Entity\\Directory');
-        if (isset($configuration['default_directory'])) {
-            $this->working_directory = $configuration['default_directory'];
-        } else {
-            throw new \RuntimeException("Default upload and file management directory should be set! ");
-        }
-    }
-
-    /**
-     * Set the base permissions of every managed directory
-     *
-     * @param array $roles          An array with the roles as keys and the accepted actions as the values
-     *                              Possible actions are VIEW, CREATE, DELETE, EDIT and MASK_OWNER
-     */
-    public function setBasePermissions( $roles ){
-        $securityidentity = $this->basedirectory;
-
-        // Make sure the base ACL exists
-        try {
-            $acl = $this->aclProvider->findAcl( $securityidentity );
-        } catch( \Exception $e ){
-            $acl = $this->aclProvider->createAcl( $securityidentity );
-        }
-
-        // Generate the class ACEs using the roles as input
-        $insert_aces = array();
-
-        $rolekeys = array_keys( $roles );
-        for( $i = 0, $length = count( $rolekeys ); $i < $length; $i++ ){
-            $role = $rolekeys[$i];
-            $roleidentity = new RoleSecurityIdentity( $role );
-
-            $values = $roles[ $rolekeys[ $i ] ];
-            $mask = DirectoryMaskBuilder::getMaskFromValues( $values );
-
-            $found = false;
-            $classaces = $acl->getClassAces();
-            foreach( $classaces as $index => $classace ){
-                if( $classace->getSecurityIdentity()->getRole() == $role ){
-                    $found = true;
-
-                    $acl->updateClassAce( $index, $mask );
-                    break;
-                }
-            }
-
-            // Collect the ACEs that should be inserted and insert them outside the update loop
-            if( $found == false ){
-                $insert_aces[] = array( "identity" => $roleidentity, "mask" => $mask );
-            }
-        }
-
-        for( $i = 0, $length = count( $insert_aces ); $i < $length; $i++ ){
-            $acl->insertClassAce( $insert_aces[$i]['identity'], $insert_aces[$i]['mask'] );
-        }
-
-        $this->aclProvider->updateAcl( $acl );
     }
 
     /**
      * Revoke access to a directory for certain roles
      *
-     * @param $directory
-     * @param $roles                An array with the roles as keys and the accepted actions as the values
-     *                              Possible actions are VIEW, CREATE, DELETE, EDIT and MASK_OWNER
+     * @param Directory $directory              The directory that should have their rights changed
+     * @param $roles                            An array with the roles that should be denied access
+     * @param $actions                          The actions that should be denied
      */
-    public function denyAccessToDirectory( $directory, $roles ){
-        $objectIdentity = ObjectIdentity::fromDomainObject($directory);
+    public function denyAccessToDirectory( Directory $directory, $roles, $actions ){
+        if( $directory->getId() != 0 || $directory->getId() != null ){
+            $objectIdentity = ObjectIdentity::fromDomainObject($directory);
 
-        // Make sure the base ACL exists
+            $this->changeAccessToDirectory( $objectIdentity, $roles, $actions, false );
+        } else {
+            throw new InvalidArgumentException( "The directory must have an id set to be able to get ACLs" );
+        }
+    }
+
+    /**
+     * Grant access to a directory for certain roles
+     *
+     * @param Directory $directory              The directory that should have their rights changed
+     * @param $roles                            An array with the roles that should be granted access
+     * @param $actions                          The actions to allow
+     */
+    public function grantAccessToDirectory( Directory $directory, $roles, $actions ){
+        if( $directory->getId() != 0 || $directory->getId() != null ){
+            $objectIdentity = ObjectIdentity::fromDomainObject($directory);
+
+            $this->changeAccessToDirectory( $objectIdentity, $roles, $actions, true );
+        } else {
+            throw new InvalidArgumentException( "The directory must have an id set to be able to get ACLs" );
+        }
+    }
+
+    /**
+     * Change the access to a directory for certain roles and certain actions
+     *
+     * @param ObjectIdentity $objectIdentity
+     * @param $roles                    An array with the roles that should have their access changed
+     * @param $actions                  The actions to change access
+     * @param bool $grant_access        Whether to grant access or not
+     */
+    protected function changeAccessToDirectory( ObjectIdentity $objectIdentity, $roles, $actions, $grant_access ){
+
+        // Make sure the ACL exists
         try {
             $acl = $this->aclProvider->findAcl( $objectIdentity );
         } catch( \Exception $e ){
@@ -159,18 +135,17 @@ class FileACLManagerService {
 
         // Generate the class ACEs using the roles as input
         $insert_aces = array();
-        $rolekeys = array_keys( $roles );
-        for( $i = 0, $length = count( $rolekeys ); $i < $length; $i++ ){
-            $role = $rolekeys[$i];
+        for( $i = 0, $length = count( $roles ); $i < $length; $i++ ){
+            $role = $roles[$i];
             $roleidentity = new RoleSecurityIdentity( $role );
 
-            $values = $roles[ $rolekeys[ $i ] ];
-            $mask = $this->getMaskFromValues( $values );
+            $mask = DirectoryMaskBuilder::getMaskFromValues( $actions );
 
             $found = false;
             $aces = $acl->getObjectAces();
+            /** @var Entry $ace */
             foreach( $aces as $index => $ace ){
-                if( $ace->getSecurityIdentity()->getRole() == $role && $ace->isGranted() == false ){
+                if( $ace->getSecurityIdentity()->getRole() == $role && $ace->isGranting() !== $grant_access ){
                     $found = true;
 
                     $acl->updateObjectAce( $index, $mask );
@@ -185,27 +160,22 @@ class FileACLManagerService {
         }
 
         for( $i = 0, $length = count( $insert_aces ); $i < $length; $i++ ){
-            $acl->insertObjectAce( $insert_aces[$i]['identity'], $insert_aces[$i]['mask'], 0, false );
+            $acl->insertObjectAce( $insert_aces[$i]['identity'], $insert_aces[$i]['mask'], 0, $grant_access );
         }
 
         $this->aclProvider->updateAcl( $acl );
     }
 
-    public function testAcl(){
-        /*$roles = array(
-            'ROLE_USER' => array('VIEW', 'CREATE' ),
-            'ROLE_ADMIN' => array('VIEW', 'CREATE', 'EDIT', 'DELETE'),
-            'ROLE_SUPER_ADMIN' => array('VIEW', 'CREATE', 'EDIT', 'DELETE', 'MASK_OWNER')
-        );
 
-        $this->setBasePermissions( $roles );*/
-
-        $directory = new Directory();
-        $directory->setId( 1 );
-
-        $this->denyAccessToDirectory( $directory, array('ROLE_USER' => array('OPEN') ) );
-
-        //var_dump( $this->canReadDirectory( $directory ) );
+    /**
+     * Clear all the access rights for a directory - This is usually done on deletion
+     *
+     * @param Directory $directory                  The directory to clear the access rights from
+     */
+    public function clearAccessRightsForDirectory( Directory $directory ){
+        if( $directory->getId() != null && $directory->getId() != 0 ){
+            $domainIdentity = ObjectIdentity::fromDomainObject( $directory );
+            $this->aclProvider->deleteAcl( $domainIdentity );
+        }
     }
-
 }

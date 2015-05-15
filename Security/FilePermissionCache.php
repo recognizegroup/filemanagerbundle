@@ -70,8 +70,4 @@ class FilePermissionCache {
         );
     }
 
-    public function getCache(){
-        return $this->cache;
-    }
-
 }
