@@ -116,13 +116,6 @@ class FileSecurityContext implements FileSecurityContextInterface {
                             $directory_relativepath, $directory_name );
                     }
 
-                    if( strpos( $absolute_path, "js" ) !== false ){
-                        $parentdirectory = new Directory();
-                        $parentdirectory->setId( 1 );
-                        $directoryobject->setParentDirectory( $parentdirectory );
-                    }
-
-
                     return $this->isActionGrantedForDirectory( $action, $directoryobject );
 
 

@@ -106,7 +106,22 @@ class FilemanagerService {
 
                 try {
                     $finder->depth($depth)->in($path);
-                    return $this->finderToFilesArray($finder);
+                    $files = $this->finderToFilesArray($finder);
+
+                    // Filter out the directories that cannot be opened
+                    $securitycontext = $this->security_context;
+                    $filteredfiles = array_filter( $files, function( $file ) use ( $securitycontext ){
+                        if( $file->isFile() == true ||
+                            $securitycontext->isGranted("open", $this->working_directory,
+                                PathUtils::addTrailingSlash( $file->getRelativePath() ) . $file->getFilename() ) ){
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
+
+                    // Reset the indecis and return the array
+                    return array_values( $filteredfiles );
 
                 } catch (InvalidArgumentException $e) {
                     $path_from_workingdir = substr($this->current_directory, strlen($this->working_directory));
