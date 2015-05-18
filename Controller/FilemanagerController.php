@@ -65,18 +65,28 @@ class FilemanagerController extends Controller {
 
             /** @var UploadedFile $file */
             $file = $request->files->get( 'filemanager_upload' );
-            $changes = $filemanager->saveUploadedFile( $file, $file->getClientOriginalName() );
-            $builder->addChange( $changes );
+            try {
+                $changes = $filemanager->saveUploadedFile($file, $file->getClientOriginalName());
+                $builder->addChange($changes);
+            } catch( \Exception $e ){
+                $builder->fail( $e->getMessage(), 400 );
+            }
 
         } else if( $request->request->has('directory_name') && $request->request->has('filemanager_directory') ) {
 
             $directoryname = $request->request->get('directory_name');
             $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
-            $changes = $filemanager->createDirectory( $directoryname );
-            $builder->addChange( $changes );
+
+            try {
+                $changes = $filemanager->createDirectory($directoryname);
+                $builder->addChange( $changes );
+            } catch( \Exception $e ){
+                $builder->fail( $e->getMessage(), 400 );
+            }
 
         } else {
-            $builder->fail( "Invalid request");
+
+            $builder->fail( "Invalid request ");
         }
 
         return $builder->build();

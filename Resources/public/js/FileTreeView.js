@@ -62,8 +62,8 @@ FileTreeView.prototype = {
             this._formatSearchelement = config.searchelementFormat;
         }
 
-        if( typeof config.uploadbuttonFormat === "function" ){
-            this._formatUploadButton = config.uploadbuttonFormat;
+        if( typeof config.uploadFormat === "function" ){
+            this._formatUpload = config.uploadFormat;
         }
 
         if( typeof config.createdirectoryFormat === "function" ){
@@ -116,6 +116,24 @@ FileTreeView.prototype = {
      */
     _formatTitleDirectory: function( current_directory ){
         return "<p class=\"filemanagerrow\"><span>" + current_directory + "</span></p>";
+    },
+
+    /**
+     * Format the uploading area of the filemanager
+     *
+     * @param action                        The link to which the upload should go to
+     * @param uploadname                    The fieldname of the file upload field
+     * @param directoryname                 The fieldname of the directory selection field
+     * @param current_directory             The current directory
+     * @returns {string}
+     * @private
+     */
+    _formatUpload: function( action, uploadname, directoryname, current_directory){
+        return '<form enctype="multipart/form-data" method="POST" action="' + action + '">' +
+            '<input type="hidden" name="' + directoryname + '" value="' + current_directory + '" />' +
+            '<input type="file" name="' + uploadname + '"/>' +
+            '<input type="submit" name="Uploaden" />' +
+            '</form>';
     },
 
     /**
@@ -198,14 +216,51 @@ FileTreeView.prototype = {
             var searchelement = this._formatSearchelement( searchinput );
             searchelement.appendTo( this._titlebarElement );
 
-            var uploadstring = '<form enctype="multipart/form-data" method="POST" action="/admin/fileapi/create">' +
-                '<input type="hidden" name="filemanager_directory" value="' + current_directory + '" />' +
-                this._formatUploadButton() +
-                '</form>';
-
+            // Add the uploading button
+            var uploadstring = this._formatUpload( "/admin/fileapi/create", "filemanager_upload", "filemanager_directory", current_directory );
             var uploadelement = $( uploadstring );
             uploadelement.addClass('upload-container');
             uploadelement.appendTo( this._titlebarElement );
+
+            // Add the hidden progress row
+            var progressstring = '<div class="col-xs-9"><div id="progressOuter" class="progress progress-striped active" style="display:none;">' +
+                '<div id="progressBar" class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div></div></div>';
+            $(progressstring).appendTo( this._titlebarElement );
+            var progressOuter = $("#progressOuter");
+            var progressBar = $("#progressBar");
+
+            // Add the AJAX upload functionality
+            var uploader = new ss.SimpleUpload({
+                 button: uploadelement,
+                 url: "/admin/fileapi/create",
+                 name: "filemanager_upload",
+                 method: 'POST',
+                 multipart: true,
+                 data: {
+                    filemanager_directory: current_directory
+                 },
+                 responseType: 'json',
+                 dropzone: "filemanager_view",
+                 debug: self._debug,
+                 startXHR: function() {
+                     progressOuter.css('display', 'block'); // make progress bar visible
+                     this.setProgressBar( progressBar );
+                 },
+
+                 onComplete: function(filename, response){
+                     self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: current_directory } );
+                 },
+
+                 onError: function( filename, errorType, status, statusText, response ){
+                     progressOuter.css('display', 'none');
+
+                     response = JSON.parse( response );
+                     if( response != null ){
+                         self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
+                     }
+                 }
+             });
+
 
             // Keyboard focus handling
             if( self._keepFocusOnTitlebar == true ){

@@ -283,6 +283,16 @@ FilemanagerAPI.prototype = {
     },
 
     /**
+     * Handles the response of an AJAX upload
+     *
+     * @param directory             The directory to refresh
+     * @param response              The JSON response
+     */
+    uploadResponse: function( directory, response ){
+        this._eventHandler.trigger('filemanager:api:update_data', {contents: response.data.changes, directory: directory});
+    },
+
+    /**
      * Handles an API error
      *
      * @param jqXHR
@@ -342,6 +352,10 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.register('filemanager:view:delete', function( eventobj ){
             self.delete( eventobj.file.directory, eventobj.file.name );
+        });
+
+        this._eventHandler.register('filemanager:view:ajax_upload', function( eventobj ){
+            self.uploadResponse( eventobj.directory, eventobj.response )
         });
     }
 };
