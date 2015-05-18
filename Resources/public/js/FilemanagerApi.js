@@ -116,7 +116,7 @@ FilemanagerAPI.prototype = {
         // To allow for easy debug messages
         var self = this;
 
-        // TODO ADD EMPTY PROMISE
+        this._eventHandler.trigger("filemanager:api:loading");
 
         return $.ajax({
             url: path,
@@ -128,12 +128,16 @@ FilemanagerAPI.prototype = {
                 this.self.debug("Sending " + this.method + " request to " + this.url + "...");
             }
 
-            // Log the response
         }).done( function( data ){
+            this.self._eventHandler.trigger("filemanager:api:done");
+
+            // Log the response
             this.self.debug( data );
 
-            // Log the failure
         }).fail( function( jqXHR, error, errorMessage ){
+            this.self._eventHandler.trigger("filemanager:api:done");
+
+            // Log the failure
             this.self.errorLog( { statuscode: jqXHR.status,
                 statustext: jqXHR.statusText,
                 response: jqXHR.responseText });
@@ -222,7 +226,6 @@ FilemanagerAPI.prototype = {
                     changes = data.data.changes;
                 }
 
-
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: directory });
             })
             .fail( this._handleApiError );
@@ -289,6 +292,7 @@ FilemanagerAPI.prototype = {
      * @param response              The JSON response
      */
     uploadResponse: function( directory, response ){
+        this._eventHandler.trigger("filemanager:api:done");
         this._eventHandler.trigger('filemanager:api:update_data', {contents: response.data.changes, directory: directory});
     },
 

@@ -32,8 +32,11 @@
     </style>
     <div class="filetree">
         <div class="titlebar"></div>
-        <div class="directories"></div>
-        <div class="mainview"></div>
+        <div class="overlayreference">
+            <div class="directories"></div>
+            <div class="mainview"></div>
+            <div class="overlay"></div>
+        </div>
 
         <script type="text/javascript">
             var filetree = $('.filetree').filemanager({ debug: true, api: { url: window.location.origin + "/admin/fileapi", startingDirectory: "" } });

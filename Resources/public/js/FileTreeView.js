@@ -7,7 +7,9 @@ var FileTreeView = function( config, element ){
         elements: {
             title: ".titlebar",
             main: '.mainview',
-            directories: '.directories'
+            directories: '.directories',
+            overlayReference: '.overlayreference',
+            overlay: '.overlay'
         }
     };
 
@@ -26,6 +28,8 @@ FileTreeView.prototype = {
     _contentElement: false,
     _uploadLink: false,
 
+    _overlayReference: false,
+    _overlayElement: false,
 
     // Keyboard accessability
     _keepFocusOnSearchbar: false,
@@ -48,6 +52,9 @@ FileTreeView.prototype = {
         this._directoryElement = $( config.elements.directories );
         this._titlebarElement = $( config.elements.title );
         this._contentElement = $( config.elements.main );
+        this._overlayReference = $( config.elements.overlayReference );
+        this._overlayElement = $( config.elements.overlay );
+
         this._eventHandler = config.eventHandler;
 
         this._contentElement.on("dragover", function( event ){
@@ -258,6 +265,8 @@ FileTreeView.prototype = {
                 startXHR: function() {
                     progressOuter.css('display', 'block'); // make progress bar visible
                     this.setProgressBar( progressBar );
+
+                    self._eventHandler.trigger("filemanager:api:loading");
                 },
 
                 onComplete: function(filename, response){
@@ -266,47 +275,46 @@ FileTreeView.prototype = {
 
                 onError: function( filename, errorType, status, statusText, response ){
                     progressOuter.css('display', 'none');
+                    self._eventHandler.trigger("filemanager:api:done");
 
                     response = JSON.parse( response );
-                    if( response != null ){
+                    if( response != false ){
                         self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
                     }
                 }
              });
 
-
+            // Prevent multiple upload screens from showing
             if( this._uploadFunctionality != null ){
                 this._uploadFunctionality.destroy();
             }
             this._uploadFunctionality = uploader;
 
+            // Ajax upload button
             var uploadbutton = uploadelement.find('#uploadbutton');
             uploadbutton.off("click").off("keydown").off("keyup");
-
             if( uploadbutton.length == 0 ){
                 this.errorLog("Upload ID wasn't set in the upload element");
             }
 
+            // Keyboard focus for AJAX button
             uploadbutton.on("click", function(){
                 $("input[name=" + "filemanager_upload" + "]").trigger("click");
             }).on("keydown", function( event ){
 
+                // ENTER
                 if( event.keyCode == 13 ) {
                     uploadbutton.addClass('active');
-
                     event.preventDefault();
                 }
-
             }).on("keyup", function( event ){
 
                 // ENTER
                 if( event.keyCode == 13 ){
                     uploadbutton.removeClass('active');
-
                     $("input[name=" + "filemanager_upload" + "]").trigger("click");
                 }
             });
-
 
             // Keyboard focus handling
             if( self._keepFocusOnTitlebar == true ){
@@ -438,6 +446,39 @@ FileTreeView.prototype = {
                 self._addContextmenuToRow( "." + rowclass, file );
             }
         }
+
+        self.hideOverlay();
+    },
+
+    /**
+     * Show the overlay element
+     */
+    showOverlay: function(){
+        this._resizeOverlay();
+
+        this._overlayElement.css("position", 'absolute').css("display", "block");
+    },
+
+    /**
+     * Hide the overlay element
+     */
+    hideOverlay: function(){
+        this._overlayElement.css("position", 'absolute').css("display", "none");
+    },
+
+    /**
+     * Resizes the overlay so it matches the content area and directory area again
+     *
+     * @private
+     */
+    _resizeOverlay: function(){
+        var rowPos = this._overlayReference.offset();
+        var bottomTop = rowPos.top;
+        var bottomLeft = rowPos.left;
+
+        this._overlayElement
+            .css("top", bottomTop).css("left", bottomLeft).css("width", this._overlayReference.width())
+            .css("height", this._overlayReference.height())
     },
 
     /**
@@ -679,6 +720,14 @@ FileTreeView.prototype = {
 
         this._eventHandler.register('filemanager:model:path_changed', function( current_directory ){
             self.refreshTitlebar( current_directory );
+        });
+
+        this._eventHandler.register('filemanager:api:loading', function( ){
+            self.showOverlay();
+        });
+
+        this._eventHandler.register('filemanager:api:done', function( ){
+            self.hideOverlay();
         });
     }
 };
