@@ -32,6 +32,8 @@ FileTreeView.prototype = {
     _keepFocusOnDirectories: false,
     _keepFocusOnTitlebar: false,
 
+    _uploadFunctionality: null,
+
     /**
      * Initializes the filetreeview
      *
@@ -39,12 +41,20 @@ FileTreeView.prototype = {
      * @param element                       The main HTML element
      */
     init: function( config, element ){
+        var self = this;
+
         this._debug = config.debug;
         this._container = element;
         this._directoryElement = $( config.elements.directories );
         this._titlebarElement = $( config.elements.title );
         this._contentElement = $( config.elements.main );
         this._eventHandler = config.eventHandler;
+
+        this._contentElement.on("dragover", function( event ){
+            self._contentElement.css("background", "red");
+        }).on("dragleave", function( event ){
+            self._contentElement.css("background", "white");
+        });
 
         if( typeof config.filerowFormat === "function" ){
             this._formatFilerow = config.filerowFormat;
@@ -122,17 +132,18 @@ FileTreeView.prototype = {
      * Format the uploading area of the filemanager
      *
      * @param action                        The link to which the upload should go to
+     * @param buttonid                      The id which links to the button that can be pressed
      * @param uploadname                    The fieldname of the file upload field
      * @param directoryname                 The fieldname of the directory selection field
      * @param current_directory             The current directory
      * @returns {string}
      * @private
      */
-    _formatUpload: function( action, uploadname, directoryname, current_directory){
+    _formatUpload: function( action, buttonid, uploadname, directoryname, current_directory){
         return '<form enctype="multipart/form-data" method="POST" action="' + action + '">' +
             '<input type="hidden" name="' + directoryname + '" value="' + current_directory + '" />' +
             '<input type="file" name="' + uploadname + '"/>' +
-            '<input type="submit" name="Uploaden" />' +
+            '<input type="submit" id="' + buttonid + '" name="Uploaden" />' +
             '</form>';
     },
 
@@ -217,7 +228,8 @@ FileTreeView.prototype = {
             searchelement.appendTo( this._titlebarElement );
 
             // Add the uploading button
-            var uploadstring = this._formatUpload( "/admin/fileapi/create", "filemanager_upload", "filemanager_directory", current_directory );
+            var uploadstring = this._formatUpload( "/admin/fileapi/create", "uploadbutton",
+                "filemanager_upload", "filemanager_directory", current_directory );
             var uploadelement = $( uploadstring );
             uploadelement.addClass('upload-container');
             uploadelement.appendTo( this._titlebarElement );
@@ -231,35 +243,69 @@ FileTreeView.prototype = {
 
             // Add the AJAX upload functionality
             var uploader = new ss.SimpleUpload({
-                 button: uploadelement,
-                 url: "/admin/fileapi/create",
-                 name: "filemanager_upload",
-                 method: 'POST',
-                 multipart: true,
-                 data: {
+                url: "/admin/fileapi/create",
+                name: "filemanager_upload",
+                method: 'POST',
+                hoverClass: 'focus',
+                focusClass: 'active',
+                multipart: true,
+                data: {
                     filemanager_directory: current_directory
-                 },
-                 responseType: 'json',
-                 dropzone: "filemanager_view",
-                 debug: self._debug,
-                 startXHR: function() {
-                     progressOuter.css('display', 'block'); // make progress bar visible
-                     this.setProgressBar( progressBar );
-                 },
+                },
+                responseType: 'json',
+                dropzone: "filemanager_view",
+                debug: self._debug,
+                startXHR: function() {
+                    progressOuter.css('display', 'block'); // make progress bar visible
+                    this.setProgressBar( progressBar );
+                },
 
-                 onComplete: function(filename, response){
-                     self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: current_directory } );
-                 },
+                onComplete: function(filename, response){
+                    self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: current_directory } );
+                },
 
-                 onError: function( filename, errorType, status, statusText, response ){
-                     progressOuter.css('display', 'none');
+                onError: function( filename, errorType, status, statusText, response ){
+                    progressOuter.css('display', 'none');
 
-                     response = JSON.parse( response );
-                     if( response != null ){
-                         self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
-                     }
-                 }
+                    response = JSON.parse( response );
+                    if( response != null ){
+                        self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
+                    }
+                }
              });
+
+
+            if( this._uploadFunctionality != null ){
+                this._uploadFunctionality.destroy();
+            }
+            this._uploadFunctionality = uploader;
+
+            var uploadbutton = uploadelement.find('#uploadbutton');
+            uploadbutton.off("click").off("keydown").off("keyup");
+
+            if( uploadbutton.length == 0 ){
+                this.errorLog("Upload ID wasn't set in the upload element");
+            }
+
+            uploadbutton.on("click", function(){
+                $("input[name=" + "filemanager_upload" + "]").trigger("click");
+            }).on("keydown", function( event ){
+
+                if( event.keyCode == 13 ) {
+                    uploadbutton.addClass('active');
+
+                    event.preventDefault();
+                }
+
+            }).on("keyup", function( event ){
+
+                // ENTER
+                if( event.keyCode == 13 ){
+                    uploadbutton.removeClass('active');
+
+                    $("input[name=" + "filemanager_upload" + "]").trigger("click");
+                }
+            });
 
 
             // Keyboard focus handling
