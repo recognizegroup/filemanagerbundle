@@ -4,3 +4,8 @@ file:
   date_modified: Modified date
 upload: Upload
 create_directory: Create directory
+list_view: Listview
+grid_view: Gridview
+search: Search
+cancel_upload: Cancel
+refresh: Refresh

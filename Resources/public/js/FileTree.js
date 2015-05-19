@@ -567,6 +567,33 @@ FileTree.prototype = {
     },
 
     /**
+     * Gets the directory above the directory using its path
+     *
+     * @param directory_path
+     * @returns {string}
+     * @private
+     */
+    _getHigherDirectory: function( directory_path ){
+        var pathnodes = directory_path.split('/');
+
+        // Filter out all the spaces
+        pathnodes = pathnodes.filter( function(value){
+            return value != "";
+        });
+
+        var path = "";
+        for( var i = 0, length = pathnodes.length - 1; i < length; i++ ){
+            path += pathnodes[i];
+
+            if( i !== length - 1 ){
+                path += "/";
+            }
+        }
+
+        return path;
+    },
+
+    /**
      * Displays debug data
      * @param debug_message
      */
@@ -609,6 +636,11 @@ FileTree.prototype = {
             self._updateViews(false, true, false);
         });
 
+        this._eventHandler.register('filemanager:view:directory_up', function( eventobj ){
+            self.moveUpDirectory();
+        });
+
+
         this._eventHandler.register('filemanager:view:open', function( eventobj ){
 
             // Only open the directory if the data already exists
@@ -616,5 +648,26 @@ FileTree.prototype = {
                 self.openPath( eventobj.directory, true );
             }
         });
+    },
+
+    // --------------------- JQUERY FUNCTIONS
+    refresh: function(){
+        var self = this;
+        this._eventHandler.trigger("filemanager:view:open", { directory: self._currentPath, isSynchronized: false } );
+    },
+
+    search: function( value ){
+        var self = this;
+        this._eventHandler.trigger("filemanager:view:search", { directory: self._currentPath, query: value } );
+    },
+
+    moveUpDirectory: function(){
+        var self = this;
+        this._eventHandler.trigger("filemanager:view:open", { directory: self._getHigherDirectory( self._currentPath ),
+            isSynchronized: false } );
+    },
+
+    getCurrentPath: function(){
+        return this._currentPath;
     }
 };

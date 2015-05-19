@@ -1,5 +1,6 @@
 (function() {
-    $.fn.filemanager = function( config ) {
+
+    $.fn.filemanager = function( config ){
         if( typeof config === "undefined"){
             config = {};
         }
@@ -7,7 +8,8 @@
 
         if( config.api !== null && typeof config.api === 'object' ) {
             if (typeof config.api.url !== 'undefined' && config.api.url != "") {
-                this.data('treeview', new FileTreeView( config ) );
+                this.data("event", config.eventHandler );
+                this.data('view', new FileTreeView( config ) );
                 this.data('api', new FilemanagerAPI( config ) );
                 this.data('tree', new FileTree( config ) );
             } else {
@@ -15,6 +17,45 @@
             }
         }
 
+        var self = this;
+        var methods = {
+
+            refresh: function(){
+                self.data("tree").refresh();
+                return self;
+            },
+
+            moveUpDirectory: function(){
+                self.data("tree").moveUpDirectory();
+            },
+
+            createDirectory: function(){
+                var path = self.data("tree").getCurrentPath();
+                self.data("view")._createDirectory( path );
+
+                return self;
+            },
+
+            setListview: function(){
+
+            },
+
+            setGridview: function(){
+
+            },
+
+            search: function( value ){
+                self.data("view").search( value );
+                return self;
+            },
+
+            on: function( eventstring, listener ){
+                self.data("event").register(eventstring, listener);
+                return self;
+            }
+        };
+
+        this.data("filemanager", methods);
         return this;
     };
 

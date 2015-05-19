@@ -4,3 +4,8 @@ file:
   date_modified: Aanpasdatum
 upload: Uploaden
 create_directory: Map maken
+list_view: Lijstweergave
+grid_view: Rasterweergave
+search: Zoeken
+cancel_upload: Annuleren
+refresh: Verversen

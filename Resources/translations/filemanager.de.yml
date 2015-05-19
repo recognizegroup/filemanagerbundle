@@ -4,3 +4,8 @@ file:
   date_modified: Änderungsdatum
 upload: Hochladen
 create_directory: Ordner machen
+list_view: Listenansicht
+grid_view: Rasteransicht
+search: Suchen
+cancel_upload: Abbrechen
+refresh: Aktualisieren

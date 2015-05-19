@@ -87,6 +87,27 @@ FileTreeView.prototype = {
             this._formatCreatedirectoryButton = config.createdirectoryFormat;
         }
 
+        $("[data-fm-functionality=directory_up]").on('click', function(event){
+            self._eventHandler.trigger('filemanager:view:directory_up',{});
+
+        }).on('keydown', function(event){
+
+            // ENTER
+            if( event.keyCode == 13 ){
+                event.preventDefault();
+
+                // Force the active state on enter
+                $( event.target).addClass('active').trigger('mousedown');
+            }
+
+        }).on('keyup', function(event){
+            if( event.keyCode == 13 ){
+
+                // Make sure to keep the focus on the upper directory on refresh
+                self._keepFocusOnTitlebar = true;
+                $( event.currentTarget).removeClass('active').trigger('click');
+            }
+        });
 
         this._registerEvents();
     },
@@ -181,6 +202,8 @@ FileTreeView.prototype = {
         var self = this;
 
         this.debug("Refreshing titlebar with directory " + current_directory );
+
+        $("[data-fm-value=current_directory]").text( "/" + current_directory );
 
         if( this._titlebarElement.length > 0 ){
             this._titlebarElement.empty();
@@ -282,7 +305,7 @@ FileTreeView.prototype = {
                         self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
                     }
                 }
-             });
+            });
 
             // Prevent multiple upload screens from showing
             if( this._uploadFunctionality != null ){
@@ -299,7 +322,7 @@ FileTreeView.prototype = {
 
             // Keyboard focus for AJAX button
             uploadbutton.on("click", function(){
-                $("input[name=" + "filemanager_upload" + "]").trigger("click");
+                $("input[name=filemanager_upload]").trigger("click");
             }).on("keydown", function( event ){
 
                 // ENTER
@@ -312,7 +335,7 @@ FileTreeView.prototype = {
                 // ENTER
                 if( event.keyCode == 13 ){
                     uploadbutton.removeClass('active');
-                    $("input[name=" + "filemanager_upload" + "]").trigger("click");
+                    $("input[name=filemanager_upload]").trigger("click");
                 }
             });
 
@@ -456,7 +479,7 @@ FileTreeView.prototype = {
     showOverlay: function(){
         this._resizeOverlay();
 
-        this._overlayElement.css("position", 'absolute').css("display", "block");
+        this._overlayElement.css("position", 'absolute').css("display", "table");
     },
 
     /**
