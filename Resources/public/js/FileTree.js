@@ -631,8 +631,8 @@ FileTree.prototype = {
             self.addChanges( eventobj.contents, true );
         });
 
-        this._eventHandler.register('filemanager:api:search_data', function( eventobj ){
-            self.setContents( eventobj.contents );
+        this._eventHandler.register('filemanager:api:search_data', function( eventobj ) {
+            self.setContents(eventobj.contents);
             self._updateViews(false, true, false);
         });
 
@@ -640,6 +640,13 @@ FileTree.prototype = {
             self.moveUpDirectory();
         });
 
+        this._eventHandler.register("filemanager:view:sort", function( eventobj ){
+            if( eventobj !== undefined && typeof eventobj.sortfunction === "function"){
+                self.sortContent( eventobj.sortfunction );
+            } else {
+                self.sortContent();
+            }
+        });
 
         this._eventHandler.register('filemanager:view:open', function( eventobj ){
 
@@ -647,6 +654,10 @@ FileTree.prototype = {
             if( eventobj.isSynchronized ){
                 self.openPath( eventobj.directory, true );
             }
+        });
+
+        this._eventHandler.register('filemanager:view:refresh', function( eventobj ){
+            self.refresh();
         });
     },
 
@@ -656,15 +667,15 @@ FileTree.prototype = {
         this._eventHandler.trigger("filemanager:view:open", { directory: self._currentPath, isSynchronized: false } );
     },
 
-    search: function( value ){
-        var self = this;
-        this._eventHandler.trigger("filemanager:view:search", { directory: self._currentPath, query: value } );
-    },
-
     moveUpDirectory: function(){
         var self = this;
         this._eventHandler.trigger("filemanager:view:open", { directory: self._getHigherDirectory( self._currentPath ),
             isSynchronized: false } );
+    },
+
+    search: function( value ){
+        var self = this;
+        this._eventHandler.trigger("filemanager:view:search", { directory: self._currentPath, query: value } );
     },
 
     getCurrentPath: function(){

@@ -1094,3 +1094,8 @@
 .filetree tbody .form-control {
     width: 80%;
 }
+
+.filetree .btn.selected {
+    margin-top: 4px !important;
+    border-bottom-width: 0px !important;
+}

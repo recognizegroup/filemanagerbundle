@@ -7,9 +7,7 @@ var FileTreeView = function( config, element ){
         elements: {
             title: ".titlebar",
             main: '.mainview',
-            directories: '.directories',
-            overlayReference: '.overlayreference',
-            overlay: '.overlay'
+            directories: '.directories'
         }
     };
 
@@ -28,15 +26,12 @@ FileTreeView.prototype = {
     _contentElement: false,
     _uploadLink: false,
 
-    _overlayReference: false,
-    _overlayElement: false,
-
     // Keyboard accessability
-    _keepFocusOnSearchbar: false,
     _keepFocusOnDirectories: false,
-    _keepFocusOnTitlebar: false,
+    _keepFocusOnContent: false,
 
     _uploadFunctionality: null,
+    _currentDirectory: "",
 
     /**
      * Initializes the filetreeview
@@ -48,12 +43,10 @@ FileTreeView.prototype = {
         var self = this;
 
         this._debug = config.debug;
-        this._container = element;
+        this._container = $( element );
         this._directoryElement = $( config.elements.directories );
         this._titlebarElement = $( config.elements.title );
         this._contentElement = $( config.elements.main );
-        this._overlayReference = $( config.elements.overlayReference );
-        this._overlayElement = $( config.elements.overlay );
 
         this._eventHandler = config.eventHandler;
 
@@ -87,28 +80,7 @@ FileTreeView.prototype = {
             this._formatCreatedirectoryButton = config.createdirectoryFormat;
         }
 
-        $("[data-fm-functionality=directory_up]").on('click', function(event){
-            self._eventHandler.trigger('filemanager:view:directory_up',{});
-
-        }).on('keydown', function(event){
-
-            // ENTER
-            if( event.keyCode == 13 ){
-                event.preventDefault();
-
-                // Force the active state on enter
-                $( event.target).addClass('active').trigger('mousedown');
-            }
-
-        }).on('keyup', function(event){
-            if( event.keyCode == 13 ){
-
-                // Make sure to keep the focus on the upper directory on refresh
-                self._keepFocusOnTitlebar = true;
-                $( event.currentTarget).removeClass('active').trigger('click');
-            }
-        });
-
+        this._addFunctionality();
         this._registerEvents();
     },
 
@@ -203,59 +175,11 @@ FileTreeView.prototype = {
 
         this.debug("Refreshing titlebar with directory " + current_directory );
 
+        this._currentDirectory = current_directory;
         $("[data-fm-value=current_directory]").text( "/" + current_directory );
 
         if( this._titlebarElement.length > 0 ){
             this._titlebarElement.empty();
-
-            var directoryelement = $( this._formatTitleDirectory( current_directory ) );
-            directoryelement.appendTo( this._titlebarElement )
-                .on('click', function(event){
-                    var higherdirectory = self._getHigherDirectory( current_directory );
-                    self._eventHandler.trigger('filemanager:view:open', { directory: higherdirectory, isSynchronized: true });
-
-                }).on('keydown', function(event){
-
-                    // ENTER
-                    if( event.keyCode == 13 ){
-                        event.preventDefault();
-
-                        // Force the active state on enter
-                        $( event.target).addClass('active').trigger('mousedown');
-                    }
-
-                }).on('keyup', function(event){
-                    if( event.keyCode == 13 ){
-
-                        // Make sure to keep the focus on the upper directory on refresh
-                        self._keepFocusOnTitlebar = true;
-                        $( event.currentTarget).removeClass('active').trigger('click');
-                    }
-                });
-
-            var createbuttonstring = this._formatCreatedirectoryButton();
-            var createdirectorybutton = $( createbuttonstring );
-            createdirectorybutton.on('click', { directory: current_directory }, function( event ){
-                self._createDirectory( event.data.directory );
-            });
-            createdirectorybutton.appendTo( this._titlebarElement );
-
-            var searchinputstring = '<input type="search" name="filemanager_search" />';
-            var searchinput = $( searchinputstring );
-            searchinput.on('search', { directory: current_directory }, function( event ){
-                    self._searchEvent( event );
-
-                    self._keepFocusOnSearchbar = true;
-                }).on('keyup', { directory: current_directory }, function( event ){
-
-                    // Search on Enter
-                    if( event.keyCode == 13 ){
-                        self._searchEvent( event );
-                        self._keepFocusOnSearchbar = true;
-                    }
-                });
-            var searchelement = this._formatSearchelement( searchinput );
-            searchelement.appendTo( this._titlebarElement );
 
             // Add the uploading button
             var uploadstring = this._formatUpload( "/admin/fileapi/create", "uploadbutton",
@@ -338,16 +262,6 @@ FileTreeView.prototype = {
                     $("input[name=filemanager_upload]").trigger("click");
                 }
             });
-
-            // Keyboard focus handling
-            if( self._keepFocusOnTitlebar == true ){
-                directoryelement.focus();
-                self._keepFocusOnTitlebar = false;
-                self._keepFocusOnSearchbar = false;
-
-            } else if ( self._keepFocusOnSearchbar == true ){
-                searchinput.focus();
-            }
         }
     },
 
@@ -456,10 +370,11 @@ FileTreeView.prototype = {
 
                         // ENTER
                         if( event.keyCode == 13){
-                            self._openContentEvent( event );
 
-                            // Make sure to keep the focus on the upper directory on refresh
-                            self._keepFocusOnTitlebar = true;
+                            // Keep the focus on the content items if we are using a keyboard
+                            self._keepFocusOnContent = true;
+
+                            self._openContentEvent( event );
                         }
 
                     }).on('dblclick', { file: file }, function( evt ){
@@ -467,41 +382,16 @@ FileTreeView.prototype = {
                     });
 
                 self._addContextmenuToRow( "." + rowclass, file );
+
+                // Ensure we keep focus on the content area
+                if( i == 0 && self._keepFocusOnContent == true ){
+                    rowelement.focus();
+                    self._keepFocusOnContent = false;
+                }
             }
         }
 
-        self.hideOverlay();
-    },
-
-    /**
-     * Show the overlay element
-     */
-    showOverlay: function(){
-        this._resizeOverlay();
-
-        this._overlayElement.css("position", 'absolute').css("display", "table");
-    },
-
-    /**
-     * Hide the overlay element
-     */
-    hideOverlay: function(){
-        this._overlayElement.css("position", 'absolute').css("display", "none");
-    },
-
-    /**
-     * Resizes the overlay so it matches the content area and directory area again
-     *
-     * @private
-     */
-    _resizeOverlay: function(){
-        var rowPos = this._overlayReference.offset();
-        var bottomTop = rowPos.top;
-        var bottomLeft = rowPos.left;
-
-        this._overlayElement
-            .css("top", bottomTop).css("left", bottomLeft).css("width", this._overlayReference.width())
-            .css("height", this._overlayReference.height())
+        self._eventHandler.trigger("filemanager:view:rendered");
     },
 
     /**
@@ -701,6 +591,100 @@ FileTreeView.prototype = {
     },
 
     /**
+     * Add listeners and functionality to the elements designated to have this functionality
+     *
+     * Possible functionalities
+     *
+     * search - The search input field
+     * directory_up - Button that moves up a directory
+     * refresh - Refreshes the current directory
+     * create_directory - Button that creates a directory row in the filemanager
+     * grid_view - Set the content view as grid
+     * list_view - Set the content view as a list
+     * sort_filename - Button that toggles the sorting on filename
+     * sort_* - Button that toggles the sorting on a property of a file ( For example, sort_date_modified )
+     *
+     * @private
+     */
+    _addFunctionality: function(){
+        var self = this;
+
+        // Shared button events for keyboard functionality
+        var keydownEvent = function(event){
+
+            // ENTER
+            if( event.keyCode == 13 ){
+                event.preventDefault();
+
+                // Force the active state on enter
+                $( event.target).addClass('active').trigger('mousedown');
+            }
+        };
+
+        var keyupEvent = function(event){
+            if( event.keyCode == 13 ){
+                $( event.currentTarget).removeClass('active').trigger('click');
+            }
+        };
+
+        // Directory up button
+        $("[data-fm-functionality=directory_up]").on('click', function(event){
+            self._eventHandler.trigger('filemanager:view:directory_up',{});
+        }).on('keydown', keydownEvent).on('keyup', keyupEvent);
+
+        // Refresh button
+        $("[data-fm-functionality=refresh]").on("click", function(){
+            self._eventHandler.trigger("filemanager:view:refresh", {});
+        }).on('keydown', keydownEvent).on('keyup', keyupEvent);
+
+        // Create directory button
+        $("[data-fm-functionality=create_directory]").on("click", function( event ){
+            self._createDirectory( self._currentDirectory );
+        }).on('keydown', keydownEvent).on('keyup', keyupEvent);
+
+        // Sort button for properties
+        $("[data-fm-functionality^='sort_']").on("click", function( event ){
+            var funcproperty = $( event.currentTarget).attr("data-fm-functionality");
+            var property = funcproperty.substring( 5 );
+
+            if( property === "filename" ){
+                self._eventHandler.trigger("filemanager:view:sort");
+            } else {
+                self._eventHandler.trigger("filemanager:view:sort", {
+                    sortfunction: function(a, b){
+                        if(a[ property ] > b[ property ]){
+                            return -1;
+                        } else if(a[ property ] < b[ property ]){
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
+                });
+            }
+        }).on("keydown", keydownEvent).on("keyup", keyupEvent);
+
+        // Search input
+        $("input[data-fm-functionality=search]").on('search', { directory: self._currentDirectory }, function( event ) {
+            self._searchEvent(event);
+
+        }).on('keydown', function( event ){
+
+            // Disable ENTER on keydown
+            if( event.keyCode == 13){
+                event.preventDefault();
+            }
+
+        }).on('keyup', { directory: self._currentDirectory }, function( event ){
+
+            // Search on Enter
+            if( event.keyCode == 13 ){
+                self._searchEvent( event );
+            }
+        });
+    },
+
+    /**
      * Displays debug data
      * @param debug_message
      */
@@ -743,14 +727,6 @@ FileTreeView.prototype = {
 
         this._eventHandler.register('filemanager:model:path_changed', function( current_directory ){
             self.refreshTitlebar( current_directory );
-        });
-
-        this._eventHandler.register('filemanager:api:loading', function( ){
-            self.showOverlay();
-        });
-
-        this._eventHandler.register('filemanager:api:done', function( ){
-            self.hideOverlay();
         });
     }
 };

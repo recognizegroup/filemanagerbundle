@@ -37,7 +37,7 @@
             },
 
             setListview: function(){
-
+                self.data("view").setListview();
             },
 
             setGridview: function(){
