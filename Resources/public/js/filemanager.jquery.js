@@ -36,16 +36,8 @@
                 return self;
             },
 
-            setListview: function(){
-                self.data("view").setListview();
-            },
-
-            setGridview: function(){
-
-            },
-
             search: function( value ){
-                self.data("view").search( value );
+                self.data("tree").search( value );
                 return self;
             },
 

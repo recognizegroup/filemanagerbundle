@@ -8,7 +8,7 @@ module.exports = function(grunt) {
                     specs: 'Tests/Resources/*Test.js',
                     helpers: 'Tests/Resources/*Helper.js',
                     vendor:  [
-                        'http://code.jquery.com/jquery-1.11.2.min.js',
+                        'Resources/public/js/jquery-1.11.2.min.js',
                         'node_modules/jasmine-jquery/lib/jasmine-jquery.js',
                         'Resources/public/js/jstree.js'
                     ]

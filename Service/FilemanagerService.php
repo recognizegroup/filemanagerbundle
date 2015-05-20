@@ -6,6 +6,8 @@ use InvalidArgumentException;
 use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Exception\DotfilesNotAllowedException;
+use Recognize\FilemanagerBundle\Exception\FileTooLargeException;
+use Recognize\FilemanagerBundle\Exception\UploadException;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Security\FileSecurityContextInterface;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
@@ -441,25 +443,47 @@ class FilemanagerService {
         if( $this->security_context->isGranted("upload", $this->working_directory, $this->absolutePathToRelativePath( $this->current_directory ) ) ) {
             $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
             if ($fs->exists($absolute_path) == false) {
-                try {
-                    $file->move($this->current_directory, $new_filename);
+                if( $file->getError() !== 0 ){
+                    $this->throwFileExceptions( $file->getError() );
+                } else {
+                    try {
+                        $file->move($this->current_directory, $new_filename);
 
-                    $finder = new Finder();
-                    $finder->in($this->current_directory)->path("/^" . $new_filename . "$/");
-                    if ($finder->count() > 0) {
-                        $movedfile = $this->getFirstFileInFinder($finder);
-                        return new FileChanges("create", $movedfile);
-                    } else {
+                        $finder = new Finder();
+                        $finder->in($this->current_directory)->path("/^" . $new_filename . "$/");
+                        if ($finder->count() > 0) {
+                            $movedfile = $this->getFirstFileInFinder($finder);
+                            return new FileChanges("create", $movedfile);
+                        } else {
+                            throw new FileException("File not created");
+                        }
+                    } catch (FileException $e) {
                         throw new FileException("File not created");
                     }
-                } catch (FileException $e) {
-                    throw new FileException("File not created");
                 }
             } else {
                 throw new ConflictException();
             }
         } else {
             throw new AccessDeniedException();
+        }
+    }
+
+    /**
+     * Throws exceptions based on the UPLOAD_ERR codes
+     *
+     * @param $upload_error_int
+     */
+    protected function throwFileExceptions( $upload_error_int ){
+
+        switch( $upload_error_int ){
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                throw new FileTooLargeException();
+                break;
+            default:
+                throw new UploadException( "File not uploaded" );
+            break;
         }
     }
 

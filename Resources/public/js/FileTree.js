@@ -662,6 +662,7 @@ FileTree.prototype = {
     },
 
     // --------------------- JQUERY FUNCTIONS
+
     refresh: function(){
         var self = this;
         this._eventHandler.trigger("filemanager:view:open", { directory: self._currentPath, isSynchronized: false } );

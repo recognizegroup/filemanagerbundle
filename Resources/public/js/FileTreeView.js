@@ -3,12 +3,7 @@
 var FileTreeView = function( config, element ){
 
     var defaults = {
-        debug: false,
-        elements: {
-            title: ".titlebar",
-            main: '.mainview',
-            directories: '.directories'
-        }
+        debug: false
     };
 
     this.options = $.extend(true, defaults, config);
@@ -22,16 +17,17 @@ FileTreeView.prototype = {
     _container: false,
 
     _directoryElement: false,
-    _titlebarElement: false,
     _contentElement: false,
     _uploadLink: false,
+
+    _viewFormat: "list",
 
     // Keyboard accessability
     _keepFocusOnDirectories: false,
     _keepFocusOnContent: false,
 
-    _uploadFunctionality: null,
     _currentDirectory: "",
+    _currentContent: [],
 
     /**
      * Initializes the filetreeview
@@ -44,48 +40,38 @@ FileTreeView.prototype = {
 
         this._debug = config.debug;
         this._container = $( element );
-        this._directoryElement = $( config.elements.directories );
-        this._titlebarElement = $( config.elements.title );
-        this._contentElement = $( config.elements.main );
+        this._directoryElement = $("[data-fm-value=directories]");
 
         this._eventHandler = config.eventHandler;
 
-        this._contentElement.on("dragover", function( event ){
-            self._contentElement.css("background", "red");
-        }).on("dragleave", function( event ){
-            self._contentElement.css("background", "white");
-        });
-
         if( typeof config.filerowFormat === "function" ){
             this._formatFilerow = config.filerowFormat;
+        }
+
+        if( typeof config.fileCellFormat === "function" ){
+            this._formatFilecell = config.fileCellFormat;
         }
 
         if( typeof config.renamerowFormat === "function" ){
             this._formatRenamerow = config.renamerowFormat;
         }
 
-        if( typeof config.titledirectoryFormat === "function" ){
-            this._formatTitleDirectory = config.titledirectoryFormat;
+        if( typeof config.renamecellFormat === "function" ){
+            this._formatRenamecell = config.renamecellFormat;
         }
 
-        if( typeof config.searchelementFormat === "function" ){
-            this._formatSearchelement = config.searchelementFormat;
-        }
 
         if( typeof config.uploadFormat === "function" ){
             this._formatUpload = config.uploadFormat;
         }
 
-        if( typeof config.createdirectoryFormat === "function" ){
-            this._formatCreatedirectoryButton = config.createdirectoryFormat;
-        }
-
+        this._setOverviewLayout("list");
         this._addFunctionality();
         this._registerEvents();
     },
 
     /**
-     * Formats the data of the file into an HTML element - Can be replaced using the config variables
+     * Formats the data of the file into an HTML element used in the listview - Can be replaced using the config variables
      *
      * @param file                          A file object
      * @returns {string}                    An html string
@@ -93,6 +79,17 @@ FileTreeView.prototype = {
      */
     _formatFilerow: function( file ){
         return "<p class=\"filemanagerrow\"><span>" + file.path + "</span></p>";
+    },
+
+    /**
+     * Formats the data of the file into an HTML element used in the gridview - Can be replaced using the config variables
+     *
+     * @param file                          A file object
+     * @returns {string}                    An html string
+     * @private
+     */
+    _formatFilecell: function( file ){
+        return "<p class=\"filemanagercell\"><span>" + file.path + "</span></p>";
     },
 
     /**
@@ -107,64 +104,14 @@ FileTreeView.prototype = {
     },
 
     /**
-     * Formats the search element in the titlebar
+     * Formats the cell where inline editting is taking place
      *
-     * @param searchelement                 An html element with the input field
+     * @param input                          A file object
      * @returns {string}                    An html string
      * @private
      */
-    _formatSearchelement: function( searchelement ){
-        return searchelement;
-    },
-
-    /**
-     * Formats the data of the current directory into an HTML element - Can be replaced using the config variables
-     *
-     * @param current_directory             The current directory
-     * @returns {string}                    An html string
-     * @private
-     */
-    _formatTitleDirectory: function( current_directory ){
-        return "<p class=\"filemanagerrow\"><span>" + current_directory + "</span></p>";
-    },
-
-    /**
-     * Format the uploading area of the filemanager
-     *
-     * @param action                        The link to which the upload should go to
-     * @param buttonid                      The id which links to the button that can be pressed
-     * @param uploadname                    The fieldname of the file upload field
-     * @param directoryname                 The fieldname of the directory selection field
-     * @param current_directory             The current directory
-     * @returns {string}
-     * @private
-     */
-    _formatUpload: function( action, buttonid, uploadname, directoryname, current_directory){
-        return '<form enctype="multipart/form-data" method="POST" action="' + action + '">' +
-            '<input type="hidden" name="' + directoryname + '" value="' + current_directory + '" />' +
-            '<input type="file" name="' + uploadname + '"/>' +
-            '<input type="submit" id="' + buttonid + '" name="Uploaden" />' +
-            '</form>';
-    },
-
-    /**
-     * Outputs the button that should be in the form
-     *
-     * @returns {string}                    An html string
-     * @private
-     */
-    _formatUploadButton: function(){
-        return '<a class="btn filemanager_uploading">Uploaden' + '<input type="file" name="filemanager_upload"/>' + "</a>";
-    },
-
-    /**
-     * Outputs the button that creates a new directory row in the content area
-     *
-     * @returns {string}                    An html string
-     * @private
-     */
-    _formatCreatedirectoryButton: function(){
-        return "<a>Create directory</a>";
+    _formatRenamecell: function( file ){
+        return "<p class=\"filemanagercell\"><span>" + file.name + "</span></p>";
     },
 
     /**
@@ -174,95 +121,8 @@ FileTreeView.prototype = {
         var self = this;
 
         this.debug("Refreshing titlebar with directory " + current_directory );
-
         this._currentDirectory = current_directory;
         $("[data-fm-value=current_directory]").text( "/" + current_directory );
-
-        if( this._titlebarElement.length > 0 ){
-            this._titlebarElement.empty();
-
-            // Add the uploading button
-            var uploadstring = this._formatUpload( "/admin/fileapi/create", "uploadbutton",
-                "filemanager_upload", "filemanager_directory", current_directory );
-            var uploadelement = $( uploadstring );
-            uploadelement.addClass('upload-container');
-            uploadelement.appendTo( this._titlebarElement );
-
-            // Add the hidden progress row
-            var progressstring = '<div class="col-xs-9"><div id="progressOuter" class="progress progress-striped active" style="display:none;">' +
-                '<div id="progressBar" class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div></div></div>';
-            $(progressstring).appendTo( this._titlebarElement );
-            var progressOuter = $("#progressOuter");
-            var progressBar = $("#progressBar");
-
-            // Add the AJAX upload functionality
-            var uploader = new ss.SimpleUpload({
-                url: "/admin/fileapi/create",
-                name: "filemanager_upload",
-                method: 'POST',
-                hoverClass: 'focus',
-                focusClass: 'active',
-                multipart: true,
-                data: {
-                    filemanager_directory: current_directory
-                },
-                responseType: 'json',
-                dropzone: "filemanager_view",
-                debug: self._debug,
-                startXHR: function() {
-                    progressOuter.css('display', 'block'); // make progress bar visible
-                    this.setProgressBar( progressBar );
-
-                    self._eventHandler.trigger("filemanager:api:loading");
-                },
-
-                onComplete: function(filename, response){
-                    self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: current_directory } );
-                },
-
-                onError: function( filename, errorType, status, statusText, response ){
-                    progressOuter.css('display', 'none');
-                    self._eventHandler.trigger("filemanager:api:done");
-
-                    response = JSON.parse( response );
-                    if( response != false ){
-                        self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
-                    }
-                }
-            });
-
-            // Prevent multiple upload screens from showing
-            if( this._uploadFunctionality != null ){
-                this._uploadFunctionality.destroy();
-            }
-            this._uploadFunctionality = uploader;
-
-            // Ajax upload button
-            var uploadbutton = uploadelement.find('#uploadbutton');
-            uploadbutton.off("click").off("keydown").off("keyup");
-            if( uploadbutton.length == 0 ){
-                this.errorLog("Upload ID wasn't set in the upload element");
-            }
-
-            // Keyboard focus for AJAX button
-            uploadbutton.on("click", function(){
-                $("input[name=filemanager_upload]").trigger("click");
-            }).on("keydown", function( event ){
-
-                // ENTER
-                if( event.keyCode == 13 ) {
-                    uploadbutton.addClass('active');
-                    event.preventDefault();
-                }
-            }).on("keyup", function( event ){
-
-                // ENTER
-                if( event.keyCode == 13 ){
-                    uploadbutton.removeClass('active');
-                    $("input[name=filemanager_upload]").trigger("click");
-                }
-            });
-        }
     },
 
     /**
@@ -308,11 +168,17 @@ FileTreeView.prototype = {
             size: "",
             children: {}
         };
-        var createdirectoryrow = $( this._formatRenamerow( directory ) );
+
+        var createdirectorycontainer;
+        if( this._viewFormat == "list"){
+            createdirectorycontainer = $( this._formatRenamerow( directory ) );
+        } else if( this._viewFormat == "grid") {
+            createdirectorycontainer = $( this._formatRenamecell( directory ) );
+        }
 
         // Add an enter event to the input
         var self = this;
-        var createdirectoryelement = createdirectoryrow.find('input[name=directory_name]');
+        var createdirectoryelement = createdirectorycontainer.find('input[name=directory_name]');
         createdirectoryelement.on("keydown", {directory: path }, function( event ){
 
             // ENTER
@@ -330,7 +196,7 @@ FileTreeView.prototype = {
             self._contentElement.children().eq(0).remove();
         });
 
-        this._contentElement.prepend( createdirectoryrow );
+        this._contentElement.prepend( createdirectorycontainer );
         createdirectoryelement.focus();
     },
 
@@ -341,6 +207,11 @@ FileTreeView.prototype = {
      */
     refreshContent: function( content ){
         var self = this;
+
+        if( content !== undefined ){
+            this._currentContent = content;
+        }
+
         if( this._contentElement.length > 0 ){
 
             // Clear the view before filling it
@@ -349,15 +220,22 @@ FileTreeView.prototype = {
             // Clear all the context menus
             $.contextMenu( 'destroy' );
 
-            for( var i = 0, length = content.length; i < length; i++ ){
+            for( var i = 0, length = self._currentContent.length; i < length; i++ ){
 
-                var file = $.extend({}, content[i]);
+                var file = $.extend({}, self._currentContent[i]);
                 file.size = this._filesizeFormat( file.size );
-                var filerow = this._formatFilerow( file );
-                var rowclass = 'filerow-' + i;
+                var filestring = "";
 
-                var rowelement = $(filerow)
-                    .addClass( rowclass )
+                // Use the correct format for the overview
+                if( self._viewFormat == "list"){
+                    filestring = this._formatFilerow( file );
+                } else {
+                    filestring = this._formatFilecell( file );
+                }
+                var fileclass = 'file-' + i;
+
+                var fileelement = $( filestring )
+                    .addClass( fileclass )
                     .appendTo( this._contentElement )
                     .on('click',{ file: file }, function( evt ) {
                         $(evt.currentTarget).toggleClass('selected');
@@ -381,11 +259,11 @@ FileTreeView.prototype = {
                         self._openContentEvent( evt );
                     });
 
-                self._addContextmenuToRow( "." + rowclass, file );
+                self._addContextmenuToRow( "." + fileclass, file );
 
                 // Ensure we keep focus on the content area
                 if( i == 0 && self._keepFocusOnContent == true ){
-                    rowelement.focus();
+                    fileelement.focus();
                     self._keepFocusOnContent = false;
                 }
             }
@@ -437,7 +315,13 @@ FileTreeView.prototype = {
         var copiedfile = $.extend({}, file );
 
         copiedfile.name = '<input type="text" name="file_name" value="' + file.name + '"/>';
-        var renameelement = $( self._formatRenamerow( copiedfile ) );
+        var renameelement;
+        if( this._viewFormat == "list"){
+            renameelement = $( self._formatRenamerow( copiedfile ) );
+        } else if( this._viewFormat == "grid") {
+            renameelement = $( self._formatRenamecell( copiedfile ) );
+        }
+
         var renameinput = renameelement.find('input');
         renameinput.on("keydown", {file: file }, function( event ){
 
@@ -591,16 +475,49 @@ FileTreeView.prototype = {
     },
 
     /**
-     * Add listeners and functionality to the elements designated to have this functionality
+     * Show the correct display - Either a list or a gridview
      *
-     * Possible functionalities
+     * @private
+     */
+    _setOverviewLayout: function( overviewlayout ){
+        if( overviewlayout == "list" || overviewlayout == "grid"){
+            this._viewFormat = overviewlayout;
+
+            if( this._viewFormat == "list"){
+
+                $("[data-fm-show=list_view]").show();
+                $("[data-fm-show=grid_view]").hide();
+
+                $("[data-fm-functionality=set_list]").addClass("selected");
+                $("[data-fm-functionality=set_grid]").removeClass("selected");
+
+                this._contentElement = $("[data-fm-value=list_content]");
+
+            } else if( this._viewFormat == "grid" ){
+
+                $("[data-fm-show=list_view]").hide();
+                $("[data-fm-show=grid_view]").show();
+
+                $("[data-fm-functionality=set_grid]").addClass("selected");
+                $("[data-fm-functionality=set_list]").removeClass("selected");
+
+                this._contentElement = $("[data-fm-value=grid_content]");
+            }
+        } else {
+            this.errorLog( "Overview layout can only be a list or a grid" );
+        }
+    },
+
+    /**
+     * Add listeners and functionality to the elements designated to have this functionality
+     * Functionalities are set by adding a data-fm-functionality attribute with one of the functionalities below
      *
      * search - The search input field
      * directory_up - Button that moves up a directory
      * refresh - Refreshes the current directory
      * create_directory - Button that creates a directory row in the filemanager
-     * grid_view - Set the content view as grid
-     * list_view - Set the content view as a list
+     * set_grid - Set the content view as grid
+     * set_list - Set the content view as a list
      * sort_filename - Button that toggles the sorting on filename
      * sort_* - Button that toggles the sorting on a property of a file ( For example, sort_date_modified )
      *
@@ -642,6 +559,21 @@ FileTreeView.prototype = {
             self._createDirectory( self._currentDirectory );
         }).on('keydown', keydownEvent).on('keyup', keyupEvent);
 
+        // Set the overview as a list view
+        $("[data-fm-functionality=set_list]").on("click", function( event ){
+            self._setOverviewLayout("list");
+
+            self.refreshContent();
+        }).on('keydown', keydownEvent).on('keyup', keyupEvent);
+
+        // Set the overview as a list view
+        $("[data-fm-functionality=set_grid]").on("click", function( event ){
+            self._setOverviewLayout("grid");
+
+            self.refreshContent();
+        }).on('keydown', keydownEvent).on('keyup', keyupEvent);
+
+
         // Sort button for properties
         $("[data-fm-functionality^='sort_']").on("click", function( event ){
             var funcproperty = $( event.currentTarget).attr("data-fm-functionality");
@@ -682,6 +614,89 @@ FileTreeView.prototype = {
                 self._searchEvent( event );
             }
         });
+
+        self._addUploadFunctionality();
+    },
+
+    /**
+     * Add the AJAX uploading functionality
+     * Functionalities are set by adding a data-fm-functionality attribute with one of the functionalities below
+     *
+     * upload_progress - A progress bar, the width gets updated from 0% to 100% during uploading
+     * upload_button - Button that opens the filemanager and starts the uploading process if a file was selected
+     * abort_upload - Button that aborts the current upload
+     *
+     * @private
+     */
+    _addUploadFunctionality: function(){
+        var self = this;
+
+        var progressBar = $("[data-fm-functionality=upload_progress]");
+
+        // Add the AJAX upload functionality
+        var uploader = new ss.SimpleUpload({
+            url: "/admin/fileapi/create",
+            name: "filemanager_upload",
+            method: 'POST',
+            hoverClass: 'focus',
+            focusClass: 'active',
+            multipart: true,
+            data: {
+                filemanager_directory: self._currentDirectory
+            },
+            responseType: 'json',
+            dropzone: "filemanager_view",
+            debug: self._debug,
+            startXHR: function() {
+
+                if( progressBar.length > 0 ){
+                    progressBar.css("width", "0%");
+                    this.setProgressBar( progressBar );
+                }
+
+                self._eventHandler.trigger("filemanager:api:uploading");
+            },
+
+            onComplete: function(filename, response){
+                self._eventHandler.trigger("filemanager:api:upload_done");
+
+                self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: self._currentDirectory } );
+            },
+
+            onError: function( filename, errorType, status, statusText, response ){
+                self._eventHandler.trigger("filemanager:api:upload_done");
+
+                response = JSON.parse( response );
+                if( response != false ){
+                    self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: statusText, statuscode: status });
+                }
+            }
+        });
+        uploader.setAbortBtn( $("[data-fm-functionality=abort_upload]") );
+
+        // Ajax upload button
+        var uploadbutton = $("[data-fm-functionality=upload_button]");
+        if( uploadbutton.length !== 0 ){
+            // Keyboard focus for AJAX button
+            uploadbutton.on("click", function(){
+                $("input[name=filemanager_upload]").trigger("click");
+
+            }).on("keydown", function( event ){
+
+                // ENTER
+                if( event.keyCode == 13 ) {
+                    uploadbutton.addClass('active');
+                    event.preventDefault();
+                }
+            }).on("keyup", function( event ){
+
+                // ENTER
+                if( event.keyCode == 13 ){
+                    uploadbutton.removeClass('active');
+                    $("input[name=filemanager_upload]").trigger("click");
+                }
+            });
+        }
     },
 
     /**

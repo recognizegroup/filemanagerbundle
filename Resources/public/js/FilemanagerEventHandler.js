@@ -20,7 +20,6 @@ FilemanagerEventHandler.prototype = {
         }
     },
 
-
     /**
      * Check if event exists
      * @param event
