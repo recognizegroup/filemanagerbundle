@@ -171,4 +171,16 @@ class FilemanagerController extends Controller {
         return $builder->build();
     }
 
+
+    /**
+     * Preview a file
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function preview(Request $request) {
+        $filemanager = $this->getFilemanager();
+        return $filemanager->getFilePreview( $request->query->get('filemanager_path') );
+    }
+
 }

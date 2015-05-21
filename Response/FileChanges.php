@@ -21,6 +21,8 @@ class FileChanges {
     /** @var SplFileInfo */
     protected $newfile = null;
 
+    protected $finfo = null;
+
     /**
      * @param string $type                  The type of change done - For example rename
      * @param SplFileInfo $oldfile
@@ -28,6 +30,7 @@ class FileChanges {
     public function __construct( $type, SplFileInfo $oldfile ){
         $this->type = $type;
         $this->oldfile = $oldfile;
+        $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
     }
 
     /**
@@ -65,6 +68,12 @@ class FileChanges {
         $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
+        $mimetype = finfo_file( $this->finfo, $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename() );
+        $filedata['mimetype'] = $mimetype;
+        if( strpos( $mimetype, "image") !== false ){
+            $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+        }
+
         if( $file->isDir() ){
             $filedata['type'] = "dir";
         } else {
@@ -101,6 +110,8 @@ class FileChanges {
         if( $this->newfile !== null ){
             $data['updatedfile'] = $this->transformFileToData( $this->newfile );
         }
+
+        finfo_close( $this->finfo );
         return $data;
     }
 

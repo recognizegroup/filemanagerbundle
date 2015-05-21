@@ -12,6 +12,11 @@ class FilemanagerResponseBuilder {
     protected $error_message = "";
 
     protected $translation_function = null;
+    protected $finfo = null;
+
+    public function __construct(){
+        $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
+    }
 
     /**
      * Fail the response and return a detailed message
@@ -112,7 +117,15 @@ class FilemanagerResponseBuilder {
         $filedata['directory'] = $file->getRelativePath();
         $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
+        $absolutepath = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename();
+
         $filedata['file_extension'] = $file->getExtension();
+        $mimetype = finfo_file( $this->finfo, $absolutepath );
+        $filedata['mimetype'] = $mimetype;
+        if( strpos( $mimetype, "image") !== false ){
+            $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+        }
+
         if( $file->isDir() ){
             $filedata['type'] = "dir";
         } else {
@@ -161,6 +174,7 @@ class FilemanagerResponseBuilder {
      */
     public function build(){
         $this->translateFiles();
+        finfo_close( $this->finfo );
 
         $response = new Response( json_encode( $this->config ) );
         if( $this->statuscode != 200 ){

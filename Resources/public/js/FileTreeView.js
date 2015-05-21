@@ -865,6 +865,11 @@ FileTreeView.prototype = {
                 self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: self._currentDirectory } );
             },
 
+            onAbort: function(){
+
+                self._eventHandler.trigger("filemanager:api:upload_done");
+            },
+
             onError: function( filename, errorType, status, statusText, response ){
                 self._eventHandler.trigger("filemanager:api:upload_done");
 

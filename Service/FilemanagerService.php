@@ -20,6 +20,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Form\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -487,6 +488,41 @@ class FilemanagerService {
             break;
         }
     }
+
+    /**
+     * Get the full image as a preview if we are dealing with an image file
+     *
+     * @param string $relative_filepath
+     * @return
+     */
+    public function getFilePreview( $filepath ){
+        $fs = new Filesystem();
+
+        $response = new Response();
+
+        // Check the mimetype
+        $finfo = finfo_open( FILEINFO_MIME_TYPE );
+        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $filepath;
+        if ($fs->exists($absolute_path) == true) {
+            $mimetype = finfo_file($finfo, $absolute_path);
+            finfo_close( $finfo );
+            if( strpos( $mimetype, "image" ) !== false ){
+
+                $finder = new Finder();
+                $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($filepath) . "$/");
+
+                if ($finder->count() > 0) {
+                    $file = $this->getFirstFileInFinder($finder);
+
+                    $response = new Response( $file->getContents() ,
+                        200, array("Content-Type" => $file->getType() ));
+                }
+            }
+        }
+
+        return $response;
+    }
+
 
     /**
      * Escape forward slashes in a path
