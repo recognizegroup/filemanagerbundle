@@ -405,11 +405,13 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedDeletedFile(){
         return array("type" => "delete", "file" => array("file_extension" => "txt",
+            'mimetype' => "text/plain",
             "name" => "testing.txt", "path" => "testing.txt", "directory" => "", "type" => "file") );
     }
 
     protected function getExpectedDeletedDirectory(){
         return array("type" => "delete", "file" => array("file_extension" => "",
+            'mimetype' => "directory",
             "name" => "testing", "path" => "testing", "directory" => "", "type" => "dir") );
     }
 

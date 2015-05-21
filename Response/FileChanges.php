@@ -68,7 +68,7 @@ class FileChanges {
         $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
-        $mimetype = finfo_file( $this->finfo, $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename() );
+        $mimetype = @finfo_file( $this->finfo, $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename() );
         $filedata['mimetype'] = $mimetype;
         if( strpos( $mimetype, "image") !== false ){
             $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];

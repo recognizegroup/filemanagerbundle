@@ -99,6 +99,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
                         "directory" => "",
                         "path" => "testing.txt",
                         "file_extension" => "txt",
+                        'mimetype' => "text/plain",
                         "type" => "file"
                     ),
                     array(
@@ -106,6 +107,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
                         "directory" => "",
                         "path" => "testing2",
                         "file_extension" => "",
+                        'mimetype' => "directory",
                         "type" => "dir"
                     ),
                     array(
@@ -113,6 +115,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
                         "directory" => "",
                         "path" => "testing",
                         "file_extension" => "",
+                        'mimetype' => "directory",
                         "type" => "dir"
                     )
                 )
@@ -134,6 +137,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
                         "directory" => "",
                         "path" => "testing.txt",
                         "file_extension" => "txt",
+                        'mimetype' => "text/plain",
                         "type" => "file"
                     )
                 )
@@ -155,6 +159,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
                         "directory" => "",
                         "path" => "testing.txt",
                         "file_extension" => "txt",
+                        'mimetype' => "text/plain",
                         "type" => "file"
                     )
                 )

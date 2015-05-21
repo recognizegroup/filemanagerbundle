@@ -46,8 +46,10 @@ class FileChangesTest extends FilesystemTestCase {
         $changes = new FileChanges( "rename", $olddir );
         $changes->setFileAfterChanges( $newdir );
 
+        $falsemimetype = false;
+
         $actualresponse = $this->filterUnreliableFiledata( $changes->toArray() );
-        $this->assertEquals( $this->getExpectedDirectoryRenameChanges(), $actualresponse );
+        $this->assertEquals( $this->getExpectedDirectoryRenameChanges( $falsemimetype ), $actualresponse );
         $this->assertEquals( $changes->getUpdatedFile(), $newdir );
     }
 
@@ -63,6 +65,7 @@ class FileChangesTest extends FilesystemTestCase {
                 'directory' => "",
                 'name' => 'testing2.txt',
                 'file_extension' => 'txt',
+                'mimetype' => "text/plain",
                 'path' => 'testing2.txt'
             ),
             "updatedfile" => array(
@@ -70,6 +73,7 @@ class FileChangesTest extends FilesystemTestCase {
                 'directory' => "",
                 'name' => 'testing.txt',
                 'file_extension' => 'txt',
+                'mimetype' => "text/plain",
                 'path' => 'testing.txt'
             )
         );
@@ -80,13 +84,14 @@ class FileChangesTest extends FilesystemTestCase {
     /**
      * @return array
      */
-    protected function getExpectedDirectoryRenameChanges(){
+    protected function getExpectedDirectoryRenameChanges( $mimetype = "directory" ){
         $changes = array(
             "type" => "rename",
             "file" => array(
                 'type' => 'dir',
                 'directory' => "",
                 'name' => 'Old directory',
+                'mimetype' => "directory",
                 'file_extension' => '',
                 'path' => 'Old directory'
             ),
@@ -94,6 +99,7 @@ class FileChangesTest extends FilesystemTestCase {
                 'type' => 'file',
                 'directory' => "",
                 'name' => 'New',
+                'mimetype' => $mimetype,
                 'file_extension' => '',
                 'path' => 'New'
             )

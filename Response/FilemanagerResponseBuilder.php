@@ -120,7 +120,7 @@ class FilemanagerResponseBuilder {
         $absolutepath = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
-        $mimetype = finfo_file( $this->finfo, $absolutepath );
+        $mimetype = @finfo_file( $this->finfo, $absolutepath );
         $filedata['mimetype'] = $mimetype;
         if( strpos( $mimetype, "image") !== false ){
             $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
