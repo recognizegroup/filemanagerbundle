@@ -315,7 +315,8 @@ class FilemanagerService {
             if( $this->security_context->isGranted("move", $this->working_directory, $this->absolutePathToRelativePath( $filepath) ) ) {
                 $newrelativepath = $this->current_directory . DIRECTORY_SEPARATOR . $newpath;
                 $newfilepath = $newrelativepath . DIRECTORY_SEPARATOR . $oldfile->getFilename();
-                $newfile = new SplFileInfo($newfilepath, $newrelativepath, $oldfile->getFilename());
+
+                $newfile = new SplFileInfo($newfilepath, $this->absolutePathToRelativePath( $newrelativepath ), $oldfile->getFilename());
 
                 // Prevent files from being overwritten
                 if ($fs->exists($newfilepath)) {
@@ -341,7 +342,7 @@ class FilemanagerService {
                 throw new AccessDeniedException();
             }
         } else {
-            throw new FileNotFoundException("The file or directory that should be moved doesn't exist");
+            throw new FileNotFoundException("The file or directory that should be moved doesn't exist: " . $this->escapeSlashes( $relative_path_to_file ));
         }
     }
 

@@ -179,12 +179,13 @@ FilemanagerAPI.prototype = {
      * Send a move request to the server
      *
      * @param directory                     The directory from the file to move
-     * @param filepath                      The path to the file including the filename
+     * @param filename                      The filename
      * @param new_location                  The new location of the file
      */
-    move: function( directory, filepath, new_location ){
+    move: function( directory, filename, new_location ){
         var url = this._url + this._path_move;
 
+        var filepath = directory + filename;
         this._sendRequest( url, "POST", { filemanager_filepath: filepath, filemanager_newdirectory: new_location } )
             .success(function( data, status, jqXHR) {
 
@@ -198,6 +199,10 @@ FilemanagerAPI.prototype = {
                     changes = data.data.changes;
                 }
 
+                // Update the current directory as well
+                if( directory !== new_location ){
+                    this.self._eventHandler.trigger('filemanager:api:refresh');
+                }
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: new_location });
             })
             .fail( this._handleApiError );
@@ -252,6 +257,7 @@ FilemanagerAPI.prototype = {
                 } else {
                     changes = data.data.changes;
                 }
+
 
                 this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
             })
@@ -353,6 +359,10 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.register('filemanager:view:rename', function( eventobj ){
             self.rename( eventobj.file.directory, eventobj.file.name, eventobj.newname );
+        });
+
+        this._eventHandler.register('filemanager:view:move', function( eventobj ){
+            self.move( eventobj.file.directory, eventobj.file.name, eventobj.newlocation );
         });
 
         this._eventHandler.register('filemanager:view:delete', function( eventobj ){

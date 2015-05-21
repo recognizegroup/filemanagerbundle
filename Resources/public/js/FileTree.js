@@ -659,6 +659,10 @@ FileTree.prototype = {
         this._eventHandler.register('filemanager:view:refresh', function( eventobj ){
             self.refresh();
         });
+
+        this._eventHandler.register('filemanager:api:refresh', function( eventobj ){
+            self.refresh();
+        });
     },
 
     // --------------------- JQUERY FUNCTIONS

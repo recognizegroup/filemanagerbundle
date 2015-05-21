@@ -241,14 +241,14 @@ describe('FileTreeView', function() {
         initializeTreeView();
 
         var files = [
-            { name: "one", path: "two", type: "file" },
+            { name: "one", path: "two", type: "file", directory: "" },
             { name: "one", path: "three" },
             { name: "one", path: "one" }
         ];
         treeviews.refreshContent( files );
 
-        treeviews.createRenamerow( ".file-1", files[0] );
-        expect( treeviews._contentElement.eq(0).find("input").length ).toBeGreaterThan( 0 );
+        treeviews.createRenamerow( "[data-fm-functionality=\"file-one\"]", files[0] );
+        expect( treeviews._contentElement.children().eq(1).find("input").length ).toBeGreaterThan( 0 );
     });
 
     it('should trigger a rename event when the enter key is pressed in a nonempty rename inputfield', function () {
@@ -263,14 +263,14 @@ describe('FileTreeView', function() {
         });
 
         var files = [
-            { name: "one", path: "two", type: "file" },
+            { name: "one", path: "two", type: "file", directory: "" },
             { name: "one", path: "three" },
             { name: "one", path: "one" }
         ];
         treeviews.refreshContent( files );
 
-        treeviews.createRenamerow( ".file-1", files[0] );
-        var input = treeviews._contentElement.eq(0).find("input").eq(0);
+        treeviews.createRenamerow( "[data-fm-functionality=\"file-one\"]", files[0] );
+        var input = treeviews._contentElement.children().eq(1).find("input").eq(0);
         input.val("TEST");
 
         var e = jQuery.Event("keydown");
@@ -294,13 +294,13 @@ describe('FileTreeView', function() {
         });
 
         var files = [
-            { name: "one", path: "two", type: "file" },
+            { name: "one", path: "two", type: "file", directory: "" },
             { name: "one", path: "three" },
             { name: "one", path: "one" }
         ];
         treeviews.refreshContent( files );
         treeviews._setOverviewLayout( "grid" );
-        treeviews.createRenamerow( ".file-1", files[0] );
+        treeviews.createRenamerow( "[data-fm-functionality=\"file-one\"]", files[0] );
 
         expect( triggered ).toEqual( true );
     });
@@ -316,7 +316,7 @@ describe('FileTreeView', function() {
         treeviews.refreshContent( files );
 
         $("[data-fm-functionality=create_directory]").eq(0).click();
-        expect( treeviews._contentElement.eq(0).find("input").length ).toBeGreaterThan( 0 );
+        expect( treeviews._contentElement.children().eq(0).find("input").length ).toBeGreaterThan( 0 );
     });
 
     it('should trigger a create event when the enter key is pressed in a nonempty create directory inputfield', function () {
@@ -338,7 +338,7 @@ describe('FileTreeView', function() {
         treeviews.refreshContent( files );
 
         $("[data-fm-functionality=create_directory]").click();
-        var input = treeviews._contentElement.eq(0).find("input").eq(0).val("asdf");
+        var input = treeviews._contentElement.children().eq(0).find("input").eq(0).val("asdf");
 
         var e = jQuery.Event("keydown");
         e.which = 13;
@@ -370,6 +370,60 @@ describe('FileTreeView', function() {
 
         $("[data-fm-functionality=create_directory]").click();
         expect( triggered ).toEqual( true );
+    });
+
+    it('should add a class to a file being cut when going into cutting mode', function () {
+        initializeTreeView();
+
+        var files = [
+            { name: "one", path: "two", type: "file", directory: "" },
+            { name: "one", path: "three" },
+            { name: "one", path: "one" }
+        ];
+
+        treeviews.refreshContent( files );
+        treeviews._setCutMode("[data-fm-functionality=\"file-one\"]", files[0]);
+
+        expect( treeviews._contentElement.children().eq(0).hasClass("mode-cut") ).toEqual( true );
+    });
+
+    it('should keep the mode cut class on the file if the overview is being switched', function () {
+        initializeTreeView();
+
+        var files = [
+            { name: "one", path: "two", type: "file", directory: "" },
+            { name: "one", path: "three" },
+            { name: "one", path: "one" }
+        ];
+
+        treeviews.refreshContent( files );
+        treeviews._setCutMode("[data-fm-functionality=\"file-one\"]", files[0]);
+        treeviews._setOverviewLayout( "grid" );
+        treeviews.refreshContent( files );
+
+        expect( treeviews._contentElement.children().eq(0).hasClass("mode-cut") ).toEqual( true );
+    });
+
+    it('should add a span element with the class searchquery around the searched query in the filerow when a search has been executed', function () {
+        initializeTreeView({
+            filerowFormat: function( file ){
+                return "<p>" + file.name + "</p>";
+            }
+        });
+
+        var files = [
+            { name: "one", path: "one" },
+            { name: "one", path: "two", type: "file", directory: "" },
+            { name: "one", path: "three" }
+        ];
+
+        treeviews._searching = true;
+        treeviews._searchQuery = "ne";
+        treeviews.refreshContent( files );
+
+        var span = treeviews._contentElement.children().eq(0).children().eq(0);
+        expect( span.is("span") ).toEqual( true );
+        expect( span.hasClass("searchquery") ).toEqual( true );
     });
 
 

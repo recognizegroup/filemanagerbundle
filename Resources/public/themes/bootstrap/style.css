@@ -1099,3 +1099,11 @@
     margin-top: 4px !important;
     border-bottom-width: 0px !important;
 }
+
+.filetree .mode-cut {
+    opacity: 0.3;
+}
+
+.filetree .searchquery {
+    background: #FFFF00;
+}

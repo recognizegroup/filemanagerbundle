@@ -9,3 +9,5 @@ grid_view: Rasterweergave
 search: Zoeken
 cancel_upload: Annuleren
 refresh: Verversen
+no_search_results_found_for: Geen zoekresultaten gevonden voor
+no_content: Deze map is leeg

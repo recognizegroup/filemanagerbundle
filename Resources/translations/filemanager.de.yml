@@ -9,3 +9,5 @@ grid_view: Rasteransicht
 search: Suchen
 cancel_upload: Abbrechen
 refresh: Aktualisieren
+no_search_results_found_for: Keine Ergebnisse gefunden für
+no_content: Dieser Ordner ist leer

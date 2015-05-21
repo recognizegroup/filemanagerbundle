@@ -28,6 +28,14 @@ FileTreeView.prototype = {
 
     _currentDirectory: "",
     _currentContent: [],
+    _searching: false,
+    _searchQuery: "",
+
+    _editContext: {
+        mode: "none",
+        selector: false,
+        file: false
+    },
 
     /**
      * Initializes the filetreeview
@@ -139,7 +147,9 @@ FileTreeView.prototype = {
 
             this._directoryElement.jstree('destroy').jstree({ 'core': {
                 'data' : jstreedata,
-                'multiple': false}
+                'multiple': false
+            },'plugins': []
+
             }).on('dblclick.jstree', function( event ){
 
                 self._jstreeOpenEvent( event );
@@ -221,8 +231,14 @@ FileTreeView.prototype = {
             $.contextMenu( 'destroy' );
 
             for( var i = 0, length = self._currentContent.length; i < length; i++ ){
-
                 var file = $.extend({}, self._currentContent[i]);
+
+                // Add a span around the searched word
+                if( this._searching == true ){
+                    var regex = new RegExp(this._searchQuery);
+                    file.name = file.name.replace(regex, '<span class="searchquery">' + this._searchQuery + '</span>');
+                }
+
                 file.size = this._filesizeFormat( file.size );
                 var filestring = "";
 
@@ -232,10 +248,11 @@ FileTreeView.prototype = {
                 } else {
                     filestring = this._formatFilecell( file );
                 }
-                var fileclass = 'file-' + i;
+
+                var rowselector = "file-" + file.directory + file.name;
 
                 var fileelement = $( filestring )
-                    .addClass( fileclass )
+                    .attr("data-fm-functionality", rowselector )
                     .appendTo( this._contentElement )
                     .on('click',{ file: file }, function( evt ) {
                         $(evt.currentTarget).toggleClass('selected');
@@ -259,7 +276,7 @@ FileTreeView.prototype = {
                         self._openContentEvent( evt );
                     });
 
-                self._addContextmenuToRow( "." + fileclass, file );
+                self._addContextmenuToElement( "[data-fm-functionality=\"" + rowselector + "\"]", file );
 
                 // Ensure we keep focus on the content area
                 if( i == 0 && self._keepFocusOnContent == true ){
@@ -269,6 +286,10 @@ FileTreeView.prototype = {
             }
         }
 
+        this._setEditStyling();
+        this._updateVisibility();
+        self._addContextmenuToElement( "[data-fm-functionality=directory_up]",
+            { type: "dir", name: "", directory: self._currentDirectory}, true );
         self._eventHandler.trigger("filemanager:view:rendered");
     },
 
@@ -277,27 +298,56 @@ FileTreeView.prototype = {
      *
      * @param selector             The css class of the filerow
      * @param file                 The file object
+     * @param pasteonly            Whether to only allow pasting or all other options
      * @private
      */
-    _addContextmenuToRow: function( selector, file ){
+    _addContextmenuToElement: function( selector, file, pasteonly ){
         var self = this;
 
         $.contextMenu({
             selector: selector,
-            file: file,
-            callback: function(key, options) {
-                switch( key ){
-                    case "rename":
-                        self.createRenamerow( options.selector, options.file );
-                        break;
-                    case "delete":
-                        self._eventHandler.trigger('filemanager:view:delete', { file: options.file });
-                        break;
+            build: function () {
+
+                var items = {
+                    "rename": {name: "Rename", icon: "edit"},
+                    "cut": {name: "Cut", icon: "cut"},
+                    "paste": {name: "Paste", icon: "paste"},
+                    "delete": {name: "Delete", icon: "delete"}
+                };
+
+                if( pasteonly === true ){
+                    items = {};
+                    if( self._editContext.mode !== "none" ){
+                        items.paste = {name: "Paste", icon: "paste"};
+                    }
+
+                } else if( self._editContext.mode !== "none" ){
+                    items.paste.disabled = false;
+                } else {
+                    items.paste.disabled = true;
                 }
-            },
-            items: {
-                "rename": {name: "Rename", icon: "edit"},
-                "delete": {name: "Delete", icon: "delete"}
+
+
+                return {
+                    file: file,
+                    callback: function (key, options) {
+                        switch (key) {
+                            case "rename":
+                                self.createRenamerow(options.selector, options.file);
+                                break;
+                            case "cut":
+                                self._setCutMode(options.selector, options.file);
+                                break;
+                            case "paste":
+                                self._pasteMode(options.selector, options.file);
+                                break;
+                            case "delete":
+                                self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
+                                break;
+                        }
+                    },
+                    items: items
+                }
             }
         });
     },
@@ -397,6 +447,9 @@ FileTreeView.prototype = {
         // Only search if the value isn't empty
         if( querystring != "" ){
             this._eventHandler.trigger('filemanager:view:search', { directory: event.data.directory, query: querystring });
+            $("[data-fm-value=search_query]").text( querystring );
+            this._searching = true;
+            this._searchQuery = querystring;
         } else {
             this._eventHandler.trigger('filemanager:view:open', { directory: event.data.directory, isSynchronized: false });
         }
@@ -484,27 +537,167 @@ FileTreeView.prototype = {
             this._viewFormat = overviewlayout;
 
             if( this._viewFormat == "list"){
-
-                $("[data-fm-show=list_view]").show();
-                $("[data-fm-show=grid_view]").hide();
-
                 $("[data-fm-functionality=set_list]").addClass("selected");
                 $("[data-fm-functionality=set_grid]").removeClass("selected");
 
                 this._contentElement = $("[data-fm-value=list_content]");
 
             } else if( this._viewFormat == "grid" ){
-
-                $("[data-fm-show=list_view]").hide();
-                $("[data-fm-show=grid_view]").show();
-
                 $("[data-fm-functionality=set_grid]").addClass("selected");
                 $("[data-fm-functionality=set_list]").removeClass("selected");
 
                 this._contentElement = $("[data-fm-value=grid_content]");
             }
+
+            this._updateVisibility();
         } else {
             this.errorLog( "Overview layout can only be a list or a grid" );
+        }
+    },
+
+    /**
+     * Reset the previious styling on a row that is being copied or cut
+     *
+     * @private
+     */
+    _resetEditStyles: function(){
+        this._editMode = "none";
+        if( this._editContext.selector !== false ){
+            $( this._editContext.selector).removeClass("mode-cut").removeClass("mode-copy");
+            this._editContext.selector = false;
+        }
+
+        this._editContext.file = false;
+    },
+
+    /**
+     * Set the edit styling according to the editContext state
+     *
+     * @private
+     */
+    _setEditStyling: function(){
+        var context = this._editContext;
+
+        if( context.file !== false && context.selector !== false ){
+            switch( context.mode ){
+                case "cut":
+                    $( context.selector ).addClass("mode-cut");
+                    break;
+                case "copy":
+                    $( context.selector ).addClass("mode-copy");
+                    break;
+                case "none":
+                    this._resetEditStyles();
+                    break;
+            }
+        }
+    },
+
+    /**
+     * Select a single file for cutting and moving
+     *
+     * @param selector                  The HTML element linked to the file
+     * @param file
+     * @private
+     */
+    _setCutMode: function( selector, file ){
+        this._resetEditStyles();
+
+        this._editContext = {
+            mode: "cut",
+            selector: selector,
+            file: file
+        };
+
+        this._setEditStyling();
+    },
+
+    /**
+     * Select a single file for copying and moving
+     *
+     * @param selector                  The HTML element linked to the file
+     * @param file
+     * @private
+     */
+    _setCopyMode: function( selector, file ){
+        this._resetEditStyles();
+
+        this._editContext = this._editContext = {
+            mode: "copy",
+            selector: selector,
+            file: file
+        };
+
+        this._setEditStyling();
+    },
+
+    /**
+     * Move the directory over to the new place
+     *
+     * @param selector
+     * @param file
+     * @private
+     */
+    _pasteMode: function( selector, file ){
+        if( this._editContext.mode !== "none" && this._editContext.file !== false ){
+            var newlocation = file.directory;
+            if( file.type == "dir"){
+                newlocation += file.name;
+            }
+
+            this._eventHandler.trigger("filemanager:view:move", {
+                file: this._editContext.file,
+                newlocation: newlocation
+            });
+        }
+
+        this._resetEditStyles();
+    },
+
+    /**
+     * Update the visibility of the data-fm-show tags
+     * The available tags are laid out below
+     *
+     * no_content - Show this element if we don't have content in this directory
+     * no_search_results - Show this element if we don't have any search results
+     * list_view - Show this if the overview layout mode is set to list view
+     * grid_view - Show this if the overview layout mode is set to grid view
+     * search_results - Show this element if we have search results
+     * not_root - Show this element if we aren't in the root folder
+     *
+     * @private
+     */
+    _updateVisibility: function(){
+        var showtag = function( tag ){
+            return "[data-fm-show=" + tag + "]";
+        };
+
+        if( this._viewFormat == "list"){
+            $( showtag("list_view") ).show();
+            $( showtag("grid_view") ).hide();
+        } else if( this._viewFormat == "grid" ) {
+            $( showtag("list_view") ).hide();
+            $( showtag("grid_view") ).show();
+        }
+
+        $( showtag("no_content") ).hide();
+        $( showtag("no_search_results") ).hide();
+        if( this._currentContent.length == 0 ){
+            if( this._searching == false ){
+                $( showtag("no_content") ).show();
+            } else {
+                $( showtag("no_search_results") ).show();
+            }
+        } else {
+            if( this._searching == true ){
+                $( showtag("search_results") ).show();
+            }
+        }
+
+        if( this._currentDirectory !== ""){
+            $( showtag("no_root") ).show();
+        } else {
+            $( showtag("no_root") ).hide();
         }
     },
 
@@ -677,6 +870,7 @@ FileTreeView.prototype = {
         // Ajax upload button
         var uploadbutton = $("[data-fm-functionality=upload_button]");
         if( uploadbutton.length !== 0 ){
+
             // Keyboard focus for AJAX button
             uploadbutton.on("click", function(){
                 $("input[name=filemanager_upload]").trigger("click");
@@ -733,6 +927,11 @@ FileTreeView.prototype = {
         });
 
         this._eventHandler.register('filemanager:model:directories_changed', function( jstreedata ){
+
+            // Whenever we moved to another directory, turn off the searching mode
+            self._searching = false;
+            self._searchQuery = "";
+
             self.refreshDirectories( jstreedata );
         });
 

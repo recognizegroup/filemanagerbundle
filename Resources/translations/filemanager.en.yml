@@ -9,3 +9,5 @@ grid_view: Gridview
 search: Search
 cancel_upload: Cancel
 refresh: Refresh
+no_search_results_found_for: No results found for
+no_content: This folder is empty
