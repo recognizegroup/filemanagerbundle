@@ -118,8 +118,24 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.trigger("filemanager:api:loading");
 
+        // Make sure to do an absolute request
+        var fullpath = "";
+        var httpmatcher = new RegExp('^(?:[a-z]+:)?//', 'i');
+        if( httpmatcher.test( path ) ){
+            fullpath = path;
+        } else {
+            var origin = "";
+            if(!window.location.origin){
+                origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+            } else {
+                origin = window.location.origin;
+            }
+
+            fullpath = origin + path;
+        }
+
         return $.ajax({
-            url: path,
+            url: fullpath,
             data: parameters,
             dataType: "json",
             method: method,
