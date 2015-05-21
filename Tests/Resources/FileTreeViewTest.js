@@ -426,5 +426,4 @@ describe('FileTreeView', function() {
         expect( span.hasClass("searchquery") ).toEqual( true );
     });
 
-
 });

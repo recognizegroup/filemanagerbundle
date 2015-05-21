@@ -446,7 +446,7 @@ FileTree.prototype = {
 
         var node = this._findNodeIfExists( path );
         if( node === false ){
-            this._currentPath = false;
+            this._currentPath = path;
             this._currentFiles = [];
 
         } else {

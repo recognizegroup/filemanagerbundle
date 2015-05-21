@@ -30,6 +30,8 @@ FileTreeView.prototype = {
     _currentContent: [],
     _searching: false,
     _searchQuery: "",
+    _apiCalled: false,
+
 
     _editContext: {
         mode: "none",
@@ -67,7 +69,6 @@ FileTreeView.prototype = {
         if( typeof config.renamecellFormat === "function" ){
             this._formatRenamecell = config.renamecellFormat;
         }
-
 
         if( typeof config.uploadFormat === "function" ){
             this._formatUpload = config.uploadFormat;
@@ -128,7 +129,7 @@ FileTreeView.prototype = {
     refreshTitlebar: function( current_directory ){
         var self = this;
 
-        this.debug("Refreshing titlebar with directory " + current_directory );
+        this.debug("Refreshing directory string to " + current_directory );
         this._currentDirectory = current_directory;
         $("[data-fm-value=current_directory]").text( "/" + current_directory );
     },
@@ -232,21 +233,21 @@ FileTreeView.prototype = {
 
             for( var i = 0, length = self._currentContent.length; i < length; i++ ){
                 var file = $.extend({}, self._currentContent[i]);
+                var viewfile = $.extend({}, self._currentContent[i]);
 
                 // Add a span around the searched word
-                if( this._searching == true ){
-                    var regex = new RegExp(this._searchQuery);
-                    file.name = file.name.replace(regex, '<span class="searchquery">' + this._searchQuery + '</span>');
+                if( self._searching == true ){
+                    viewfile.name = viewfile.name.replace(this._searchQuery, '<span class="searchquery">' + this._searchQuery + '</span>');
                 }
 
-                file.size = this._filesizeFormat( file.size );
-                var filestring = "";
+                viewfile.size = this._filesizeFormat( viewfile.size );
 
                 // Use the correct format for the overview
+                var filestring = "";
                 if( self._viewFormat == "list"){
-                    filestring = this._formatFilerow( file );
+                    filestring = this._formatFilerow( viewfile );
                 } else {
-                    filestring = this._formatFilecell( file );
+                    filestring = this._formatFilecell( viewfile );
                 }
 
                 var rowselector = "file-" + file.directory + file.name;
@@ -254,12 +255,12 @@ FileTreeView.prototype = {
                 var fileelement = $( filestring )
                     .attr("data-fm-functionality", rowselector )
                     .appendTo( this._contentElement )
-                    .on('click',{ file: file }, function( evt ) {
-                        $(evt.currentTarget).toggleClass('selected');
+                    .on('click',{ file: file }, function( event ) {
+                        $( event.currentTarget ).toggleClass('selected');
 
                         // On mobile, a click is a double click
                         if ($(window).width() <= 768) {
-                            self._openContentEvent(evt);
+                            self._openContentEvent( event );
                         }
                     }).on('keyup', { file: file }, function( event ){
 
@@ -272,8 +273,10 @@ FileTreeView.prototype = {
                             self._openContentEvent( event );
                         }
 
-                    }).on('dblclick', { file: file }, function( evt ){
-                        self._openContentEvent( evt );
+                    }).on('dblclick', { file: file }, function( event ){
+                        console.log( event );
+
+                        self._openContentEvent( event );
                     });
 
                 self._addContextmenuToElement( "[data-fm-functionality=\"" + rowselector + "\"]", file );
@@ -409,7 +412,13 @@ FileTreeView.prototype = {
     _openContentEvent: function( event ){
         var directory = event.data.file.directory;
         var path = event.data.file.path;
+        if( path == false ){
+            path = event.data.file.directory + event.data.file.name;
+        }
+
         if( typeof event.data.file.type == "undefined" || event.data.file.type == "dir" ) {
+            console.log( path );
+
             var synchronized = false;
             this._eventHandler.trigger('filemanager:view:open', {directory: path, isSynchronized: synchronized} );
         } else {
@@ -446,12 +455,10 @@ FileTreeView.prototype = {
 
         // Only search if the value isn't empty
         if( querystring != "" ){
-            this._eventHandler.trigger('filemanager:view:search', { directory: event.data.directory, query: querystring });
+            this._eventHandler.trigger('filemanager:view:search', { directory: this._currentDirectory, query: querystring });
             $("[data-fm-value=search_query]").text( querystring );
-            this._searching = true;
-            this._searchQuery = querystring;
         } else {
-            this._eventHandler.trigger('filemanager:view:open', { directory: event.data.directory, isSynchronized: false });
+            this._eventHandler.trigger('filemanager:view:open', { directory: this._currentDirectory, isSynchronized: false });
         }
     },
 
@@ -684,7 +691,9 @@ FileTreeView.prototype = {
         $( showtag("no_search_results") ).hide();
         if( this._currentContent.length == 0 ){
             if( this._searching == false ){
-                $( showtag("no_content") ).show();
+                if( this._apiCalled ){
+                    $( showtag("no_content") ).show();
+                }
             } else {
                 $( showtag("no_search_results") ).show();
             }
@@ -923,10 +932,13 @@ FileTreeView.prototype = {
         var self = this;
 
         this._eventHandler.register('filemanager:api:error', function( response ) {
+            self._apiCalled = true;
+
             alert( response.message );
         });
 
         this._eventHandler.register('filemanager:model:directories_changed', function( jstreedata ){
+            self._apiCalled = true;
 
             // Whenever we moved to another directory, turn off the searching mode
             self._searching = false;
@@ -935,11 +947,23 @@ FileTreeView.prototype = {
             self.refreshDirectories( jstreedata );
         });
 
+        // Listen to our own search event to make searching via the jquery function possible
+        this._eventHandler.register("filemanager:view:search", function( event ){
+            self._apiCalled = true;
+
+            self._searching = true;
+            self._searchQuery = event.query;
+        });
+
         this._eventHandler.register('filemanager:model:content_changed', function( content ){
+            self._apiCalled = true;
+
             self.refreshContent( content );
         });
 
         this._eventHandler.register('filemanager:model:path_changed', function( current_directory ){
+            self._apiCalled = true;
+
             self.refreshTitlebar( current_directory );
         });
     }

@@ -382,7 +382,6 @@ describe('FileTree', function() {
 
         tree.openPath( "nonexistingdir" );
 
-        expect( tree._currentPath).toEqual ( false );
         expect( tree._currentFiles).toEqual( [] );
     });
 
