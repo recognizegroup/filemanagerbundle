@@ -150,7 +150,7 @@ class FilemanagerService {
     public function searchDirectoryContents( $directory_path = "", $search_value, $current_directory_only = false ){
         $finder = new Finder();
         $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
-        if( $this->security_context->isGranted("open", $path ) ) {
+        if( $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $path ) ) ) {
             if ($this->hasDotFiles($path) == false) {
 
                 $search_filter = function (SplFileInfo $file) use ($search_value) {
@@ -366,7 +366,7 @@ class FilemanagerService {
             $filepath = $this->current_directory . DIRECTORY_SEPARATOR . $filename;
             $oldfile = $this->getFirstFileInFinder( $finder );
 
-            if( $this->security_context->isGranted("delete", $filepath ) ) {
+            if( $this->security_context->isGranted("delete", $this->working_directory, $this->absolutePathToRelativePath( $filepath ) ) ) {
                 $filechanges = new FileChanges("delete", $oldfile);
                 $filechanges->preloadOldfileData();
 

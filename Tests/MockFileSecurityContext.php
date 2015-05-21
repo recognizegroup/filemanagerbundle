@@ -12,7 +12,7 @@ class MockFileSecurityContext implements FileSecurityContextInterface {
      * @param string $directory                The directory to apply the action to
      * @return boolean
      */
-    public function isGranted( $action, $directory ){
+    public function isGranted( $action, $working_directory, $relative_filepath ){
         return true;
     }
 }
