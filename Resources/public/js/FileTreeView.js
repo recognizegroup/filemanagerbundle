@@ -32,6 +32,8 @@ FileTreeView.prototype = {
     _searchQuery: "",
     _apiCalled: false,
 
+    _uploadFunctionalityReference: null,
+
 
     _editContext: {
         mode: "none",
@@ -132,6 +134,9 @@ FileTreeView.prototype = {
         this.debug("Refreshing directory string to " + current_directory );
         this._currentDirectory = current_directory;
         $("[data-fm-value=current_directory]").text( "/" + current_directory );
+
+        // Update the uploading location
+        this._addUploadFunctionality();
     },
 
     /**
@@ -833,6 +838,10 @@ FileTreeView.prototype = {
     _addUploadFunctionality: function(){
         var self = this;
 
+        if( this._uploadFunctionalityReference !== null ){
+            this._uploadFunctionalityReference.destroy();
+        }
+
         var progressBar = $("[data-fm-functionality=upload_progress]");
 
         // Add the AJAX upload functionality
@@ -861,12 +870,10 @@ FileTreeView.prototype = {
 
             onComplete: function(filename, response){
                 self._eventHandler.trigger("filemanager:api:upload_done");
-
                 self._eventHandler.trigger('filemanager:view:ajax_upload', {response: response, directory: self._currentDirectory } );
             },
 
             onAbort: function(){
-
                 self._eventHandler.trigger("filemanager:api:upload_done");
             },
 
@@ -881,30 +888,35 @@ FileTreeView.prototype = {
         });
         uploader.setAbortBtn( $("[data-fm-functionality=abort_upload]") );
 
-        // Ajax upload button
-        var uploadbutton = $("[data-fm-functionality=upload_button]");
-        if( uploadbutton.length !== 0 ){
+        if( this._uploadFunctionalityReference === null ){
+            // Ajax upload button
+            var uploadbutton = $("[data-fm-functionality=upload_button]");
+            if( uploadbutton.length !== 0 ){
 
-            // Keyboard focus for AJAX button
-            uploadbutton.on("click", function(){
-                $("input[name=filemanager_upload]").trigger("click");
-
-            }).on("keydown", function( event ){
-
-                // ENTER
-                if( event.keyCode == 13 ) {
-                    uploadbutton.addClass('active');
-                    event.preventDefault();
-                }
-            }).on("keyup", function( event ){
-
-                // ENTER
-                if( event.keyCode == 13 ){
-                    uploadbutton.removeClass('active');
+                // Keyboard focus for AJAX button
+                uploadbutton.on("click", function(){
                     $("input[name=filemanager_upload]").trigger("click");
-                }
-            });
+
+                }).on("keydown", function( event ){
+
+                    // ENTER
+                    if( event.keyCode == 13 ) {
+                        uploadbutton.addClass('active');
+                        event.preventDefault();
+                    }
+                }).on("keyup", function( event ){
+
+                    // ENTER
+                    if( event.keyCode == 13 ){
+                        uploadbutton.removeClass('active');
+                        $("input[name=filemanager_upload]").trigger("click");
+                    }
+                });
+            }
         }
+
+        // Save the reference to the SimpleAjaxUploader to prevent multiple listeners being linked to the file uploading
+        this._uploadFunctionalityReference = uploader;
     },
 
     /**
