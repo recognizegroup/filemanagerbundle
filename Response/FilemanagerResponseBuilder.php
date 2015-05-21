@@ -174,7 +174,7 @@ class FilemanagerResponseBuilder {
      */
     public function build(){
         $this->translateFiles();
-        finfo_close( $this->finfo );
+        @finfo_close( $this->finfo );
 
         $response = new Response( json_encode( $this->config ) );
         if( $this->statuscode != 200 ){

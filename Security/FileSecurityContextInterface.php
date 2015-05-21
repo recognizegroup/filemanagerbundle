@@ -7,9 +7,10 @@ interface FileSecurityContextInterface {
      * Check if an action is granted
      *
      * @param string $action                   The action to check
-     * @param string $directory                The directory to apply the action to
+     * @param string $working_directory        The working direcotry
+     * @param string $relativepath             The relative path from the working directory
      * @return boolean
      */
-    public function isGranted( $action, $directory );
+    public function isGranted( $action, $working_directory, $relativepath );
 
 }

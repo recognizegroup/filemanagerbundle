@@ -111,7 +111,7 @@ class FileChanges {
             $data['updatedfile'] = $this->transformFileToData( $this->newfile );
         }
 
-        finfo_close( $this->finfo );
+        @finfo_close( $this->finfo );
         return $data;
     }
 

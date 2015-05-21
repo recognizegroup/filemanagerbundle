@@ -491,25 +491,28 @@ class FilemanagerService {
 
     /**
      * Get the full image as a preview if we are dealing with an image file
+     * NOTE - This preview is create LIVE, which means the full image is dumped into memory before being returned
      *
      * @param string $relative_filepath
      * @return
      */
-    public function getFilePreview( $filepath ){
+    public function getLiveFilePreview( $relative_filepath ){
         $fs = new Filesystem();
 
         $response = new Response();
 
         // Check the mimetype
-        $finfo = finfo_open( FILEINFO_MIME_TYPE );
-        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $filepath;
-        if ($fs->exists($absolute_path) == true) {
+        $finfo = @finfo_open( FILEINFO_MIME_TYPE );
+        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $relative_filepath;
+        if ($fs->exists($absolute_path) == true
+                && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
+
             $mimetype = finfo_file($finfo, $absolute_path);
-            finfo_close( $finfo );
+            @finfo_close( $finfo );
             if( strpos( $mimetype, "image" ) !== false ){
 
                 $finder = new Finder();
-                $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($filepath) . "$/");
+                $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($relative_filepath) . "$/");
 
                 if ($finder->count() > 0) {
                     $file = $this->getFirstFileInFinder($finder);

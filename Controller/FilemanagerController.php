@@ -180,7 +180,7 @@ class FilemanagerController extends Controller {
      */
     public function preview(Request $request) {
         $filemanager = $this->getFilemanager();
-        return $filemanager->getFilePreview( $request->query->get('filemanager_path') );
+        return $filemanager->getLiveFilePreview( $request->query->get('filemanager_path') );
     }
 
 }
