@@ -50,4 +50,15 @@ class PathUtilsTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals("haxx", PathUtils::getLastNode( "/bla/test/haxx/" ));
     }
 
+    public function testRemoveFirstSlash(){
+        $this->assertEquals("bla/test/haxx/", PathUtils::removeFirstSlash( "/bla/test/haxx/" ));
+    }
+
+    public function testRemoveFirstSlashOneCharacter(){
+        $this->assertEquals("", PathUtils::removeFirstSlash( "/" ));
+    }
+
+    public function testRemoveFirstSlashEmptyPath(){
+        $this->assertEquals("", PathUtils::removeFirstSlash( "" ));
+    }
 }

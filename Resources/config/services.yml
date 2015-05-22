@@ -6,13 +6,20 @@ services:
         arguments:
             - Recognize\FilemanagerBundle\Entity\Directory
 
+    recognize.filemanager_file_repository:
+            class: Doctrine\ORM\EntityRepository
+            factory_service: doctrine.orm.default_entity_manager
+            factory_method: getRepository
+            arguments:
+                - Recognize\FilemanagerBundle\Entity\FileReference
+
 
     recognize.file_manager:
         class: Recognize\FilemanagerBundle\Service\FilemanagerService
         arguments: [ %recognize_filemanager.config%, @recognize.file_security_context, @recognize.filedata_synchronizer ]
     recognize.filedata_synchronizer:
         class: Recognize\FilemanagerBundle\Service\FiledataSynchronizer
-        arguments: [ @doctrine.orm.entity_manager, @recognize.filemanager_directory_repository, @recognize.file_acl_manager ]
+        arguments: [ @doctrine.orm.entity_manager, @recognize.filemanager_directory_repository, @recognize.filemanager_file_repository, @recognize.file_acl_manager ]
 
     recognize.file_acl_manager:
         class: Recognize\FilemanagerBundle\Service\FileACLManagerService

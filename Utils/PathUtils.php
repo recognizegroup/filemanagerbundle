@@ -82,4 +82,18 @@ class PathUtils {
         return preg_replace('~/+~', '/', $path);
     }
 
+    /**
+     * Remove the first slash from a path
+     *
+     * @param $path
+     * @return mixed
+     */
+    public static function removeFirstSlash( $path ){
+        if( substr($path, 0, 1) == DIRECTORY_SEPARATOR){
+            $path = substr( $path, 1 );
+        }
+
+        return $path;
+    }
+
 }

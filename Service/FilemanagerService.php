@@ -455,7 +455,12 @@ class FilemanagerService {
                         $finder->in($this->current_directory)->path("/^" . $new_filename . "$/");
                         if ($finder->count() > 0) {
                             $movedfile = $this->getFirstFileInFinder($finder);
-                            return new FileChanges("create", $movedfile);
+                            $filechanges = new FileChanges("create", $movedfile);
+
+                            // Synchronize the filesystem in the database
+                            $this->synchronizer->synchronize( $filechanges, $this->working_directory );
+
+                            return $filechanges;
                         } else {
                             throw new FileException("File not created");
                         }

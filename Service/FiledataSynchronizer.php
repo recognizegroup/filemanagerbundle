@@ -3,7 +3,9 @@ namespace Recognize\FilemanagerBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Recognize\FilemanagerBundle\Entity\Directory;
+use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Repository\DirectoryRepository;
+use Recognize\FilemanagerBundle\Repository\FileRepository;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Finder\SplFileInfo;
@@ -21,14 +23,20 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
     private $directoryRepository;
 
     /**
+     * @var FileRepository
+     */
+    private $fileRepository;
+
+    /**
      * @var FileACLManagerService
      */
     private $aclservice;
 
-    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository, FileACLManagerService $aclservice ){
+    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository, FileRepository $fileRepository, FileACLManagerService $aclservice ){
         $this->em = $em;
         $this->directoryRepository = $directoryRepository;
         $this->aclservice = $aclservice;
+        $this->fileRepository = $fileRepository;
     }
 
     /**
@@ -73,6 +81,26 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             $directory->setDirectoryName( $file['name'] );
 
             $this->em->persist( $directory );
+        } else if( $file['type'] == "file") {
+
+            // Find the directory in the database
+            $dir = $this->loadDirectoryForFilepath( $working_directory,  $file['directory'] );
+
+            // Only save the file in the database if the directory has been found
+            if( $dir !== null ) {
+                $fileref = new FileReference();
+                $fileref->setFilename( $file['name'] );
+                $fileref->setParentDirectory( $dir );
+
+                $finfo = @finfo_open( FILEINFO_MIME_TYPE );
+                $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $file['path'] );
+                @finfo_close( $finfo );
+                if( $mimetype !== false ){
+                    $fileref->setMimetype( $mimetype );
+                }
+
+                $this->em->persist( $fileref );
+            }
         }
 
         $this->em->commit();
@@ -129,7 +157,24 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                     $this->em->persist( $childdirectory );
                 }
             }
+        } else if ( $file['type'] == "file" ){
 
+            // Update the parent directory of the file
+            /** @var FileReference $current_file */
+            $current_file = null;
+            $dir = $this->loadDirectoryForFilepath( $working_directory,  $file['directory'] );
+            if( $dir !== null ){
+                $current_file = $this->fileRepository->getFile( $dir, $file['name'] );
+            }
+
+            if( $current_file !== null ){
+                $newdir = $this->loadDirectoryForFilepath( $working_directory,  $changes_array['updatedfile']['directory'] );
+                if($newdir !== null ){
+
+                    $current_file->setParentDirectory( $newdir );
+                    $this->em->persist( $current_file );
+                }
+            }
         }
 
         $this->em->commit();
@@ -154,6 +199,13 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             $directories = $this->directoryRepository->findDirectoryByLocation( $working_directory, $file['directory'], $file['name'] );
             for( $i = 0, $length = count($directories); $i < $length; $i++ ){
                 $this->aclservice->clearAccessRightsForDirectory( $directories[$i] );
+
+                // Remove the file references underneath this directory
+                $files = $this->fileRepository->getFilesInDirectory( $directories[ $i ]);
+                for( $j = 0, $jlength = count( $files ); $j < $jlength; $j++ ){
+                    $this->em->remove( $files[ $j ] );
+                }
+
                 $this->em->remove( $directories[$i] );
             }
 
@@ -161,13 +213,59 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation( $working_directory, $file['directory'], $file['name']);
             for( $i = 0, $length = count($childdirectories); $i < $length; $i++ ){
                 $this->aclservice->clearAccessRightsForDirectory( $directories[$i] );
+
+                // Remove the file references underneath this directory
+                $files = $this->fileRepository->getFilesInDirectory( $childdirectories[ $i ]);
+                for( $j = 0, $jlength = count( $files ); $j < $jlength; $j++ ){
+                    $this->em->remove( $files[ $j ] );
+                }
+
                 $this->em->remove( $childdirectories[$i] );
+            }
+        } else if ( $file['type'] == "file"){
+
+            // Delete the file
+            $dir = $this->loadDirectoryForFilepath( $working_directory,  $file['directory'] );
+            if( $dir !== null ){
+                $deletedfile = $this->fileRepository->getFile( $dir, $file['name'] );
+                if( $deletedfile !== null ){
+                    $this->em->remove( $deletedfile );
+                }
             }
 
         }
 
         $this->em->commit();
         $this->em->flush();
+    }
+
+    /**
+     * Get a directory object from the database or create it if it doesn't exist
+     *
+     * @param string $working_directory            The working directory
+     * @param string $relative_path                The relative path of the file without the filename
+     */
+    protected function loadDirectoryForFilepath( $working_directory, $relative_path ){
+
+        // Find the directory in the database
+        $relpath = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $relative_path ) );
+        $dirname = PathUtils::getLastNode( $relative_path );
+        $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
+
+        // If the directory does not exist yet, create it
+        if( count($dirs) == 0 ){
+            $new_directory = $this->directoryRepository->getEmptyDirectory($working_directory, $relpath, $dirname);
+            $this->em->persist( $new_directory );
+
+            $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
+        }
+
+        // Only save the file in the database if the directory has been found
+        if( count( $dirs ) > 0 ) {
+            return $dirs[0];
+        } else {
+            return null;
+        }
     }
 
 }
