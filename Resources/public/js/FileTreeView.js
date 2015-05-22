@@ -283,6 +283,18 @@ FileTreeView.prototype = {
                             self._openContentEvent( event );
                         }
 
+                    // Add cut and paste shortcuts
+                    }).on('keydown', { file: file, selector: fileselector }, function( event ){
+
+                        // CTRL X
+                        if( event.ctrlKey && event.keyCode == 88 ){
+                            self._setCutMode( event.data.selector, event.data.file );
+
+                        // CTRL V
+                        } else if ( event.ctrlKey && event.keyCode == 86 && self._editContext.mode !== "none" ){
+                            self._pasteMode( event.data.selector, event.data.file );
+                        }
+
                     }).on('dblclick', { file: file, selector: fileselector }, function( event ){
                         self._openContentEvent( event );
                     });
