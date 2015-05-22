@@ -30,6 +30,16 @@ class FileReference {
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
+    protected $working_directory;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    protected $relative_path;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
     protected $filename;
 
     /**
@@ -50,6 +60,10 @@ class FileReference {
     public function setParentDirectory( Directory $directory){
         $this->directory_id = $directory->getId();
         $this->directory = $directory;
+
+        $this->working_directory = $directory->getWorkingDirectory();
+        $this->relative_path = PathUtils::addTrailingSlash( PathUtils::removeFirstSlash(
+            $directory->getRelativePath() . $directory->getDirectoryName() ) );
     }
 
     public function setId( $id ){
@@ -86,6 +100,18 @@ class FileReference {
 
     public function getPreviewUrl(){
         return $this->preview_url;
+    }
+
+    public function getWorkingDirectory(){
+        return $this->working_directory;
+    }
+
+    public function getRelativePath(){
+        return $this->relative_path;
+    }
+
+    public function getAbsolutePath(){
+        return $this->working_directory . $this->relative_path . $this->filename;
     }
 
 }

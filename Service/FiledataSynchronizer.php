@@ -135,6 +135,14 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $directory->setRelativePath( PathUtils::addTrailingSlash( $changes_array['updatedfile']['directory'] ) );
                 $directory->setDirectoryName( $changes_array['updatedfile']['name'] );
                 $this->em->persist( $directory );
+
+                // Update the path variables of the child files
+                /** @var FileReference[] $files */
+                $files = $this->fileRepository->getFilesInDirectory( $directory );
+                for( $j = 0, $jlength = count($files); $j < $jlength; $j++ ){
+                    $files[ $j ]->setParentDirectory( $directory );
+                    $this->em->persist( $files[ $j ] );
+                }
             }
 
             // Get all the child directories
@@ -155,6 +163,15 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                     $childdirectory->setRelativePath( $updated_relative_path );
 
                     $this->em->persist( $childdirectory );
+
+                    // Update the path variables of the files
+                    /** @var FileReference[] $files */
+                    $files = $this->fileRepository->getFilesInDirectory( $childdirectory );
+                    for( $j = 0, $jlength = count($files); $j < $jlength; $j++ ){
+                        $files[ $j ]->setParentDirectory( $childdirectory );
+                        $this->em->persist( $files[ $j ] );
+                    }
+
                 }
             }
         } else if ( $file['type'] == "file" ){
