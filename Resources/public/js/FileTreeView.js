@@ -3,7 +3,14 @@
 var FileTreeView = function( config, element ){
 
     var defaults = {
-        debug: false
+        debug: false,
+        i18n: {
+            rename: "Rename",
+            cut: "Cut",
+            paste: "Paste",
+            download: "Download",
+            "delete": "Delete"
+        }
     };
 
     this.options = $.extend(true, defaults, config);
@@ -42,6 +49,8 @@ FileTreeView.prototype = {
         file: false
     },
 
+    _i18n: {},
+
     /**
      * Initializes the filetreeview
      *
@@ -75,6 +84,10 @@ FileTreeView.prototype = {
 
         if( typeof config.uploadFormat === "function" ){
             this._formatUpload = config.uploadFormat;
+        }
+
+        if( typeof config.i18n === "object" ){
+            this._i18n = config.i18n;
         }
 
         this._setOverviewLayout("list");
@@ -338,20 +351,22 @@ FileTreeView.prototype = {
             build: function () {
 
                 var items = {
-                    "rename": {name: "Rename", icon: "edit"},
-                    "cut": {name: "Cut", icon: "cut"},
-                    "paste": {name: "Paste", icon: "paste"},
-                    "delete": {name: "Delete", icon: "delete"}
+                    "rename": {name: self._i18n.rename, icon: "edit"},
+                    "cut": {name: self._i18n.cut, icon: "cut"},
+                    "paste": {name: self._i18n.paste, icon: "paste"},
                 };
 
                 if( file.type !== "dir" ){
-                    items.download = {name: "Download", icon: "download"};
+                    items.download = {name: self._i18n.download, icon: "download"};
                 }
+
+                items.seperator = "---------";
+                items["delete"] = {name: self._i18n.delete, icon: "delete"};
 
                 if( pasteonly === true ){
                     items = {};
                     if( self._editContext.mode !== "none" ){
-                        items.paste = {name: "Paste", icon: "paste"};
+                        items.paste = {name: self._i18n.paste, icon: "paste"};
                     }
 
                 } else if( self._editContext.mode !== "none" ){
@@ -375,7 +390,8 @@ FileTreeView.prototype = {
                                 self._pasteMode(options.selector, options.file);
                                 break;
                             case "delete":
-                                self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
+
+                                //self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
                                 break;
                             case "download":
                                 self._eventHandler.trigger('filemanager:view:download', {file: options.file});

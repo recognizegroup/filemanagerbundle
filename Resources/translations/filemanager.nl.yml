@@ -11,3 +11,9 @@ cancel_upload: Annuleren
 refresh: Verversen
 no_search_results_found_for: Geen zoekresultaten gevonden voor
 no_content: Deze map is leeg
+
+rename_file: Naam wijzigen
+cut_file: Knippen
+paste_file: Plakken
+delete_file: Verwijderen
+download_file: Bestand downloaden

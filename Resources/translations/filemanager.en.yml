@@ -11,3 +11,9 @@ cancel_upload: Cancel
 refresh: Refresh
 no_search_results_found_for: No results found for
 no_content: This folder is empty
+
+rename_file: Rename
+cut_file: Cut
+paste_file: Paste
+delete_file: Delete
+download_file: Download

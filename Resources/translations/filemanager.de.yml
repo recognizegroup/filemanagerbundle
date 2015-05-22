@@ -11,3 +11,9 @@ cancel_upload: Abbrechen
 refresh: Aktualisieren
 no_search_results_found_for: Keine Ergebnisse gefunden für
 no_content: Dieser Ordner ist leer
+
+rename_file: Umbenennen
+cut_file: Ausschneiden
+paste_file: Einfügen
+delete_file: Löschen
+download_file: Datei speichern
