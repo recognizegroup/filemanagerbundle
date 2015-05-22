@@ -183,4 +183,15 @@ class FilemanagerController extends Controller {
         return $filemanager->getLiveFilePreview( $request->query->get('filemanager_path') );
     }
 
+    /**
+     * Download a file
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function download(Request $request) {
+        $filemanager = $this->getFilemanager();
+        return $filemanager->downloadFile( $request->query->get('filemanager_path') );
+    }
+
 }

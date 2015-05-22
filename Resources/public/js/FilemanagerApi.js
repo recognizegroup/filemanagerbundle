@@ -11,7 +11,8 @@ var FilemanagerAPI = function( options) {
                 search: "/search",
                 move: "/move",
                 rename: "/rename",
-                delete: "/delete"
+                delete: "/delete",
+                download: "/download"
             }
         }
     };
@@ -29,6 +30,7 @@ FilemanagerAPI.prototype = {
     _path_read_directory: "",
     _path_delete: "",
     _path_search: "",
+    _path_download: "",
     _eventHandler: false,
     _disableRequests: false,
 
@@ -77,6 +79,10 @@ FilemanagerAPI.prototype = {
 
                     if (typeof config.api.paths.search !== 'undefined') {
                         this._path_search = config.api.paths.search;
+                    }
+
+                    if (typeof config.api.paths.download !== 'undefined') {
+                        this._path_download = config.api.paths.download;
                     }
                 }
             }
@@ -326,6 +332,23 @@ FilemanagerAPI.prototype = {
     },
 
     /**
+     * Send a request to the server that downloads a file
+     *
+     * @param path                          The path to the file
+     */
+    download: function( path ){
+        var self = this;
+        var url = this._url + this._path_download;
+
+        var seperator = "?";
+        if( url.indexOf(seperator) > -1){
+            seperator = "&";
+        }
+
+        window.location = url + seperator + "filemanager_path=" + encodeURI( path );
+    },
+
+    /**
      * Handles the response of an AJAX upload
      *
      * @param directory             The directory to refresh
@@ -406,6 +429,10 @@ FilemanagerAPI.prototype = {
 
         this._eventHandler.register('filemanager:view:ajax_upload', function( eventobj ){
             self.uploadResponse( eventobj.directory, eventobj.response )
+        });
+
+        this._eventHandler.register('filemanager:view:download', function( eventobj ){
+            self.download( eventobj.file.path )
         });
     }
 };

@@ -344,6 +344,10 @@ FileTreeView.prototype = {
                     "delete": {name: "Delete", icon: "delete"}
                 };
 
+                if( file.type !== "dir" ){
+                    items.download = {name: "Download", icon: "download"};
+                }
+
                 if( pasteonly === true ){
                     items = {};
                     if( self._editContext.mode !== "none" ){
@@ -372,6 +376,9 @@ FileTreeView.prototype = {
                                 break;
                             case "delete":
                                 self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
+                                break;
+                            case "download":
+                                self._eventHandler.trigger('filemanager:view:download', {file: options.file});
                                 break;
                         }
                     },

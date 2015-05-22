@@ -496,7 +496,7 @@ class FilemanagerService {
 
     /**
      * Get the full image as a preview if we are dealing with an image file
-     * NOTE - This preview is create LIVE, which means the full image is dumped into memory before being returned
+     * WARNING - High memory usage - This preview is create LIVE, which means the full image is dumped into memory before being returned
      *
      * @param string $relative_filepath
      * @return
@@ -510,7 +510,7 @@ class FilemanagerService {
         $finfo = @finfo_open( FILEINFO_MIME_TYPE );
         $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $relative_filepath;
         if ($fs->exists($absolute_path) == true
-                && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
+            && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
 
             $mimetype = finfo_file($finfo, $absolute_path);
             @finfo_close( $finfo );
@@ -524,6 +524,39 @@ class FilemanagerService {
 
                     $response = new Response( $file->getContents() ,
                         200, array("Content-Type" => $file->getType() ));
+                }
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * Get the file contents
+     * WARNING - High memory usage - The full file is dumped into memory before being returned
+     *
+     * @param string $relative_filepath
+     * @return Response
+     */
+    public function downloadFile( $relative_filepath ){
+        $fs = new Filesystem();
+
+        $response = new Response();
+
+        $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $relative_filepath;
+        if ($fs->exists($absolute_path) == true
+            && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
+
+            $finder = new Finder();
+            $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($relative_filepath) . "$/");
+
+            if ($finder->count() > 0) {
+                $file = $this->getFirstFileInFinder($finder);
+
+                if( $file->isDir() == false ){
+                    $response = new Response( $file->getContents() ,
+                        200, array("Content-Type" => "application/octet-stream",
+                            "Content-Disposition" => "attachment; filename=" . $file->getFilename() ));
                 }
             }
         }
