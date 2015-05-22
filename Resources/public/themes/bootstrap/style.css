@@ -1107,3 +1107,41 @@
 .filetree .searchquery {
     background: #FFA000;
 }
+
+/* COPY STYLES FROM FONT AWESOME */
+
+.context-menu-item.icon {
+    padding-left: 12px;
+}
+
+.context-menu-item.icon:before {
+    font: normal normal normal 14px/1 FontAwesome;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translate(0, 0);
+    line-height: 0.75em;
+    vertical-align: -15%;
+    padding-right: 12px;
+}
+
+.context-menu-item.icon-rename:before {
+    content: "\f044";
+}
+
+.context-menu-item.icon-cut:before {
+    content: "\f0c4";
+}
+
+.context-menu-item.icon-paste:before {
+    content: "\f0ea";
+}
+
+.context-menu-item.icon-download:before {
+    content: "\f019";
+}
+
+.context-menu-item.icon-delete:before {
+    content: "\f00d";
+}
+

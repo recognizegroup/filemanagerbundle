@@ -351,9 +351,9 @@ FileTreeView.prototype = {
             build: function () {
 
                 var items = {
-                    "rename": {name: self._i18n.rename, icon: "edit"},
+                    "rename": {name: self._i18n.rename, icon: "rename"},
                     "cut": {name: self._i18n.cut, icon: "cut"},
-                    "paste": {name: self._i18n.paste, icon: "paste"},
+                    "paste": {name: self._i18n.paste, icon: "paste"}
                 };
 
                 if( file.type !== "dir" ){
