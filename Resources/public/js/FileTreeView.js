@@ -36,7 +36,6 @@ FileTreeView.prototype = {
     _isMultiple: false,
     _selectedFiles: [],
 
-
     _editContext: {
         mode: "none",
         selector: false,

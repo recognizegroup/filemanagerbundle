@@ -141,20 +141,20 @@ FilemanagerAPI.prototype = {
             method: method,
             self: self,
             beforeSend: function (jqXHR) {
-                this.self.debug("Sending " + this.method + " request to " + this.url + "...");
+                self.debug("Sending " + this.method + " request to " + this.url + "...");
             }
 
         }).done( function( data ){
-            this.self._eventHandler.trigger("filemanager:api:done");
+            self._eventHandler.trigger("filemanager:api:done");
 
             // Log the response
-            this.self.debug( data );
+            self.debug( data );
 
         }).fail( function( jqXHR, error, errorMessage ){
-            this.self._eventHandler.trigger("filemanager:api:done");
+            self._eventHandler.trigger("filemanager:api:done");
 
             // Log the failure
-            this.self.errorLog( { statuscode: jqXHR.status,
+            self.errorLog( { statuscode: jqXHR.status,
                 statustext: jqXHR.statusText,
                 response: jqXHR.responseText });
         });
@@ -166,13 +166,16 @@ FilemanagerAPI.prototype = {
      * @param directory                     The directory to read
      */
     read: function( directory ){
+        var self = this;
         var url = this._url + this._path_read_directory;
 
         this._sendRequest( url, "GET", { directory: directory } )
-            .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:add_data', {contents: data.data.contents, directory: directory });
+            .done(function( data, status, jqXHR) {
+                self._eventHandler.trigger('filemanager:api:add_data', {contents: data.data.contents, directory: directory });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -182,13 +185,16 @@ FilemanagerAPI.prototype = {
      * @param query                         The value to search for
      */
     search: function( directory, query ){
+        var self = this;
         var url = this._url + this._path_search;
 
         this._sendRequest( url, "GET", { directory: directory, q: query } )
-            .success(function( data, status, jqXHR) {
-                this.self._eventHandler.trigger('filemanager:api:search_data', {contents: data.data.contents, directory: directory, query: query });
+            .done(function( data, status, jqXHR) {
+                self._eventHandler.trigger('filemanager:api:search_data', {contents: data.data.contents, directory: directory, query: query });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -199,11 +205,12 @@ FilemanagerAPI.prototype = {
      * @param new_location                  The new location of the file
      */
     move: function( directory, filename, new_location ){
+        var self = this;
         var url = this._url + this._path_move;
 
         var filepath = directory + filename;
         this._sendRequest( url, "POST", { filemanager_filepath: filepath, filemanager_newdirectory: new_location } )
-            .success(function( data, status, jqXHR) {
+            .done(function( data, status, jqXHR) {
 
                 // Make sure our changes are in the correct format
                 var changes = [];
@@ -217,11 +224,13 @@ FilemanagerAPI.prototype = {
 
                 // Update the current directory as well
                 if( directory !== new_location ){
-                    this.self._eventHandler.trigger('filemanager:api:refresh');
+                    self._eventHandler.trigger('filemanager:api:refresh');
                 }
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: new_location });
+                self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: new_location });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -232,10 +241,11 @@ FilemanagerAPI.prototype = {
      * @param new_filename                  The new location of the file
      */
     rename: function( directory, filename, new_filename ){
+        var self = this;
         var url = this._url + this._path_rename;
 
         this._sendRequest( url, "POST", { filemanager_directory: directory, filemanager_filename: filename, filemanager_newfilename: new_filename } )
-            .success(function( data, status, jqXHR) {
+            .done(function( data, status, jqXHR) {
 
                 // Make sure our changes are in the correct format
                 var changes = [];
@@ -247,9 +257,11 @@ FilemanagerAPI.prototype = {
                     changes = data.data.changes;
                 }
 
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: directory });
+                self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: directory });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -259,10 +271,11 @@ FilemanagerAPI.prototype = {
      * @param name                          The name of the directory to be made
      */
     createDirectory: function( path, name ){
+        var self = this;
         var url = this._url + this._path_create;
 
         this._sendRequest( url, "POST", { type: "directory", filemanager_directory: path, directory_name: name } )
-            .success(function( data, status, jqXHR) {
+            .done(function( data, status, jqXHR) {
 
                 // Make sure our changes are in the correct format
                 var changes = [];
@@ -275,9 +288,11 @@ FilemanagerAPI.prototype = {
                 }
 
 
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
+                self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -287,10 +302,11 @@ FilemanagerAPI.prototype = {
      * @param name                          The name of the file or directory to destroy
      */
     delete: function( path, name ){
+        var self = this;
         var url = this._url + this._path_delete;
 
         this._sendRequest( url, "POST", { filemanager_directory: path, filemanager_filename: name } )
-            .success(function( data, status, jqXHR) {
+            .done(function( data, status, jqXHR) {
 
                 // Make sure our changes are in the correct format
                 var changes = [];
@@ -302,9 +318,11 @@ FilemanagerAPI.prototype = {
                     changes = data.data.changes;
                 }
 
-                this.self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
+                self._eventHandler.trigger('filemanager:api:update_data', {contents: changes, directory: path });
             })
-            .fail( this._handleApiError );
+            .fail( function( jqXHR ){
+                self._handleApiError( jqXHR );
+            });
     },
 
     /**
@@ -326,8 +344,9 @@ FilemanagerAPI.prototype = {
      * @private
      */
     _handleApiError: function( jqXHR ){
+        var self = this;
         var response = JSON.parse( jqXHR.responseText );
-        this.self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: response.status, statuscode: jqXHR.status });
+        self._eventHandler.trigger('filemanager:api:error', {message: response.data.message, status: response.status, statuscode: jqXHR.status });
     },
 
     /**
