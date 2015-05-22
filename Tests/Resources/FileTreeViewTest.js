@@ -134,6 +134,107 @@ describe('FileTreeView', function() {
         expect( triggered ).toEqual( true );
     });
 
+    it('should only allow a single selection if multiselect is turned off', function () {
+        initializeTreeView();
+
+        var files = [
+            { name: "one", path: "two", type: "file" },
+            { name: "tone", path: "three", type: "file"},
+            { name: "123one", path: "one" }
+        ];
+        treeviews.refreshContent( files );
+        var filerow1 = treeviews._contentElement.children().eq(0);
+        var filerow2 = treeviews._contentElement.children().eq(1);
+
+        filerow1.click();
+        filerow2.click();
+
+        expect( filerow2.hasClass('selected') ).toEqual( true );
+        expect( filerow1.hasClass('selected') ).toEqual( false );
+        expect( treeviews._selectedFiles[0].file ).toEqual( files[1] );
+    });
+
+    it('should deselect a file if a selected file is pressed twice', function () {
+        initializeTreeView();
+
+        var files = [
+            { name: "one", path: "two", type: "file" },
+            { name: "tone", path: "three", type: "file"},
+            { name: "123one", path: "one" }
+        ];
+        treeviews.refreshContent( files );
+        var filerow1 = treeviews._contentElement.children().eq(0);
+
+        filerow1.click().click();
+
+        expect( filerow1.hasClass('selected') ).toEqual( false );
+        expect( treeviews._selectedFiles.length ).toEqual( 0 );
+    });
+
+    it('should trigger a deselect event when a file is clicked twice', function () {
+        var eventhandler = new FilemanagerEventHandler();
+        var triggered = false;
+        eventhandler.register("filemanager:view:deselect", function(){
+            triggered = true;
+        });
+
+        initializeTreeView( {
+            eventHandler: eventhandler
+        });
+
+        var files = [
+            { name: "one", path: "two", type: "file" },
+            { name: "one", path: "three" },
+            { name: "one", path: "one" }
+        ];
+        treeviews.refreshContent( files );
+        treeviews._contentElement.children().eq(0).click().click();
+
+        expect( triggered ).toEqual( true );
+    });
+
+
+
+    it('should keep showing the right selection when the overview layout is switched to grid', function () {
+        initializeTreeView();
+
+        var files = [
+            { name: "one", path: "two", type: "file" },
+            { name: "tone", path: "three", type: "file"},
+            { name: "123one", path: "one" }
+        ];
+        treeviews.refreshContent( files );
+        treeviews._contentElement.children().eq(0).click();
+        treeviews._setOverviewLayout( "grid" );
+        treeviews.refreshContent( files );
+
+        var filecell = treeviews._contentElement.children().eq(0);
+        expect( filecell.hasClass('selected') ).toEqual( true );
+        expect( treeviews._selectedFiles[0].file ).toEqual( files[ 0 ] );
+    });
+
+    it('should allow a multiple file selection if multiselect is turned on', function () {
+        initializeTreeView();
+        treeviews._isMultiple = true;
+
+        var files = [
+            { name: "one", path: "two", type: "file" },
+            { name: "tone", path: "three", type: "file"},
+            { name: "123one", path: "one" }
+        ];
+        treeviews.refreshContent( files );
+        var filerow1 = treeviews._contentElement.children().eq(0);
+        var filerow2 = treeviews._contentElement.children().eq(1);
+
+        filerow1.click();
+        filerow2.click();
+
+        expect( filerow1.hasClass('selected') ).toEqual( true );
+        expect( filerow2.hasClass('selected') ).toEqual( true );
+        expect( treeviews._selectedFiles[0].file ).toEqual( files[0] );
+        expect( treeviews._selectedFiles[1].file ).toEqual( files[1] );
+    });
+
     it('should trigger an open event when a folder is double clicked', function () {
         var eventhandler = new FilemanagerEventHandler();
         var triggered = false;

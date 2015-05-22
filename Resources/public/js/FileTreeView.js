@@ -19,6 +19,7 @@ FileTreeView.prototype = {
     _directoryElement: false,
     _contentElement: false,
     _uploadLink: false,
+    _uploadFunctionalityReference: null,
 
     _viewFormat: "list",
 
@@ -32,7 +33,8 @@ FileTreeView.prototype = {
     _searchQuery: "",
     _apiCalled: false,
 
-    _uploadFunctionalityReference: null,
+    _isMultiple: false,
+    _selectedFiles: [],
 
 
     _editContext: {
@@ -256,18 +258,21 @@ FileTreeView.prototype = {
                 }
 
                 var rowselector = "file-" + file.directory + file.name;
+                var fileselector = "[data-fm-functionality=\"" + rowselector + "\"]";
 
                 var fileelement = $( filestring )
                     .attr("data-fm-functionality", rowselector )
                     .appendTo( this._contentElement )
-                    .on('click',{ file: file }, function( event ) {
-                        $( event.currentTarget ).toggleClass('selected');
+                    .on('click',{ file: file, selector: fileselector }, function( event ) {
 
                         // On mobile, a click is a double click
                         if ($(window).width() <= 768) {
                             self._openContentEvent( event );
+                        } else {
+                            self._toggleSelection( event );
                         }
-                    }).on('keyup', { file: file }, function( event ){
+
+                    }).on('keyup', { file: file, selector: fileselector }, function( event ){
 
                         // ENTER
                         if( event.keyCode == 13){
@@ -278,13 +283,18 @@ FileTreeView.prototype = {
                             self._openContentEvent( event );
                         }
 
-                    }).on('dblclick', { file: file }, function( event ){
-                        console.log( event );
-
+                    }).on('dblclick', { file: file, selector: fileselector }, function( event ){
                         self._openContentEvent( event );
                     });
 
-                self._addContextmenuToElement( "[data-fm-functionality=\"" + rowselector + "\"]", file );
+                // Make sure the selected files stay selected when the content is refreshed
+                for( var j = 0, jlength = this._selectedFiles.length; j < jlength; j++ ){
+                    if( this._selectedFiles[ j ].selector == fileselector ){
+                        fileelement.addClass("selected");
+                    }
+                }
+
+                self._addContextmenuToElement( fileselector , file );
 
                 // Ensure we keep focus on the content area
                 if( i == 0 && self._keepFocusOnContent == true ){
@@ -422,13 +432,93 @@ FileTreeView.prototype = {
         }
 
         if( typeof event.data.file.type == "undefined" || event.data.file.type == "dir" ) {
-            console.log( path );
-
             var synchronized = false;
             this._eventHandler.trigger('filemanager:view:open', {directory: path, isSynchronized: synchronized} );
         } else {
-            this._eventHandler.trigger('filemanager:view:select', { file: path });
+            this._toggleSelection( event );
         }
+    },
+
+    /**
+     * Toggle the selection
+     *
+     * @param event
+     * @private
+     */
+    _toggleSelection: function( event ){
+        if( this._isFileSelected( event.data.file ) ){
+            this._deselectEvent ( event );
+        } else {
+            this._selectEvent ( event );
+        }
+    },
+
+    /**
+     * Select a file
+     *
+     * @param event
+     * @private
+     */
+    _selectEvent: function( event ){
+        if( this._isMultiple == false ){
+            this._clearSelection();
+        }
+
+        this._selectedFiles.push( {selector: event.data.selector, file: event.data.file } );
+        $( event.data.selector ).addClass("selected");
+
+        this._eventHandler.trigger('filemanager:view:select', { file: event.data.file.path });
+    },
+
+    /**
+     * Check if the file is selected
+     *
+     * @param file
+     * @private
+     */
+    _isFileSelected: function( file ){
+        for( var i = 0, length = this._selectedFiles.length; i < length; i++ ){
+            if( file == this._selectedFiles[i].file ){
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * Deselect a file
+     *
+     * @param event
+     * @private
+     */
+    _deselectEvent: function( event ){
+
+        // Rebuild the selection array
+        var newSelectedFiles = [];
+        for( var i = 0, length = this._selectedFiles.length; i < length; i++ ){
+            if( event.data.file == this._selectedFiles[i].file ) {
+                $( event.data.selector ).removeClass("selected");
+            } else {
+                newSelectedFiles = this._selectedFiles[i];
+            }
+        }
+
+        this._selectedFiles = newSelectedFiles;
+        this._eventHandler.trigger('filemanager:view:deselect', { file: event.data.file.path });
+    },
+
+    /**
+     * Clear all the previously selected files and their styling
+     *
+     * @private
+     */
+    _clearSelection: function(){
+        for( var i = 0, length = this._selectedFiles.length; i < length; i++ ){
+            $( this._selectedFiles[i].selector).removeClass("selected");
+        }
+
+        this._selectedFiles = [];
     },
 
     /**
