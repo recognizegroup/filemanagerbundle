@@ -1,0 +1,26 @@
+{% if id is not defined %}
+    {% set id = "filetree_" + random(100) %}
+{% endif %}
+{% if locale is not defined %}
+    {% set locale = app.request.locale %}
+{% endif %}
+{# Set the default values#}
+{% if filemanager_config is not defined %}{% set filemanager_config = {} %}{% endif %}
+{# Override the defaults if the values are set from PHP #}
+{% set default_filemanager_config = {'debug': app.environment != "prod", "i18n": {
+    "rename": 'Rename'|trans({}, 'filemanager', locale),
+    "cut": 'Cut'|trans({}, 'filemanager', locale),
+    "paste": 'Paste'|trans({}, 'filemanager', locale),
+    "download": 'Download'|trans({}, 'filemanager', locale),
+    "delete": 'Delete'|trans({}, 'filemanager', locale)
+}} %}
+{% set filemanager_config = default_filemanager_config | merge( filemanager_config ) %}
+
+<div id="{{ id }}" class="filetree">
+    {% block html %}
+        {% include "RecognizeFilemanagerBundle::theme/default/template.html.twig" %}
+    {% endblock %}
+    {% block scripts %}
+        {% include "RecognizeFilemanagerBundle::theme/default/scripts.html.twig" %}
+    {% endblock %}
+</div>

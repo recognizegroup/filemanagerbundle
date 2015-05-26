@@ -1,0 +1,148 @@
+<script type="text/javascript">
+    $(document).ready(function(){
+        var directory_up = $(".filetree .directory-up");
+        var search_container = $(".filetree .search-input");
+        var search_input = $(".filetree .search-input input");
+
+        if( $(window).width() <= 768 ){
+            search_container.hide();
+
+            var is_search_visible = false;
+
+            search_input.on("blur",function (){
+                var searchquery = search_input.val();
+                if( searchquery !== ""){
+                    $('.filetree').data("filemanager").search( searchquery );
+                }
+            });
+
+            $(".filetree .search-button").on("click", function(){
+
+                if( directory_up.is(":visible") ){
+                    directory_up.hide();
+                    search_container.show();
+                    search_input.focus();
+                } else {
+                    directory_up.show();
+                    search_container.hide();
+                }
+            });
+        }
+    });
+
+    var recognize_filemanager_defaults_{{ id }} = { debug: true,
+        api: { url: "/admin/fileapi", startingDirectory: "" },
+
+        i18n: {
+            rename: "{{ 'Rename'|trans }}",
+            cut: "{{ 'Cut'|trans }}",
+            paste: "{{ 'Paste'|trans }}",
+            download: "{{ 'Download'|trans }}",
+            "delete": "{{ 'Delete'|trans }}"
+        }
+    };
+
+    var recognize_filemanager_config_{{ id }} = (true, recognize_filemanager_defaults_{{ id }}, {{ filemanager_config|json_encode|raw  }});
+    recognize_filemanager_config_{{ id }}['filerowFormat'] = function( file ){
+
+        // Set the icon as a file or a directory
+        var icon = "<i class=\"fa fa-file-o pull-left\"></i>";
+        if( file.type == "dir" ){
+            icon = "<i class=\"fa fa-folder-open pull-left\"></i>";
+        }
+
+        return "<tr tabindex=\"0\" class=\"noselect\"><td class=\"col-sm-3 col-xs-6\">" + icon + file.name + "</td><td class=\"col-xs-1\">" + file.size  + "</td><td class=\"col-xs-1\">" + file.date_modified  + "</td></tr>";
+    };
+
+    recognize_filemanager_config_{{ id }}['renamerowFormat'] = function( file ){
+
+        // Set the icon as a file or a directory
+        var icon = "<i class=\"fa fa-file-o pull-left\"></i>";
+        if( file.type == "dir" ){
+            icon = "<i class=\"fa fa-folder-open pull-left\"></i>";
+        }
+
+        var name = $( file.name );
+        name.addClass('form-control');
+        var content = $('<div></div>');
+        content.append( name );
+        return "<tr tabindex=\"0\" class=\"noselect\"><td class=\"col-sm-3 col-xs-6\">" + icon + content.get(0).innerHTML + "</td><td class=\"col-xs-1\">" + file.size  + "</td><td class=\"col-xs-1\">" + file.date_modified  + "</td></tr>";
+    };
+
+    recognize_filemanager_config_{{ id }}['fileCellFormat'] = function( file ){
+
+        // Set the icon as a file or a directory
+        var icon = "<i class=\"fa fa-file-o\" style=\"display: block; font-size: 70px;\"></i>";
+        if( file.type == "dir" ){
+            icon = "<i class=\"fa fa-folder-open\" style=\"display: block; font-size: 70px;\"></i>";
+        }
+
+        if( typeof file.preview !== "undefined") {
+            icon = "<img src=\"" + location.origin + file.preview + "\" style=\"max-width: 70px; max-height: 70px;\" />";
+        }
+
+        var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";
+        contents += "<span style=\"display:block; overflow: hidden; word-wrap: break-word;\">" + file.size + "</span>";
+
+        return "<a href=\"#\" style=\"text-align: center; color: #000000; height: 150px; width: 150px; margin-right: 10px; margin-bottom: 10px; display: inline-block;\">" + icon + contents + "</div>";
+    };
+
+    recognize_filemanager_config_{{ id }}['renamecellFormat'] = function( file ){
+
+        // Set the icon as a file or a directory
+        var icon = "<i class=\"fa fa-file-o\" style=\"display: block; font-size: 70px;\"></i>";
+        if( file.type == "dir" ){
+            icon = "<i class=\"fa fa-folder-open\" style=\"display: block; font-size: 70px;\"></i>";
+        }
+
+        var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";
+        contents += "<span style=\"display:block; overflow: hidden; word-wrap: break-word;\">" + file.size + "</span>";
+
+        return "<a href=\"#\" style=\"text-align: center; color: #000000; height: 150px; width: 150px; margin-right: 10px; margin-bottom: 10px; display: inline-block;\">" + icon + contents + "</div>";
+    };
+
+
+    recognize_filemanager_config_{{ id }}['uploadFormat'] = function( action, buttonid ){
+        return "<div class=\"col-sm-2\"><a href=\"#\" class=\"btn\" id=\"" + buttonid + "\">Upload</a></div>";
+    };
+
+    var filetree = $('.filetree').filemanager( recognize_filemanager_config_{{ id }} ).data("filemanager").on("filemanager:api:loading", function(){
+        var overlayreference = $( ".overlayreference" );
+        var rowPos = overlayreference.offset();
+        var bottomTop = rowPos.top;
+        var bottomLeft = rowPos.left;
+
+        $(".overlay").css("top", bottomTop).css("left", bottomLeft).css("width", overlayreference.width())
+                .css("height", overlayreference.height())
+                .css("display", "table");
+
+        // Hide the loading animation after the content has been rendered
+    }).data("filemanager").on("filemanager:view:rendered", function(){
+        $(".overlay").css("display", "none");
+    }).data("filemanager").on("filemanager:api:error", function(){
+        $(".overlay").css("display", "none");
+    }).data("filemanager").on("filemanager:api:uploading", function(){
+
+        $(".filetree .options").hide();
+        $(".filetree .upload-area").show();
+
+        $(".upload-cancel-button").focus();
+
+    }).data("filemanager").on("filemanager:api:upload_done", function(){
+
+        $(".filetree .options").show();
+        $(".filetree .upload-area").hide();
+    });
+
+    $('.sort-by-filename').on("click",function( event ){
+        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
+    });
+
+    $('.sort-by-filesize').on("click",function( event ){
+        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
+    });
+
+    $('.sort-by-date').on("click",function( event ){
+        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
+    });
+</script>

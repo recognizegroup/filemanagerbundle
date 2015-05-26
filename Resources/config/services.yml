@@ -1,4 +1,11 @@
 services:
+    recognize.filemanager.twig.filemanager_extension:
+        class: Recognize\FilemanagerBundle\Twig\FilemanagerExtension
+        arguments: [@service_container]
+        public: false
+        tags:
+             - { name: twig.extension }
+
     recognize.filemanager_directory_repository:
         class: Doctrine\ORM\EntityRepository
         factory_service: doctrine.orm.default_entity_manager

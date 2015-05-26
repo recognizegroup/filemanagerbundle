@@ -43,7 +43,7 @@
                 <target>Verversen</target>
             </trans-unit>
             <trans-unit id="11">
-                <source>No search result found for</source>
+                <source>No search results found for</source>
                 <target>Geen zoekresultaten gevonden voor</target>
             </trans-unit>
             <trans-unit id="12">

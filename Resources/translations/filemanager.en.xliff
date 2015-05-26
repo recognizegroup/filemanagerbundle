@@ -43,8 +43,8 @@
                 <target>Refresh</target>
             </trans-unit>
             <trans-unit id="11">
-                <source>No search result found for</source>
-                <target>No search result found for</target>
+                <source>No search results found for</source>
+                <target>No search results found for</target>
             </trans-unit>
             <trans-unit id="12">
                 <source>This folder is empty</source>

@@ -43,7 +43,7 @@
                 <target>Aktualisieren</target>
             </trans-unit>
             <trans-unit id="11">
-                <source>No search result found for</source>
+                <source>No search results found for</source>
                 <target>Keine Ergebnisse gefunden für</target>
             </trans-unit>
             <trans-unit id="12">
