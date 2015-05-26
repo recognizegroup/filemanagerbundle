@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="en" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>File name</source>
+                <target>Dateiname</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>File size</source>
+                <target>Dateigröße</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>Date modified</source>
+                <target>Änderungsdatum</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>Upload</source>
+                <target>Hochladen</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>Create directory</source>
+                <target>Ordner machen</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>List view</source>
+                <target>Listenansicht</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>Grid view</source>
+                <target>Rasteransicht</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>Search</source>
+                <target>Suchen</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>Cancel</source>
+                <target>Abbrechen</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>Refresh</source>
+                <target>Aktualisieren</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>No search result found for</source>
+                <target>Keine Ergebnisse gefunden für</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>This folder is empty</source>
+                <target>Dieser Ordner ist leer</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>Rename</source>
+                <target>Umbenennen</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>Cut</source>
+                <target>Asschneiden</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>Paste</source>
+                <target>Einfügen</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>Delete</source>
+                <target>Löschen</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>Download file</source>
+                <target>Datei herunterladen</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
