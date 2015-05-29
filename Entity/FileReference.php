@@ -129,4 +129,8 @@ class FileReference {
         return $this->directory;
     }
 
+    public function __toString(){
+        return $this->getAbsolutePath();
+    }
+
 }

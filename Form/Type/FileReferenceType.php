@@ -55,30 +55,39 @@ class FileReferenceType extends AbstractType {
      * @param array $options
      */
     public function buildForm(FormBuilderInterface $builder, array $options) {
-        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ( $options ) {
             $data = $event->getData();
-            try {
-                $fileref = null;
-                if ($data instanceof UploadedFile) {
-                    /** @var FileChanges $changes */
-                    $changes = $this->filemanager->saveUploadedFile($data, $data->getClientOriginalName(), true);
-                    $fileref = $this->synchronizer->loadFileReference( $this->filemanager->getWorkingDirectory(), $changes->getFile()->getRelativePath() . $changes->getFile()->getFilename() );
-                } else if (is_string($data)) {
 
-                    $files = $this->filemanager->searchDirectoryContents(PathUtils::moveUpPath( $data ), "/^" . PathUtils::getLastNode( $data ) . "$/");
-                    $fileref = $this->synchronizer->loadFileReference( $this->filemanager->getWorkingDirectory(), $files[0]->getRelativePath() . $files[0]->getFilename() );
+            // Ignore empty values
+            if ($data !== null) {
+                try {
+                    $fileref = null;
+
+                    // Allow UploadFile for fallback when there is no javascript
+                    if ($data instanceof UploadedFile) {
+                        /** @var FileChanges $changes */
+                        $changes = $this->filemanager->saveUploadedFile($data, $data->getClientOriginalName(), true);
+                        $fileref = $this->synchronizer->loadFileReference($this->filemanager->getWorkingDirectory(), $changes->getFile()->getRelativePath() . $changes->getFile()->getFilename());
+
+                    // Allow a relative path to the file as well
+                    } else if (is_string($data)) {
+
+                        $files = $this->filemanager->searchDirectoryContents(PathUtils::moveUpPath($data), "/^" . PathUtils::getLastNode($data) . "$/");
+                        $fileref = $this->synchronizer->loadFileReference($this->filemanager->getWorkingDirectory(), $files[0]->getRelativePath() . $files[0]->getFilename());
+                    }
+
+
+                    if ( $fileref == null ) {
+                        throw new \RuntimeException("Database entity not found ");
+                    } else {
+                        $event->setData($fileref);
+                    }
+
+                } catch(\RuntimeException $e) {
+
+                    $event->setData(null);
+                    $event->getForm()->addError(new FormError($e->getMessage()));
                 }
-
-                if( $fileref == null ){
-                    throw new \RuntimeException("Database entity not found");
-                } else {
-                    $event->setData( $fileref );
-                }
-
-            } catch (\RuntimeException $e) {
-
-                $event->setData( null );
-                $event->getForm()->addError(new FormError($e->getMessage()));
             }
         });
 

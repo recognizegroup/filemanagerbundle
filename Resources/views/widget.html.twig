@@ -31,6 +31,9 @@
                 $(document).ready(function(){
                     var fileinput =  $('#{{ id }} .select-file input[type=file]');
                     fileinput.attr("type", "text").css("opacity", "0")
+                            .on("focus", function( event ){
+                                $( event.target).blur();
+                            })
                             .on("invalid", function( event ){
                         setTimeout( function() {
                             $(event.target).blur();
@@ -54,6 +57,7 @@
                         }
                         html += "<p>" + event.file.name + "</p>";
                         $('#{{ id }} .file-selection').html( html );
+
                         fileinput.attr("value", event.path );
                     });
                 });
