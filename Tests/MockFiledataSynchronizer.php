@@ -9,4 +9,8 @@ class MockFiledataSynchronizer implements FiledataSynchronizerInterface {
     public function synchronize(FileChanges $changes, $working_directory){
         // Do nothing
     }
+
+    public function loadFileReference($working_directory, $relativepath) {
+        // Do nothing
+    }
 }

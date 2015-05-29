@@ -58,7 +58,6 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $this->delete( $changes, $working_directory );
                 break;
         }
-
     }
 
     /**
@@ -261,18 +260,26 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
      *
      * @param string $working_directory            The working directory
      * @param string $relative_path                The relative path of the file without the filename
+     * @param bool $flush                          Whether to persist the dir or not
      */
-    protected function loadDirectoryForFilepath( $working_directory, $relative_path ){
+    protected function loadDirectoryForFilepath( $working_directory, $relative_path, $flush = false ){
 
         // Find the directory in the database
         $relpath = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $relative_path ) );
         $dirname = PathUtils::getLastNode( $relative_path );
+
+        if( $relpath == false ){
+            $relpath = "";
+        }
         $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
 
         // If the directory does not exist yet, create it
         if( count($dirs) == 0 ){
             $new_directory = $this->directoryRepository->getEmptyDirectory($working_directory, $relpath, $dirname);
             $this->em->persist( $new_directory );
+            if( $flush ){
+                $this->em->flush();
+            }
 
             $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
         }
@@ -283,6 +290,48 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         } else {
             return null;
         }
+    }
+
+
+    /**
+     * Get a FileReference object for a file on the filesystem
+     * Or create it if it doesn't exist
+     *
+     * @param string $working_directory            The working directory
+     * @param string $relative_path                The relative path of the file with the filename
+     * @return FileReference | null
+     */
+    public function loadFileReference( $working_directory, $relative_path ){
+
+        // Find the directory in the database
+        $dir = $this->loadDirectoryForFilepath( $working_directory,  PathUtils::moveUpPath( $relative_path ), true );
+        $this->em->flush();
+
+
+        // Only save the file in the database if the directory has been found
+        if( $dir !== null ) {
+            $fileref = $this->fileRepository->getFile( $dir, PathUtils::getLastNode( $relative_path ) );
+            if( $fileref == null ){
+
+                $fileref = new FileReference();
+                $fileref->setFilename( PathUtils::getLastNode( $relative_path ) );
+                $fileref->setParentDirectory( $dir );
+
+                $finfo = @finfo_open( FILEINFO_MIME_TYPE );
+                $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $relative_path );
+                @finfo_close( $finfo );
+                if( $mimetype !== false ){
+                    $fileref->setMimetype( $mimetype );
+                }
+
+                $this->em->persist( $fileref );
+                $this->em->flush();
+            }
+
+            return $fileref;
+        }
+
+        return null;
     }
 
 }

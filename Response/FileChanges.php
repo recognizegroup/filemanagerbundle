@@ -16,6 +16,7 @@ class FileChanges {
 
     /** @var SplFileInfo */
     protected $oldfile;
+
     protected $preloaded_oldfile = null;
 
     /** @var SplFileInfo */

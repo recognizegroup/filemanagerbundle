@@ -96,4 +96,33 @@ class PathUtils {
         return $path;
     }
 
+    /**
+     * Add a copy string to a filepath
+     *
+     * For example: directory/file.txt will become directory/file(1).txt
+     *
+     * @param string $filename                     The filename to add the number to
+     * @param string $add_number                   The number to add at the end of the file
+     */
+    public static function addCopyNumber($filename, $add_number){
+        $pathnodes = explode(".", $filename);
+
+        $copystring = "(" . $add_number . ")";
+        $nodenumber = 0;
+        if( count( $pathnodes ) == 1 ){
+            $nodenumber = 0;
+        } else {
+            $nodenumber = count( $pathnodes ) - 2;
+        }
+
+        if( preg_match( "/\([0-9]+\)/", $pathnodes[ $nodenumber ] ) ){
+            $pathnodes[ $nodenumber ] = preg_replace( "/\([0-9]+\)/", $copystring, $pathnodes[ $nodenumber ] );
+        } else {
+            $pathnodes[ $nodenumber ] .= $copystring;
+        }
+
+        $copyfilename = join(".", $pathnodes);
+        return $copyfilename;
+    }
+
 }

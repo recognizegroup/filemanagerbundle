@@ -26,12 +26,18 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         return new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
     }
 
-    public function testEmptyDirectoryListing(){
+    public function testGetWorkingDirectory(){
+        $filemanagerservice = new FilemanagerService( array("default_directory" => "abc"), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $this->assertEquals( "abc", $filemanagerservice->getWorkingDirectory() );
+    }
+
+    public function testWorkspace(){
         $filemanagerservice = $this->getFilemanagerService();
         $files = $filemanagerservice->getDirectoryContents();
 
         $this->assertEquals( array(), $files );
     }
+
 
     public function testFilledDirectoryListing(){
         $filemanagerservice = $this->getFilemanagerService();
@@ -241,6 +247,22 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     /**
      * @depends testPartialFilenameAndNestedSearching
      */
+    public function testUploadWithCopy(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
+
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile.txt", true );
+        $this->assertEquals( $this->getExpectedUploadedFileWithCopy(), $changes->getFile() );
+    }
+
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
     public function testMovingDirectoryDeeper(){
         $filemanagerservice = $this->getFilemanagerService();
         $this->fillTempDirectory();
@@ -389,6 +411,10 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     protected function getExpectedUploadedFile(){
         return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "testfile.txt", "", "testfile.txt" );
+    }
+
+    protected function getExpectedUploadedFileWithCopy(){
+        return new SplFileInfo( $this->workspace . DIRECTORY_SEPARATOR . "temporaryfile(2).txt", "", "temporaryfile(2).txt" );
     }
 
     protected function getExpectedUploadedFileInTesting(){

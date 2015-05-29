@@ -7,4 +7,6 @@ interface FiledataSynchronizerInterface {
 
     public function synchronize( FileChanges $changes, $working_directory );
 
+    public function loadFileReference( $working_directory, $relativepath );
+
 }

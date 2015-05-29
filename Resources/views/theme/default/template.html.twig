@@ -1,7 +1,26 @@
 {% trans_default_domain "filemanager" %}
-<div class="titlebar"></div>
-<div class="overlayreference">
-    <div class="directories"></div>
-    <div class="mainview"></div>
-    <div class="overlay"></div>
+<div class="titlebar">
+    <a href="#" class="upload-button" data-fm-functionality="upload_button" title="{{ 'Upload'|trans }}">{{ 'Upload'|trans }}</a>
+    <a href="#" class="directory-button" data-fm-functionality="create_directory">{{ 'Create directory'|trans }}</a>
+    <div id="progressOuter" class="progress progress-striped active">
+        <div id="progressBar" data-fm-functionality="upload_progress" class="progress-bar"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+    </div>
+    <a href="#" class="directory-up-button" data-fm-functionality="directory_up">
+        <span data-fm-value="current_directory">
+            <!-- Directories go here -->
+        </span>
+    </a>
+    <input class="search-input" style="height: 37px; padding-bottom: 5px;" type="search" name="searchvalue" placeholder="{{ 'Search'|trans }}" data-fm-functionality="search" />
+</div>
+<div class="directories" data-fm-value="directories"></div>
+<div class="mainview">
+    <div data-fm-value="list_content">
+        <!-- Content goes here -->
+    </div>
+    <div data-fm-show="no_search_results">
+        <span>{{ 'No search results found for'|trans }} "<span data-fm-value="search_query"></span>"</span>
+    </div>
+    <div data-fm-show="no_content">
+        <span>{{ 'This folder is empty'|trans }}</span>
+    </div>
 </div>

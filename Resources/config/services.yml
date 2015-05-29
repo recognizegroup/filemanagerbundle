@@ -6,6 +6,12 @@ services:
         tags:
              - { name: twig.extension }
 
+    recognize.filemanager.form.type.filereference:
+        class: Recognize\FilemanagerBundle\Form\Type\FileReferenceType
+        arguments: [@recognize.file_manager, @recognize.filedata_synchronizer]
+        tags:
+            -  { name: form.type, alias: "filereference" }
+
     recognize.filemanager_directory_repository:
         class: Doctrine\ORM\EntityRepository
         factory_service: doctrine.orm.default_entity_manager
@@ -19,7 +25,6 @@ services:
             factory_method: getRepository
             arguments:
                 - Recognize\FilemanagerBundle\Entity\FileReference
-
 
     recognize.file_manager:
         class: Recognize\FilemanagerBundle\Service\FilemanagerService

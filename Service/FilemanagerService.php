@@ -252,7 +252,7 @@ class FilemanagerService {
     public function rename( $relative_path_to_file, $new_name ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $relative_path_to_file ) . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex( $relative_path_to_file ) . "$/" );
 
         if( $finder->count() > 0 ){
 
@@ -306,7 +306,7 @@ class FilemanagerService {
     public function move( $relative_path_to_file, $newpath ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $relative_path_to_file ) . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex( $relative_path_to_file ) . "$/" );
 
         if( $finder->count() > 0 ){
 
@@ -343,7 +343,7 @@ class FilemanagerService {
                 throw new AccessDeniedException();
             }
         } else {
-            throw new FileNotFoundException("The file or directory that should be moved doesn't exist: " . $this->escapeSlashes( $relative_path_to_file ));
+            throw new FileNotFoundException("The file or directory that should be moved doesn't exist: " . $this->escapeRegex( $relative_path_to_file ));
         }
     }
 
@@ -359,7 +359,7 @@ class FilemanagerService {
     public function delete( $filename ){
         $fs = new Filesystem();
         $finder = new Finder();
-        $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes( $filename ) . "$/" );
+        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex( $filename ) . "$/" );
 
         if( $finder->count() > 0 ){
 
@@ -438,8 +438,9 @@ class FilemanagerService {
      *
      * @param UploadedFile $file
      * @param string $new_filename                  The name of the new file without the extension
+     * @param int $copy_number                       When a conflict arrises, add this number to the file and try again
      */
-    public function saveUploadedFile( UploadedFile $file, $new_filename ){
+    public function saveUploadedFile( UploadedFile $file, $new_filename, $copy_number = false ){
         $fs = new Filesystem();
 
         if( $this->security_context->isGranted("upload", $this->working_directory, $this->absolutePathToRelativePath( $this->current_directory ) ) ) {
@@ -452,7 +453,7 @@ class FilemanagerService {
                         $file->move($this->current_directory, $new_filename);
 
                         $finder = new Finder();
-                        $finder->in($this->current_directory)->path("/^" . $new_filename . "$/");
+                        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex( $new_filename ) . "$/");
                         if ($finder->count() > 0) {
                             $movedfile = $this->getFirstFileInFinder($finder);
                             $filechanges = new FileChanges("create", $movedfile);
@@ -469,7 +470,17 @@ class FilemanagerService {
                     }
                 }
             } else {
-                throw new ConflictException();
+                if( $copy_number === false ){
+                    throw new ConflictException();
+                } else {
+                    if( $copy_number <= 1 || $copy_number === true ){
+                        $copy_number = 1;
+                    }
+
+                    $copy_number++;
+                    $filename = PathUtils::addCopyNumber( $new_filename, $copy_number );
+                    return $this->saveUploadedFile( $file, $filename, $copy_number );
+                }
             }
         } else {
             throw new AccessDeniedException();
@@ -517,7 +528,7 @@ class FilemanagerService {
             if( strpos( $mimetype, "image" ) !== false ){
 
                 $finder = new Finder();
-                $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($relative_filepath) . "$/");
+                $finder->in($this->current_directory)->path("/^" . $this->escapeRegex($relative_filepath) . "$/");
 
                 if ($finder->count() > 0) {
                     $file = $this->getFirstFileInFinder($finder);
@@ -548,7 +559,7 @@ class FilemanagerService {
             && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
 
             $finder = new Finder();
-            $finder->in($this->current_directory)->path("/^" . $this->escapeSlashes($relative_filepath) . "$/");
+            $finder->in($this->current_directory)->path("/^" . $this->escapeRegex($relative_filepath) . "$/");
 
             if ($finder->count() > 0) {
                 $file = $this->getFirstFileInFinder($finder);
@@ -564,13 +575,21 @@ class FilemanagerService {
         return $response;
     }
 
-
     /**
-     * Escape forward slashes in a path
+     * Escapes all regex characters
      *
      * @param $string
      */
-    protected function escapeSlashes( $string ){
-        return str_replace("/", "\/", $string);
+    protected function escapeRegex( $string ){
+        return preg_quote( $string, "/" );
+    }
+
+    /**
+     * Returns the working directory path
+     *
+     * @return mixed
+     */
+    public function getWorkingDirectory(){
+        return $this->working_directory;
     }
 }

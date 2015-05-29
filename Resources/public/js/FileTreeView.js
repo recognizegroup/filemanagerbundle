@@ -391,7 +391,7 @@ FileTreeView.prototype = {
                                 break;
                             case "delete":
 
-                                //self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
+                                self._eventHandler.trigger('filemanager:view:delete', {file: options.file});
                                 break;
                             case "download":
                                 self._eventHandler.trigger('filemanager:view:download', {file: options.file});
@@ -501,7 +501,7 @@ FileTreeView.prototype = {
         this._selectedFiles.push( {selector: event.data.selector, file: event.data.file } );
         $( event.data.selector ).addClass("selected");
 
-        this._eventHandler.trigger('filemanager:view:select', { file: event.data.file.path });
+        this._eventHandler.trigger('filemanager:view:select', { path: event.data.file.path, file: event.data.file });
     },
 
     /**
@@ -539,7 +539,7 @@ FileTreeView.prototype = {
         }
 
         this._selectedFiles = newSelectedFiles;
-        this._eventHandler.trigger('filemanager:view:deselect', { file: event.data.file.path });
+        this._eventHandler.trigger('filemanager:view:deselect', { path: event.data.file.path, file: event.data.file });
     },
 
     /**

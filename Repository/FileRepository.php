@@ -5,6 +5,7 @@ namespace Recognize\FilemanagerBundle\Repository;
 use Doctrine\ORM\EntityRepository;
 use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Entity\FileReference;
+use SplFileInfo;
 
 
 /**
@@ -59,5 +60,4 @@ class FileRepository extends EntityRepository {
             return null;
         }
     }
-
 }

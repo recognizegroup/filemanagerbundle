@@ -1,0 +1,86 @@
+{% block filereference_widget %}
+    {% set managerid = id ~ "_manager" %}
+    {% spaceless %}
+        <div id="{{ id }}">
+            <div class="file-selection">
+                {% if preview is defined %}
+                    <img class="preview" src="{{ preview }}">
+                {% endif %}
+                <p>{{ value }}</p>
+            </div>
+            <a class="select-file btn btn-primary">
+                <input type="file" id="{{ id }}" name="{{ full_name }}" {% if value is not empty %}value="{{ value }}" {% endif %} {% if required %}required="required"{% endif %} />
+            Selecteer bestand</a>
+
+            {% if is_simple == false %}
+            <div class="filemanager-modal-overlay" style="display:none">
+                <div class="filemanager-modal">
+                    <div class="row">
+                        <div style="margin-left: 36px; margin-right: 36px;">
+                            <h1>Filemanager<a class="pull-right text-danger close-modal" href="#"><i class="fa fa-close"></i></a></h1></div>
+                    </div>
+                    {{ filemanager(managerid, {
+                                "api": {
+                                    "url": "/admin/fileapi",
+                                    "startingDirectory": ""
+                                }
+                    }, "bootstrap") }}
+                </div>
+            </div>
+            <script type="text/javascript">
+                $(document).ready(function(){
+                    var fileinput =  $('#{{ id }} .select-file input[type=file]');
+                    fileinput.attr("type", "text").css("opacity", "0")
+                            .on("invalid", function( event ){
+                        setTimeout( function() {
+                            $(event.target).blur();
+                        }, 5);
+                    });
+
+                    $('#{{ id }} .select-file').on("click", function(){
+                        $('#{{ id }} .filemanager-modal-overlay').toggle();
+                    });
+
+
+                    $('#{{ id }} .filemanager-modal a.close-modal').on("click", function(){
+                        $('#{{ id }} .filemanager-modal-overlay').hide();
+                    });
+
+                    $('#{{ managerid }}').data("filemanager").on("filemanager:view:select", function( event ){
+                        $('#{{ id }} .filemanager-modal-overlay').hide();
+                        var html = "";
+                        if( event.file.hasOwnProperty('preview') ){
+                            html += "<img class=\"preview\" src=\"" + event.file.preview + "\">";
+                        }
+                        html += "<p>" + event.file.name + "</p>";
+                        $('#{{ id }} .file-selection').html( html );
+                        fileinput.attr("value", event.path );
+                    });
+                });
+            </script>
+            {% endif %}
+        </div>
+    {% endspaceless %}
+{% endblock %}
+
+{% block filereference_row %}
+    <div class="{% if (not compound or force_error|default(false)) and not valid %}has-error{% endif %}">
+        {% if not compound %}
+            {% set label_attr = label_attr|merge({'for': id}) %}
+        {% endif %}
+        {% if required %}
+            {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' required')|trim}) %}
+        {% endif %}
+        {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' control-label')|trim}) %}
+
+        <label{% for attrname, attrvalue in label_attr %} {{ attrname }}="{{ attrvalue }}"{% endfor %}>
+        {% if label is empty %}
+            {% set label = name|humanize %}
+        {% endif %}
+        {{ label|trans({}, translation_domain) }}
+        </label>
+        {{ form_widget(form) }}
+        {{ form_errors(form) }}
+
+    </div>
+{% endblock %}
