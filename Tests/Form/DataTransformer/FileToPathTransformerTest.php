@@ -25,5 +25,16 @@ class FilToPathTransformerTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals( $expected, $transformer->transform( $fileref ));
     }
 
+    public function testReverseStaysTheSame(){
+        $transformer = new FileToPathTransformer();
+
+        $filename = "testpath.php";
+
+        $fileref = new FileReference();
+        $fileref->setFileName( $filename );
+
+        $expected = $fileref;
+        $this->assertEquals( $expected, $transformer->reverseTransform( $fileref ));
+    }
 
 }

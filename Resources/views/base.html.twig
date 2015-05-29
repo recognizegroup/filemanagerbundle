@@ -2,7 +2,11 @@
     {% set id = "filetree_" + random(100) %}
 {% endif %}
 {% if locale is not defined %}
-    {% set locale = app.request.locale %}
+    {% if app.request is not null %}
+        {% set locale = app.request.locale %}
+    {% else %}
+        {% set locale = 'en' %}
+    {% endif %}
 {% endif %}
 {# Set the default values#}
 {% if filemanager_config is not defined %}{% set filemanager_config = {} %}{% endif %}

@@ -16,10 +16,5 @@
         </testsuite>
     </testsuites>
 
-    <filter>
-        <blacklist>
-            <directory suffix=".php">Tests</directory>
-        </blacklist>
-    </filter>
 
 </phpunit>

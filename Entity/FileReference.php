@@ -27,6 +27,12 @@ class FileReference {
      */
     protected $directory_id;
 
+
+    /**
+     * @var Directory
+     */
+    protected $directory;
+
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
@@ -82,6 +88,11 @@ class FileReference {
         $this->preview_url = $preview_url;
     }
 
+    public function setLocale( $locale ){
+        $this->locale = $locale;
+    }
+
+
     public function getId(){
         return $this->id;
     }
@@ -112,6 +123,10 @@ class FileReference {
 
     public function getAbsolutePath(){
         return $this->working_directory . $this->relative_path . $this->filename;
+    }
+
+    public function getParentDirectory(){
+        return $this->directory;
     }
 
 }
