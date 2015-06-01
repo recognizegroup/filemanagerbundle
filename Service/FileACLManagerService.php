@@ -69,13 +69,16 @@ class FileACLManagerService {
 
 
         // Retrieve the security identities of the user
-        $user = $tokenStorage->getToken()->getUser();
         $securityidentities = array();
+        $token = $tokenStorage->getToken();
+        if( $token !== null ){
+            $user = $token->getUser();
 
-        $securityidentities[] = UserSecurityIdentity::fromAccount( $user );
-        $roles = $user->getRoles();
-        for( $i = 0, $length = count( $roles ); $i < $length; $i++ ){
-            $securityidentities[] = new RoleSecurityIdentity( $roles[$i] );
+            $securityidentities[] = UserSecurityIdentity::fromAccount( $user );
+            $roles = $user->getRoles();
+            for( $i = 0, $length = count( $roles ); $i < $length; $i++ ){
+                $securityidentities[] = new RoleSecurityIdentity( $roles[$i] );
+            }
         }
         $this->securityIdentities = $securityidentities;
 

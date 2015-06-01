@@ -63,7 +63,7 @@ class FileReference {
      */
     protected $preview_url;
 
-    public function setParentDirectory( Directory $directory){
+    public function setParentDirectory( Directory $directory ){
         $this->directory_id = $directory->getId();
         $this->directory = $directory;
 
@@ -133,4 +133,7 @@ class FileReference {
         return $this->getAbsolutePath();
     }
 
+    public function setDirectoryObject( $directory ){
+        $this->directory = $directory;
+    }
 }

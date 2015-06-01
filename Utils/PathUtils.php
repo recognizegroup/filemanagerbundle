@@ -67,6 +67,8 @@ class PathUtils {
             } else {
                 $path = "";
             }
+
+            $path = self::removeFirstSlash( $path );
         }
 
         return $path;

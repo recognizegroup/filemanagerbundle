@@ -8,13 +8,15 @@
          verbose="true">
 
     <testsuites>
+        <testsuite name="all">
+            <directory suffix="Test.php">Tests</directory>
+        </testsuite>
         <testsuite name="unit">
-            <directory>Tests</directory>
+            <directory suffix="Test.php">Tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
-            <directory suffix="Functional.php">Tests</directory>
+            <directory suffix="Test.php">Tests/Functional</directory>
         </testsuite>
     </testsuites>
-
 
 </phpunit>

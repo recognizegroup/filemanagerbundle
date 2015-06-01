@@ -83,7 +83,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         } else if( $file['type'] == "file") {
 
             // Find the directory in the database
-            $dir = $this->loadDirectoryForFilepath( $working_directory,  $file['directory'] );
+            $dir = $this->loadDirectoryForFilepath( $working_directory,  $file['directory'], true );
 
             // Only save the file in the database if the directory has been found
             if( $dir !== null ) {
@@ -94,9 +94,12 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $finfo = @finfo_open( FILEINFO_MIME_TYPE );
                 $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $file['path'] );
                 @finfo_close( $finfo );
-                if( $mimetype !== false ){
-                    $fileref->setMimetype( $mimetype );
+
+                if( $mimetype == false ){
+                    $mimetype = "";
                 }
+                $fileref->setMimetype( $mimetype );
+
 
                 $this->em->persist( $fileref );
             }
@@ -146,32 +149,38 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
 
             // Get all the child directories
             // and update their relative paths to match the updated parent directory
-            $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation( $working_directory, $file['directory'], $file['name']);
+            $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation( $working_directory, $old_relative_path, "");
             for( $i = 0, $length = count($childdirectories); $i < $length; $i++ ){
 
                 /** @var Directory $childdirectory */
                 $childdirectory = $childdirectories[ $i ];
 
-                // Check if the old relative path is in the child directories path
-                $pos = strpos($childdirectory->getRelativePath(), $old_relative_path);
-                if ($pos === 0) {
+                // Just add the new relative path in front of the old path if we are in the root
+                $updated_relative_path = $childdirectory->getRelativePath();
+                if( $old_relative_path == ""){
+                    $updated_relative_path = $new_relative_path . $old_relative_path;
+                } else {
+                    // Check if the old relative path is in the child directories path
+                    $pos = strpos($childdirectory->getRelativePath(), $old_relative_path);
+                    if ($pos === 0) {
+                        $updated_relative_path = substr_replace($childdirectory->getRelativePath(),
+                            $new_relative_path, 0, strlen($old_relative_path));
 
-                    $updated_relative_path = substr_replace($childdirectory->getRelativePath(),
-                        $new_relative_path, 0, strlen($old_relative_path) );
-
-                    $childdirectory->setRelativePath( $updated_relative_path );
-
-                    $this->em->persist( $childdirectory );
-
-                    // Update the path variables of the files
-                    /** @var FileReference[] $files */
-                    $files = $this->fileRepository->getFilesInDirectory( $childdirectory );
-                    for( $j = 0, $jlength = count($files); $j < $jlength; $j++ ){
-                        $files[ $j ]->setParentDirectory( $childdirectory );
-                        $this->em->persist( $files[ $j ] );
                     }
-
                 }
+
+                $childdirectory->setRelativePath( $updated_relative_path );
+
+                $this->em->persist( $childdirectory );
+
+                // Update the path variables of the files
+                /** @var FileReference[] $files */
+                $files = $this->fileRepository->getFilesInDirectory( $childdirectory );
+                for( $j = 0, $jlength = count($files); $j < $jlength; $j++ ){
+                    $files[ $j ]->setParentDirectory( $childdirectory );
+                    $this->em->persist( $files[ $j ] );
+                }
+
             }
         } else if ( $file['type'] == "file" ){
 
@@ -187,6 +196,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $newdir = $this->loadDirectoryForFilepath( $working_directory,  $changes_array['updatedfile']['directory'] );
                 if($newdir !== null ){
 
+                    $current_file->setFileName( $changes_array['updatedfile']['name']);
                     $current_file->setParentDirectory( $newdir );
                     $this->em->persist( $current_file );
                 }
@@ -228,7 +238,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             // Get all the directories below the current directory
             $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation( $working_directory, $file['directory'], $file['name']);
             for( $i = 0, $length = count($childdirectories); $i < $length; $i++ ){
-                $this->aclservice->clearAccessRightsForDirectory( $directories[$i] );
+                $this->aclservice->clearAccessRightsForDirectory( $childdirectories[$i] );
 
                 // Remove the file references underneath this directory
                 $files = $this->fileRepository->getFilesInDirectory( $childdirectories[ $i ]);
@@ -284,12 +294,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
         }
 
-        // Only save the file in the database if the directory has been found
-        if( count( $dirs ) > 0 ) {
-            return $dirs[0];
-        } else {
-            return null;
-        }
+        return $dirs[0];
     }
 
 
@@ -307,31 +312,27 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         $dir = $this->loadDirectoryForFilepath( $working_directory,  PathUtils::moveUpPath( $relative_path ), true );
         $this->em->flush();
 
+        $fileref = $this->fileRepository->getFile( $dir, PathUtils::getLastNode( $relative_path ) );
+        if( $fileref == null ){
 
-        // Only save the file in the database if the directory has been found
-        if( $dir !== null ) {
-            $fileref = $this->fileRepository->getFile( $dir, PathUtils::getLastNode( $relative_path ) );
-            if( $fileref == null ){
+            $fileref = new FileReference();
+            $fileref->setFilename( PathUtils::getLastNode( $relative_path ) );
+            $fileref->setParentDirectory( $dir );
 
-                $fileref = new FileReference();
-                $fileref->setFilename( PathUtils::getLastNode( $relative_path ) );
-                $fileref->setParentDirectory( $dir );
-
-                $finfo = @finfo_open( FILEINFO_MIME_TYPE );
-                $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $relative_path );
-                @finfo_close( $finfo );
-                if( $mimetype !== false ){
-                    $fileref->setMimetype( $mimetype );
-                }
-
-                $this->em->persist( $fileref );
-                $this->em->flush();
+            $finfo = @finfo_open( FILEINFO_MIME_TYPE );
+            $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $relative_path );
+            @finfo_close( $finfo );
+            if( $mimetype == false ) {
+                $mimetype = "";
             }
 
-            return $fileref;
+            $fileref->setMimetype( $mimetype );
+
+            $this->em->persist( $fileref );
+            $this->em->flush();
         }
 
-        return null;
+        return $fileref;
     }
 
 }

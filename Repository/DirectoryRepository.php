@@ -21,7 +21,7 @@ class DirectoryRepository extends EntityRepository {
      */
     public function findParentDirectory( $working_directory, $relative_path ){
 
-        $parent_relativepath = PathUtils::moveUpPath( $relative_path );
+        $parent_relativepath = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $relative_path ) );
         $parent_name = PathUtils::getLastNode( $relative_path );
 
         $qb = $this->createQueryBuilder('d');
@@ -79,16 +79,32 @@ class DirectoryRepository extends EntityRepository {
     public function findDirectoryChildrenByLocation($working_directory, $relative_path, $name) {
 
         $qb = $this->createQueryBuilder('d');
-        $qb->where("d.working_directory = :working_directory AND d.relative_path LIKE :relative_path")
-            ->setParameters(
-                array(
-                    "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
-                    "relative_path" => PathUtils::addTrailingSlash( $relative_path ) . $name . DIRECTORY_SEPARATOR . "%"
-                )
-            );
+        if( $relative_path !== "" && $relative_path !== ""){
+            $children_path = PathUtils::addTrailingSlash( $relative_path ) . $name;
+            $children_path = PathUtils::addTrailingSlash( $children_path );
+
+            $qb->where("(d.working_directory = :working_directory AND d.relative_path LIKE :relative_path) OR
+            (d.working_directory = :working_directory AND d.relative_path = :real_relative_path)" )
+                ->setParameters(
+                    array(
+                        "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
+                        "relative_path" => $children_path . "%",
+                        "real_relative_path" => $children_path
+                    )
+                );
+
+        // Root folder
+        } else {
+            $qb->where("d.working_directory = :working_directory AND d.name <> :name")
+                ->setParameters(
+                    array(
+                        "working_directory" => PathUtils::addTrailingSlash( $working_directory ),
+                        "name" => ""
+                    )
+                );
+        }
 
         $query = $qb->getQuery();
-
 
         return $query->getResult();
     }

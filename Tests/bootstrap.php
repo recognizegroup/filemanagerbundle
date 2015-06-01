@@ -21,4 +21,24 @@ if( defined('IS_TEST_BOOTED') == false ) {
     $rootpath = loadAutoLoad();
     $autoload = require_once($rootpath . '/app/autoload.php');
     $_SERVER['KERNEL_DIR'] = $rootpath . '/app/';
+
+    $verbose = false;
+    for( $i = 0, $length = count( $_SERVER['argv']); $i < $length; $i++ ) {
+        if( $_SERVER['argv'][$i] == "--verbose" ){
+            $verbose = true;
+        }
+    }
+
+    for( $i = 0, $length = count( $_SERVER['argv']); $i < $length; $i++ ){
+        if( $_SERVER['argv'][$i] == "--testsuite" ){
+            if( $_SERVER['argv'][$i + 1] == "functional" || $_SERVER['argv'][$i + 1] == "all"){
+
+                require_once( $rootpath . '/app/AppKernel.php');
+                $booter = new Recognize\FilemanagerBundle\Tests\TestUtils\Database\DatabaseBooter( $rootpath . '/src/' );
+                $booter->clearDatabase( $verbose );
+                $booter->createAndAlterDatabase( $verbose );
+                $booter->fillDatabaseWithFixtures( $verbose );
+            }
+        }
+    }
 }
