@@ -2,12 +2,16 @@
 namespace Recognize\FilemanagerBundle\Tests\Service;
 
 use Recognize\FilemanagerBundle\Exception\ConflictException;
+use Recognize\FilemanagerBundle\Exception\FileTooLargeException;
+use Recognize\FilemanagerBundle\Exception\UploadException;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
+use Recognize\FilemanagerBundle\Tests\TestFixtures\TestPNG;
 use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 
 class FilemanagerServiceTest extends FilesystemTestCase {
 
@@ -246,6 +250,34 @@ class FilemanagerServiceTest extends FilesystemTestCase {
 
     /**
      * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \Recognize\FilemanagerBundle\Exception\FileTooLargeException
+     */
+    public function testUploadThatIsTooLarge(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), UPLOAD_ERR_INI_SIZE, true );
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile2.txt" );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     * @expectedException \Recognize\FilemanagerBundle\Exception\UploadException
+     */
+    public function testUploadThatHasAnError(){
+        $filemanagerservice = $this->getFilemanagerService();
+
+        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
+        $this->fillTempDirectory();
+        file_put_contents( $tempfilepath, "TEST CONTENTS");
+        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), 1234, true );
+        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile2.txt" );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
      */
     public function testUploadWithCopy(){
         $filemanagerservice = $this->getFilemanagerService();
@@ -342,6 +374,46 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $changes = $filemanagerservice->delete("testing" );
         $this->assertEquals( $this->getExpectedDeletedDirectory(), $this->filterUnreliableFiledataFromChanges( $changes->toArray() ) );
         $this->assertTrue( count( $filemanagerservice->searchDirectoryContents("", "/testing.txt/") ) == 0 );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testLivePreview(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        $testimage = new TestPNG();
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR .  'testing/testing.png', $testimage->getContents() );
+
+        $response = $filemanagerservice->getLiveFilePreview("testing/testing.png");
+        $this->assertEquals( $testimage->getContents(), $response->getContent() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testEmptyLivePreview(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR .  'testing/testing.txt', "Test contents" );
+
+        $response = $filemanagerservice->getLiveFilePreview("testing/testing.txt");
+        $this->assertEquals( "", $response->getContent() );
+    }
+
+    /**
+     * @depends testPartialFilenameAndNestedSearching
+     */
+    public function testDownloadFile(){
+        $filemanagerservice = $this->getFilemanagerService();
+        $this->fillTempDirectory();
+
+        file_put_contents($this->workspace . DIRECTORY_SEPARATOR .  'testing/testing.txt', "Test contents" );
+
+        $response = $filemanagerservice->downloadFile("testing/testing.txt");
+        $this->assertEquals( "Test contents", $response->getContent() );
     }
 
 

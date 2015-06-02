@@ -1,5 +1,5 @@
 <?php
-namespace Recognize\FilemanagerBundle\TestFixtures\ORM;
+namespace Recognize\FilemanagerBundle\Tests\TestFixtures\ORM;
 
 use Doctrine\Common\DataFixtures\AbstractFixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
