@@ -72,7 +72,9 @@ class FileReferenceType extends AbstractType {
                     // Allow a relative path to the file as well
                     } else if (is_string($data)) {
 
-                        $files = $this->filemanager->searchDirectoryContents(PathUtils::moveUpPath($data), "/^" . PathUtils::getLastNode($data) . "$/");
+                        $directory = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $data ) );
+                        $filename = "/^" . preg_quote( PathUtils::getLastNode($data), "/" ) . "$/";
+                        $files = $this->filemanager->searchDirectoryContents($directory, $filename );
                         $fileref = $this->synchronizer->loadFileReference($this->filemanager->getWorkingDirectory(), $files[0]->getRelativePath() . $files[0]->getFilename());
                     }
 

@@ -42,7 +42,7 @@ class FilemanagerController extends Controller {
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
 
-        $files = $filemanager->searchDirectoryContents($request->get('directory'), "/" . strtolower( $request->get('q') ) . "/" );
+        $files = $filemanager->searchDirectoryContents($request->get('directory'), "/" . preg_quote( strtolower( $request->get('q') ), "/" ) . "/" );
         $builder = new FilemanagerResponseBuilder();
         $builder->addFiles( $files );
         return $builder->build();
