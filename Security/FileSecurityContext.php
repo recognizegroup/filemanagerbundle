@@ -52,8 +52,8 @@ class FileSecurityContext implements FileSecurityContextInterface {
         $this->config = $configuration;
         $this->always_authenticate = $always_authenticate;
         if( !$always_authenticate ){
-            if( isset( $configuration['security'] ) == false ){
-                $this->$always_authenticate = true;
+            if( array_key_exists( 'security', $configuration ) == false ){
+                $this->always_authenticate = true;
             }
         }
 
@@ -68,8 +68,11 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
             // Get the security identities of the currently logged in user
             // Get the user first so it gets checked before the roles
-            $user = UserSecurityIdentity::fromToken($token);
-            $securityidentities[] = $user;
+            try {
+                $user = UserSecurityIdentity::fromToken($token);
+                $securityidentities[] = $user;
+            } catch( \Exception $e ){
+            }
 
             // Get the roles
             $roles = $token->getUser()->getRoles();
@@ -94,10 +97,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
         if( $this->always_authenticate == false ){
             $absolute_path = PathUtils::addTrailingSlash( $working_directory ) . PathUtils::addTrailingSlash( $relativepath );
-            $directory_relativepath = PathUtils::moveUpPath( $relativepath );
-            if( $directory_relativepath == "/" ){
-                $directory_relativepath = "";
-            }
+            $directory_relativepath = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $relativepath ) );
             $directory_name = PathUtils::getLastNode( $relativepath );
 
             // Utilize the cache if the path is set

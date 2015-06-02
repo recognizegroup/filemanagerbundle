@@ -35,7 +35,7 @@ services:
 
     recognize.file_acl_manager:
         class: Recognize\FilemanagerBundle\Service\FileACLManagerService
-        arguments: [ @security.acl.provider, @security.token_storage, @doctrine.orm.entity_manager, @security.context ]
+        arguments: [ @security.acl.provider ]
     recognize.file_security_context:
         class: Recognize\FilemanagerBundle\Security\FileSecurityContext
         arguments: [ %recognize_filemanager.config%, @security.acl.provider, @security.token_storage, @recognize.filemanager_directory_repository ]

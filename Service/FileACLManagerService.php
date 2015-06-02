@@ -57,32 +57,11 @@ class FileACLManagerService {
      * Manages the ACLs for the directories in the database
      *
      * @param MutableAclProviderInterface $aclProvider
-     * @param TokenStorageInterface $tokenStorage
-     * @param EntityManager $em
      * @throws \Symfony\Component\Security\Acl\Exception\InvalidDomainObjectException
      */
-    public function __construct(MutableAclProviderInterface $aclProvider, TokenStorageInterface $tokenStorage,
-                                EntityManager $em, SecurityContextInterface $context) {
+    public function __construct(MutableAclProviderInterface $aclProvider ) {
 
-        $this->securitycontext = $context;
         $this->aclProvider = $aclProvider;
-
-
-        // Retrieve the security identities of the user
-        $securityidentities = array();
-        $token = $tokenStorage->getToken();
-        if( $token !== null ){
-            $user = $token->getUser();
-
-            $securityidentities[] = UserSecurityIdentity::fromAccount( $user );
-            $roles = $user->getRoles();
-            for( $i = 0, $length = count( $roles ); $i < $length; $i++ ){
-                $securityidentities[] = new RoleSecurityIdentity( $roles[$i] );
-            }
-        }
-        $this->securityIdentities = $securityidentities;
-
-        $this->basedirectory = new ObjectIdentity('class', 'Recognize\\FilemanagerBundle\\Entity\\Directory');
     }
 
     /**
@@ -148,11 +127,21 @@ class FileACLManagerService {
             $aces = $acl->getObjectAces();
             /** @var Entry $ace */
             foreach( $aces as $index => $ace ){
-                if( $ace->getSecurityIdentity()->getRole() == $role && $ace->isGranting() !== $grant_access ){
-                    $found = true;
+                if( $ace->getSecurityIdentity()->getRole() == $role ){
+                    $updatedbitmask = $ace->getMask();
 
-                    $acl->updateObjectAce( $index, $mask );
-                    break;
+                    if( $ace->isGranting() === $grant_access ) {
+                        $found = true;
+
+                        // Merge the existing mask with the old mask
+                        $updatedbitmask |= $mask;
+                    } else {
+
+                        // Reverse the bits in the current ACE that exists in the generated mask
+                        $updatedbitmask ^= $ace->getMask();
+                    }
+
+                    $acl->updateObjectAce($index, $updatedbitmask);
                 }
             }
 

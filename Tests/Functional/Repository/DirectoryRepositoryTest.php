@@ -52,7 +52,7 @@ class DirectoryRepositoryTest extends KernelTestCase {
 
 
     public function testFindEmptyDirectoryChildren(){
-        $existingdirs = $this->repository->findDirectoryChildrenByLocation("testroot/", "test/", "test" );
+        $existingdirs = $this->repository->findDirectoryChildrenByLocation("testroot/", "test/test/", "subtest" );
 
         $this->assertEquals( array(), $existingdirs );
     }
@@ -100,6 +100,15 @@ class DirectoryRepositoryTest extends KernelTestCase {
         $dir->setParentId( 2 );
 
         $dirs[] = $dir;
+
+        $dir2 = new Directory();
+        $dir2->setWorkingDirectory("testroot");
+        $dir2->setRelativePath("test/test");
+        $dir2->setDirectoryName("subtest");
+        $dir2->setId( 4 );
+        $dir2->setParentId( 2 );
+
+        $dirs[] = $dir2;
         return $dirs;
     }
 
@@ -113,7 +122,15 @@ class DirectoryRepositoryTest extends KernelTestCase {
         $dir->setId( 3 );
         $dir->setParentId( 2 );
 
+        $dir2 = new Directory();
+        $dir2->setWorkingDirectory("testroot");
+        $dir2->setRelativePath("test/test");
+        $dir2->setDirectoryName("subtest");
+        $dir2->setId( 4 );
+        $dir2->setParentId( 2 );
+
         $dirs[] = $dir;
+        $dirs[] = $dir2;
         return $dirs;
     }
 

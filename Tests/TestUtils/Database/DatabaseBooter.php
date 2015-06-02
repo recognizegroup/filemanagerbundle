@@ -6,6 +6,7 @@ use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
 /**
  * Utility class that manages the schema and fixtures
@@ -143,7 +144,14 @@ class DatabaseBooter {
 
         $purger = new ORMPurger();
         $executor = new ORMExecutor($em, $purger);
-        $executor->execute( $loader->getFixtures() );
+        $fixtures = $loader->getFixtures();
+        for( $i = 0, $length = count( $fixtures); $i < $length; $i++ ){
+            if( $fixtures[$i] instanceof ContainerAwareInterface ){
+                $fixtures[$i]->setContainer( $this->testkernel->getContainer() );
+            }
+        }
+
+        $executor->execute( $fixtures );
 
         echo "Done! \n\n";
     }
