@@ -91,6 +91,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
      * @return boolean
      */
     public function isGranted( $action, $working_directory, $relativepath = "" ){
+
         if( $this->always_authenticate == false ){
             $absolute_path = PathUtils::addTrailingSlash( $working_directory ) . PathUtils::addTrailingSlash( $relativepath );
             $directory_relativepath = PathUtils::moveUpPath( $relativepath );
@@ -141,18 +142,16 @@ class FileSecurityContext implements FileSecurityContextInterface {
      * @return bool
      */
     protected function isActionGrantedForDirectory( $action, Directory $directory ){
-
         // Make sure to run the directories through the database ACLs first
         try {
             $acl = $this->getDirectoryACLs( $directory, $this->securityidentities );
 
             // Check the ACLs that are found
             $actionmasks = array( DirectoryMaskBuilder::getMaskFromValues( array( $action ) ) );
-            return $acl->isGranted( $actionmasks, $this->securityidentities );
+            $granted = $acl->isGranted( $actionmasks, $this->securityidentities );
 
         // If no ACLs could be found for the directory, apply the YAML based security
         } catch( \Exception $e ){
-
             if( $this->authorization_checker == null ){
                 $this->authorization_checker = new ConfigurationAuthorizationChecker(
                     $this->config['security']['actions'] );
@@ -185,8 +184,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
             try {
                 return $this->acl_provider->findAcl( $domainidentity, $securityidentities );
-
-            } catch( AclNotFoundexception $e ){
+            } catch( AclNotFoundException $e ){
                 return $this->getParentDirectoryACLs( $directory, $securityidentities );
             }
         } else {

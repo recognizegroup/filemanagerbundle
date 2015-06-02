@@ -26,7 +26,7 @@ class FilemanagerController extends Controller {
      */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
-        $contents = $filemanager->getDirectoryContents( $request->get('directory') );
+        $contents = $filemanager->getDirectoryContents($request->get('directory'));
 
         $builder = new FilemanagerResponseBuilder();
         $builder->addFiles( $contents );

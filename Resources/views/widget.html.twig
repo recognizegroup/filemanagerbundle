@@ -50,15 +50,17 @@
                     });
 
                     $('#{{ managerid }}').data("filemanager").on("filemanager:view:select", function( event ){
-                        $('#{{ id }} .filemanager-modal-overlay').hide();
-                        var html = "";
-                        if( event.file.hasOwnProperty('preview') ){
-                            html += "<img class=\"preview\" src=\"" + event.file.preview + "\">";
-                        }
-                        html += "<p>" + event.file.name + "</p>";
-                        $('#{{ id }} .file-selection').html( html );
+                        if( event.file.type == "file" ){
+                            $('#{{ id }} .filemanager-modal-overlay').hide();
+                            var html = "";
+                            if( event.file.hasOwnProperty('preview') ){
+                                html += "<img class=\"preview\" src=\"" + event.file.preview + "\">";
+                            }
+                            html += "<p>" + event.file.name + "</p>";
+                            $('#{{ id }} .file-selection').html( html );
 
-                        fileinput.attr("value", event.path );
+                            fileinput.attr("value", event.path );
+                        }
                     });
                 });
             </script>

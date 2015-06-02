@@ -21,6 +21,10 @@ class DirectoryRepository extends EntityRepository {
      */
     public function findParentDirectory( $working_directory, $relative_path ){
 
+        if( $relative_path == false ){
+            $relative_path = "";
+        }
+
         $parent_relativepath = PathUtils::removeFirstSlash( PathUtils::moveUpPath( $relative_path ) );
         $parent_name = PathUtils::getLastNode( $relative_path );
 

@@ -75,8 +75,12 @@ class Directory {
      * @param $path
      */
     public function setRelativePath( $path ){
+        $relpath = PathUtils::removeFirstSlash( PathUtils::addTrailingSlash( $path ) );
+        if( $relpath == false ){
+            $relpath = "";
+        }
 
-        $this->relative_path = PathUtils::addTrailingSlash( $path );
+        $this->relative_path = $relpath;
     }
 
     /**

@@ -97,7 +97,7 @@ class FilemanagerService {
      */
     public function getDirectoryContents( $directory_path = "", $depth = 0 ){
         $finder = new Finder();
-        $path = $this->current_directory . DIRECTORY_SEPARATOR . $directory_path;
+        $path = PathUtils::addTrailingSlash( $this->current_directory ) . $directory_path;
 
         if( $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $path) ) ){
             if( $this->hasDotFiles( $path ) == false ) {
@@ -114,6 +114,7 @@ class FilemanagerService {
                     // Filter out the directories that cannot be opened
                     $securitycontext = $this->security_context;
                     $filteredfiles = array_filter( $files, function( $file ) use ( $securitycontext ){
+                        /** @var SplFileInfo $file */
                         if( $file->isFile() == true ||
                             $securitycontext->isGranted("open", $this->working_directory,
                                 PathUtils::addTrailingSlash( $file->getRelativePath() ) . $file->getFilename() ) ){

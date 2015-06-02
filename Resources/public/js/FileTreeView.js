@@ -482,7 +482,7 @@ FileTreeView.prototype = {
     _toggleSelection: function( event ){
         if( this._isFileSelected( event.data.file ) ){
             this._deselectEvent ( event );
-        } else {
+        } else  {
             this._selectEvent ( event );
         }
     },
