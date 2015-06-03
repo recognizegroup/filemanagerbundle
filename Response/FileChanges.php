@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Response;
 
+use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpFoundation\File\File;
 
@@ -23,6 +24,8 @@ class FileChanges {
     protected $newfile = null;
 
     protected $finfo = null;
+
+    protected $mimetype = null;
 
     /**
      * @param string $type                  The type of change done - For example rename
@@ -69,7 +72,14 @@ class FileChanges {
         $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
-        $mimetype = @finfo_file( $this->finfo, $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename() );
+        $absolutepath = PathUtils::addTrailingSlash( $file->getPath() ) .
+            PathUtils::addTrailingSlash( $file->getRelativePath() ) . $file->getFilename();
+
+        $mimetype = $this->mimetype;
+        if( $this->mimetype == null ){
+            $mimetype = @finfo_file( $this->finfo, $absolutepath );
+        }
+
         $filedata['mimetype'] = $mimetype;
         if( strpos( $mimetype, "image") !== false ){
             $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
@@ -123,6 +133,15 @@ class FileChanges {
      */
     public function getType(){
         return $this->type;
+    }
+
+    /**
+     * Set the mimetype of the files
+     *
+     * @param $getClientMimeType
+     */
+    public function setFileMimetype( $mimetype) {
+        $this->mimetype = $mimetype;
     }
 
 }

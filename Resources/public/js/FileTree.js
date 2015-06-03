@@ -629,6 +629,9 @@ FileTree.prototype = {
 
         this._eventHandler.register('filemanager:api:update_data', function( eventobj ){
             self.addChanges( eventobj.contents, true );
+            if( eventobj.selected == true ){
+                self._eventHandler.trigger("filemanager:model:select", { file: eventobj.contents[0].file });
+            }
         });
 
         this._eventHandler.register('filemanager:api:search_data', function( eventobj ) {

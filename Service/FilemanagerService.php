@@ -441,26 +441,27 @@ class FilemanagerService {
      * @param string $new_filename                  The name of the new file without the extension
      * @param int $copy_number                       When a conflict arrises, add this number to the file and try again
      */
-    public function saveUploadedFile( UploadedFile $file, $new_filename, $copy_number = false ){
+    public function saveUploadedFile( UploadedFile $file, $new_filename, $copy_number = true ) {
         $fs = new Filesystem();
 
-        if( $this->security_context->isGranted("upload", $this->working_directory, $this->absolutePathToRelativePath( $this->current_directory ) ) ) {
+        if ($this->security_context->isGranted("upload", $this->working_directory, $this->absolutePathToRelativePath($this->current_directory))) {
             $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $new_filename;
             if ($fs->exists($absolute_path) == false) {
-                if( $file->getError() !== 0 ){
-                    $this->throwFileExceptions( $file->getError() );
+                if ($file->getError() !== 0) {
+                    $this->throwFileExceptions($file->getError());
                 } else {
                     try {
                         $file->move($this->current_directory, $new_filename);
 
                         $finder = new Finder();
-                        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex( $new_filename ) . "$/");
+                        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex($new_filename) . "$/");
                         if ($finder->count() > 0) {
                             $movedfile = $this->getFirstFileInFinder($finder);
                             $filechanges = new FileChanges("create", $movedfile);
+                            $filechanges->setFileMimetype($file->getClientMimeType());
 
                             // Synchronize the filesystem in the database
-                            $this->synchronizer->synchronize( $filechanges, $this->working_directory );
+                            $this->synchronizer->synchronize($filechanges, $this->working_directory);
 
                             return $filechanges;
                         } else {
@@ -471,17 +472,13 @@ class FilemanagerService {
                     }
                 }
             } else {
-                if( $copy_number === false ){
-                    throw new ConflictException();
-                } else {
-                    if( $copy_number <= 1 || $copy_number === true ){
-                        $copy_number = 1;
-                    }
-
-                    $copy_number++;
-                    $filename = PathUtils::addCopyNumber( $new_filename, $copy_number );
-                    return $this->saveUploadedFile( $file, $filename, $copy_number );
+                if ($copy_number <= 1 || $copy_number === true) {
+                    $copy_number = 1;
                 }
+
+                $copy_number++;
+                $filename = PathUtils::addCopyNumber($new_filename, $copy_number);
+                return $this->saveUploadedFile($file, $filename, $copy_number);
             }
         } else {
             throw new AccessDeniedException();

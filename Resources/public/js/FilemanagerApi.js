@@ -357,7 +357,7 @@ FilemanagerAPI.prototype = {
     uploadResponse: function( directory, response ){
         this._eventHandler.trigger("filemanager:api:done");
 
-        this._eventHandler.trigger('filemanager:api:update_data', {contents: response.data.changes, directory: directory});
+        this._eventHandler.trigger('filemanager:api:update_data', {contents: response.data.changes, directory: directory, selected: true});
     },
 
     /**

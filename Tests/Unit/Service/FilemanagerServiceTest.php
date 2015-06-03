@@ -232,22 +232,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile.txt" );
         $this->assertEquals( $this->getExpectedUploadedFileInTesting(), $changes->getFile() );
     }
-
-    /**
-     * @depends testPartialFilenameAndNestedSearching
-     * @expectedException \RuntimeException
-     */
-    public function testOverrideUpload(){
-        $filemanagerservice = $this->getFilemanagerService();
-
-        $tempfilepath = $this->workspace . DIRECTORY_SEPARATOR . 'temporaryfile.txt';
-        $this->fillTempDirectory();
-        file_put_contents( $tempfilepath, "TEST CONTENTS");
-        $tempfile = new UploadedFile( $tempfilepath, "temporaryfile", "text/plain", filesize( $tempfilepath ), null, true );
-
-        $changes = $filemanagerservice->saveUploadedFile( $tempfile, "temporaryfile.txt" );
-    }
-
+    
     /**
      * @depends testPartialFilenameAndNestedSearching
      * @expectedException \Recognize\FilemanagerBundle\Exception\FileTooLargeException

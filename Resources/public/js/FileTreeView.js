@@ -269,11 +269,10 @@ FileTreeView.prototype = {
                     filestring = this._formatFilecell( viewfile );
                 }
 
-                var rowselector = "file-" + file.directory + file.name;
-                var fileselector = "[data-fm-functionality=\"" + rowselector + "\"]";
+                var fileselector = this._generateFileSelector( file );
 
                 var fileelement = $( filestring )
-                    .attr("data-fm-functionality", rowselector )
+                    .attr("data-fm-functionality", "file-" + file.directory + file.name )
                     .appendTo( this._contentElement )
                     .on('click',{ file: file, selector: fileselector }, function( event ) {
 
@@ -402,6 +401,16 @@ FileTreeView.prototype = {
                 }
             }
         });
+    },
+
+    /**
+     * Creates a css/jQuery selector for a file which resides in the content
+     * @param file
+     * @private
+     */
+    _generateFileSelector: function( file ){
+        var rowselector = "file-" + file.directory + file.name;
+        return "[data-fm-functionality=\"" + rowselector + "\"]";
     },
 
     /**
@@ -1106,6 +1115,17 @@ FileTreeView.prototype = {
             self._apiCalled = true;
 
             self.refreshTitlebar( current_directory );
+        });
+
+        this._eventHandler.register("filemanager:model:select", function( event ){
+            var selectevent = {
+                data: {
+                    file: event.file,
+                    selector: self._generateFileSelector( event.file )
+                }
+            };
+
+            self._selectEvent( selectevent );
         });
     }
 };

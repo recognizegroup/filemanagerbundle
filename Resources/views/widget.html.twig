@@ -32,7 +32,8 @@
                     var fileinput =  $('#{{ id }} .select-file input[type=file]');
                     fileinput.attr("type", "text").css("opacity", "0")
                             .on("focus", function( event ){
-                                $( event.target).parent(".select-file").focus();
+                                $( event.target ).parent().focus();
+                                console.log( $( event.target).parent().get(0) );
                             });
 
                     $('#{{ id }} .select-file').on("click", function(){
