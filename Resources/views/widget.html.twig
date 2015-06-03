@@ -8,7 +8,7 @@
                 {% endif %}
                 <p>{{ value }}</p>
             </div>
-            <a class="select-file btn btn-primary">
+            <a class="select-file btn btn-primary" href="#">
                 <input type="file" id="{{ id }}" name="{{ full_name }}" {% if value is not empty %}value="{{ value }}" {% endif %} {% if required %}required="required"{% endif %} />
             Selecteer bestand</a>
 
@@ -31,23 +31,32 @@
                 $(document).ready(function(){
                     var fileinput =  $('#{{ id }} .select-file input[type=file]');
                     fileinput.attr("type", "text").css("opacity", "0")
-                            .on("focus", function( event ){
-                                $( event.target ).parent().focus();
-                                console.log( $( event.target).parent().get(0) );
-                            });
+                            .attr("disabled", "disabled");
+
+                    fileinput.on("focus", function( event){
+                       $( event.target).parents(".select-file").focus();
+                    });
+
+                    fileinput.parents("form").on("submit", function(){
+                        fileinput.removeAttr("disabled");
+                    });
 
                     $('#{{ id }} .select-file').on("click", function(){
                         $('#{{ id }} .filemanager-modal-overlay').toggle();
+                        $("#{{ id }} .upload-button").focus();
                     });
 
 
                     $('#{{ id }} .filemanager-modal a.close-modal').on("click", function(){
                         $('#{{ id }} .filemanager-modal-overlay').hide();
+                        $("#{{ id }} .select-file").focus();
                     });
 
                     $('#{{ managerid }}').data("filemanager").on("filemanager:view:select", function( event ){
                         if( event.file.type == "file" ){
                             $('#{{ id }} .filemanager-modal-overlay').hide();
+                            $("#{{ id }} .select-file").focus();
+
                             var html = "";
                             if( event.file.hasOwnProperty('preview') ){
                                 html += "<img class=\"preview\" src=\"" + event.file.preview + "\">";
@@ -56,6 +65,7 @@
                             $('#{{ id }} .file-selection').html( html );
 
                             fileinput.attr("value", event.path );
+                            fileinput.trigger("change");
                         }
                     });
                 });

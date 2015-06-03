@@ -232,7 +232,7 @@ class FilemanagerServiceTest extends FilesystemTestCase {
         $changes = $filemanagerservice->saveUploadedFile( $tempfile, "testfile.txt" );
         $this->assertEquals( $this->getExpectedUploadedFileInTesting(), $changes->getFile() );
     }
-    
+
     /**
      * @depends testPartialFilenameAndNestedSearching
      * @expectedException \Recognize\FilemanagerBundle\Exception\FileTooLargeException

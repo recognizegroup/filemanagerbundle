@@ -46,59 +46,45 @@ Enable the bundle in the kernel
     {
         $bundles = array(
             // ...
-            new Recognize\WysiwygBundle\RecognizeFilemanagerBundle(),
+            new Recognize\FilemanagerBundle\RecognizeFilemanagerBundle(),
         );
     }
 ```
 
-Testing
+Testing PHP
 --------------
 
 To set up the testing enviroment you have to do two things
 
   * [Install phpunit][1]
-  
-  * Install the pre-commit hook
-
 
 [1]:  https://phpunit.de/manual/current/en/installation.html
 
-##Installing the pre-commit hook
-
-Run the following command in the root directory of this project
-
-**Linux and Mac:**
-```sh
-cp .hooks/pre-commit-phpunit .git/hooks/pre-commit
-chmod 755 .git/hooks/pre-commit
-```
-
-**Windows:**
-```sh
-copy .hooks/pre-commit-phpunit .git/hooks/pre-commit
-```
-
-This will make sure the unit tests will be run before each commit.
-If you want to disable the unit tests before a commit, you can use the following command
+After this, you can simply run the following command to test all the files.
 
 ```sh
-git commit --no-verify -m "Commit message!"
+phpunit --testsuite all
 ```
 
-Testing with php and javascript
+NOTE: This testsuite requires a testdatabase. If you just want to test the units without a database, run the following command.
+
+```sh
+phpunit --testsuite unit
+```
+
+Testing javascript
 ------------------------
 
-First, make sure you have npm and grunt-cli installed on your machine.
+First, make sure you have npm and the dependencies installed on your machine.
+Use the following command to get the dependencies after retrieving npm
 
 ```sh
-npm install -g grunt-cli
+npm install
 ```
 
-Then, run this command to install all the required packages locally
+Then, you can run the following command to test the javascript
 
 ```sh
-npm install grunt --save-dev
-npm install grunt-contrib-jasmine --save-dev
-npm install grunt-contrib-uglify --save-dev
-npm install jasmine-jquery
+grunt jasmine
 ```
+
