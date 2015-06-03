@@ -373,6 +373,7 @@
 .jstree-default .jstree-anchor {
     line-height: 24px;
     height: 24px;
+    font-size: 16px;
 }
 .jstree-default .jstree-icon {
     width: 24px;
@@ -411,8 +412,20 @@
     background-position: -68px -4px;
 }
 .jstree-default .jstree-themeicon {
-    background-position: -260px -4px;
+    background: none;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    padding-right: 10px;
 }
+
+.jstree-default .jstree-themeicon:before {
+    content: "\f07b";
+}
+
+li[aria-expanded=true] > .jstree-anchor .jstree-themeicon:before {
+    content: "\f07c";
+}
+
 .jstree-default > .jstree-no-dots .jstree-node,
 .jstree-default > .jstree-no-dots .jstree-leaf > .jstree-ocl {
     background: transparent;
@@ -1178,6 +1191,18 @@
 
 .filemanager-modal-overlay::-webkit-scrollbar {
     display: none;
+}
+
+.filemanager-modal .options .btn {
+    margin-right: 5px;
+}
+
+.filemanager-modal .btn i {
+    margin-right: 5px;
+}
+
+.filemanager-modal .options .btn-group .btn {
+    margin-right: 0px;
 }
 
 .file-selection  .preview {

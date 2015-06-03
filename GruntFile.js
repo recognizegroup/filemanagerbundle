@@ -14,9 +14,17 @@ module.exports = function(grunt) {
                     ]
                 }
             }
+        },
+
+        uglify: {
+            all: {
+                src: 'Resources/public/js/[f,F]ile*',
+                dest: 'Resources/public/js/filemanager.min.js'
+            }
         }
     });
 
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.registerTask('default', ['jasmine']);
 };

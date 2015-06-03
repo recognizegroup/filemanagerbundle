@@ -32,13 +32,8 @@
                     var fileinput =  $('#{{ id }} .select-file input[type=file]');
                     fileinput.attr("type", "text").css("opacity", "0")
                             .on("focus", function( event ){
-                                $( event.target).blur();
-                            })
-                            .on("invalid", function( event ){
-                        setTimeout( function() {
-                            $(event.target).blur();
-                        }, 5);
-                    });
+                                $( event.target).parent(".select-file").focus();
+                            });
 
                     $('#{{ id }} .select-file').on("click", function(){
                         $('#{{ id }} .filemanager-modal-overlay').toggle();

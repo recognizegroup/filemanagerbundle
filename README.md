@@ -99,5 +99,6 @@ Then, run this command to install all the required packages locally
 ```sh
 npm install grunt --save-dev
 npm install grunt-contrib-jasmine --save-dev
+npm install grunt-contrib-uglify --save-dev
 npm install jasmine-jquery
 ```
