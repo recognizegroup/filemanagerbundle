@@ -27,6 +27,7 @@ var FilemanagerAPI = function( options) {
     this._path_delete = "";
     this._path_search = "";
     this._path_download = "";
+
     this._eventHandler = false;
     this._disableRequests = false;
 
@@ -47,7 +48,7 @@ FilemanagerAPI.prototype = {
             }
 
             if( config.api !== null && typeof config.api === 'object' ){
-                if( typeof config.api.url !== 'undefined' && config.api.url != ""){
+                if( typeof config.api.url !== 'undefined' && config.api.url !== ""){
                     this._url = config.api.url;
                 } else {
 
@@ -111,6 +112,12 @@ FilemanagerAPI.prototype = {
      * @returns Promise object
      */
     _sendRequest: function( path, method, parameters ){
+        if( this._disableRequests == true ){
+            return;
+        }
+
+        this.debug("WEEEEE");
+
         if( typeof method === 'undefined'){
             method = "GET";
         }

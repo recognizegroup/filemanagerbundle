@@ -69,6 +69,27 @@ describe('FilemanagerApi', function() {
 
     // ---------------------- TESTS START HERE
 
+    it('shouldn\'t do an ajax request if the requests are disabled', function () {
+        var eventhandler = new FilemanagerEventHandler();
+        var triggered = false;
+        eventhandler.register("filemanager:api:loading", function(){
+            triggered = true;
+        });
+
+        initializeAjax({
+            eventHandler: eventhandler,
+            api: {
+                url: ""
+            }
+        });
+
+        spyOn($, 'ajax').and.callFake(failureResponse);
+        api._sendRequest("none","GET",{});
+
+        expect( triggered ).toEqual( false );
+    });
+
+
     it('should trigger a loading event when an ajax request has been made', function () {
         var eventhandler = new FilemanagerEventHandler();
         var triggered = false;
@@ -85,7 +106,6 @@ describe('FilemanagerApi', function() {
 
         expect( triggered ).toEqual( true );
     });
-
 
     it('should trigger a done event when an ajax request has failed', function () {
         var eventhandler = new FilemanagerEventHandler();

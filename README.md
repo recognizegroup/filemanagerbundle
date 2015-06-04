@@ -1,14 +1,20 @@
 RecognizeFilemanagerBundle
 ========================
 
-A bundle that allows you to quickly render a WYSIWYG editor ( currently supports CKEditor ).
-Simply add a 'wysiwyg' element to your form and you're good to go.
+This bundle allows you to use a custom filemanager that works simular to Moxiemanager.
+It gives users the option to organize files withouts links in the database breaking as long as
+the managing is done through the filemanager apis.
 
-Features
+It has the following benefits over Moxiemanager:
 
-* Can render regular and inline WYSIWYG editors.
-* Supports automatic language detection from the Symfony locale
-* Allows seperate configuration per wysiwyg element
+* Customizable API paths
+* Deep Symfony2 integration
+* Form widget that can select and upload files to the filesystem with a working fallback if javascript is disabled
+* Configurable security options for actions like opening directories and deleting files based on user roles
+* Directory level ACLs that can grant or disallow actions for user roles or users.
+
+The widget has been tested on IE9 and above, as well as Firefox, Chrome and Safari.
+It also works on mobile, and extra care has been taken to ensure that it works with just keyboard navigation as well.
 
 Installation
 -----------
@@ -50,6 +56,23 @@ Enable the bundle in the kernel
         );
     }
 ```
+
+Add the form widgets to the app config.yml
+
+```yml
+	# app/config.yml
+	# Twig Configuration
+	twig:
+    	form:
+        	resources:
+            	- 'RecognizeFilemanagerBundle::widget.html.twig'
+
+```
+
+Documentation
+--------------
+
+
 
 Testing PHP
 --------------
