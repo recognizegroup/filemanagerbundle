@@ -5,20 +5,15 @@ var FilemanagerEventHandler = function( options ){
         debug: false
     };
     options = $.extend(true, defaults, options );
-    this.init( options );
+
+    if (typeof options.debug !== 'undefined') {
+          this._debug = options.debug;
+    }
+
+    this._events = {};
 };
 
 FilemanagerEventHandler.prototype = {
-    _events: {},
-    _debug: false,
-
-    init: function( config ){
-        if( config !== null && typeof config === 'object' ) {
-            if (typeof config.debug !== 'undefined') {
-                this._debug = config.debug;
-            }
-        }
-    },
 
     /**
      * Check if event exists

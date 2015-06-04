@@ -13,83 +13,77 @@ var FileTreeView = function( config, element ){
         }
     };
 
-    this.options = $.extend(true, defaults, config);
-    this.init( this.options, element );
+    this._debug = false;
+    this._eventHandler = false;
+    this._container = false;
+
+    this._directoryElement = false;
+    this._contentElement = false;
+    this._uploadLink = false;
+    this._uploadFunctionalityReference = null;
+
+    this._viewFormat = "list";
+
+    // Keyboard accessability
+    this._keepFocusOnDirectories = false;
+    this._keepFocusOnContent = false;
+
+    this._currentDirectory = "";
+    this._currentContent = [];
+    this._searching = false;
+    this._searchQuery = "";
+    this._apiCalled = false;
+
+    this._isMultiple = false;
+    this._selectedFiles = [];
+
+    this._editContext = {
+        mode: "none",
+            selector: false,
+            file: false
+    };
+
+    this._i18n = {};
+
+    // Initialize the FiletreeView
+    var options = $.extend(true, defaults, config);
+
+    this._debug = options.debug;
+    this._container = $( element );
+    this._directoryElement = this._container.find("[data-fm-value=directories]");
+
+    this._eventHandler = options.eventHandler;
+
+    if( typeof options.filerowFormat === "function" ){
+        this._formatFilerow = options.filerowFormat;
+    }
+
+    if( typeof options.fileCellFormat === "function" ){
+        this._formatFilecell = options.fileCellFormat;
+    }
+
+    if( typeof options.renamerowFormat === "function" ){
+        this._formatRenamerow = options.renamerowFormat;
+    }
+
+    if( typeof options.renamecellFormat === "function" ){
+        this._formatRenamecell = options.renamecellFormat;
+    }
+
+    if( typeof options.i18n === "object" ){
+        this._i18n = options.i18n;
+    }
+
+    this.init();
+
 };
 
 FileTreeView.prototype = {
 
-    _debug: false,
-    _eventHandler: false,
-    _container: false,
-
-    _directoryElement: false,
-    _contentElement: false,
-    _uploadLink: false,
-    _uploadFunctionalityReference: null,
-
-    _viewFormat: "list",
-
-    // Keyboard accessability
-    _keepFocusOnDirectories: false,
-    _keepFocusOnContent: false,
-
-    _currentDirectory: "",
-    _currentContent: [],
-    _searching: false,
-    _searchQuery: "",
-    _apiCalled: false,
-
-    _isMultiple: false,
-    _selectedFiles: [],
-
-    _editContext: {
-        mode: "none",
-        selector: false,
-        file: false
-    },
-
-    _i18n: {},
-
     /**
      * Initializes the filetreeview
-     *
-     * @param config                        Configuration object
-     * @param element                       The main HTML element
      */
-    init: function( config, element ){
-        var self = this;
-
-        this._debug = config.debug;
-        this._container = $( element );
-        this._directoryElement = $("[data-fm-value=directories]");
-
-        this._eventHandler = config.eventHandler;
-
-        if( typeof config.filerowFormat === "function" ){
-            this._formatFilerow = config.filerowFormat;
-        }
-
-        if( typeof config.fileCellFormat === "function" ){
-            this._formatFilecell = config.fileCellFormat;
-        }
-
-        if( typeof config.renamerowFormat === "function" ){
-            this._formatRenamerow = config.renamerowFormat;
-        }
-
-        if( typeof config.renamecellFormat === "function" ){
-            this._formatRenamecell = config.renamecellFormat;
-        }
-
-        if( typeof config.uploadFormat === "function" ){
-            this._formatUpload = config.uploadFormat;
-        }
-
-        if( typeof config.i18n === "object" ){
-            this._i18n = config.i18n;
-        }
-
+    init: function( ){
         this._setOverviewLayout("list");
         this._addFunctionality();
         this._registerEvents();
@@ -147,7 +141,7 @@ FileTreeView.prototype = {
 
         this.debug("Refreshing directory string to " + current_directory );
         this._currentDirectory = current_directory;
-        $("[data-fm-value=current_directory]").text( "/" + current_directory );
+        self._container.find("[data-fm-value=current_directory]").text( "/" + current_directory );
 
         // Update the uploading location
         this._addUploadFunctionality();
@@ -508,7 +502,7 @@ FileTreeView.prototype = {
         }
 
         this._selectedFiles.push( {selector: event.data.selector, file: event.data.file } );
-        $( event.data.selector ).addClass("selected");
+        this._container.find( event.data.selector ).addClass("selected");
 
         this._eventHandler.trigger('filemanager:view:select', { path: event.data.file.path, file: event.data.file });
     },
@@ -541,7 +535,7 @@ FileTreeView.prototype = {
         var newSelectedFiles = [];
         for( var i = 0, length = this._selectedFiles.length; i < length; i++ ){
             if( event.data.file == this._selectedFiles[i].file ) {
-                $( event.data.selector ).removeClass("selected");
+                this._container.find( event.data.selector ).removeClass("selected");
             } else {
                 newSelectedFiles = this._selectedFiles[i];
             }
@@ -558,7 +552,7 @@ FileTreeView.prototype = {
      */
     _clearSelection: function(){
         for( var i = 0, length = this._selectedFiles.length; i < length; i++ ){
-            $( this._selectedFiles[i].selector).removeClass("selected");
+            this._container.find( this._selectedFiles[i].selector).removeClass("selected");
         }
 
         this._selectedFiles = [];
@@ -594,7 +588,7 @@ FileTreeView.prototype = {
         // Only search if the value isn't empty
         if( querystring != "" ){
             this._eventHandler.trigger('filemanager:view:search', { directory: this._currentDirectory, query: querystring });
-            $("[data-fm-value=search_query]").text( querystring );
+            this._container.find("[data-fm-value=search_query]").text( querystring );
         } else {
             this._eventHandler.trigger('filemanager:view:open', { directory: this._currentDirectory, isSynchronized: false });
         }
@@ -682,16 +676,16 @@ FileTreeView.prototype = {
             this._viewFormat = overviewlayout;
 
             if( this._viewFormat == "list"){
-                $("[data-fm-functionality=set_list]").addClass("selected");
-                $("[data-fm-functionality=set_grid]").removeClass("selected");
+                this._container.find("[data-fm-functionality=set_list]").addClass("selected");
+                this._container.find("[data-fm-functionality=set_grid]").removeClass("selected");
 
-                this._contentElement = $("[data-fm-value=list_content]");
+                this._contentElement = this._container.find("[data-fm-value=list_content]");
 
             } else if( this._viewFormat == "grid" ){
-                $("[data-fm-functionality=set_grid]").addClass("selected");
-                $("[data-fm-functionality=set_list]").removeClass("selected");
+                this._container.find("[data-fm-functionality=set_grid]").addClass("selected");
+                this._container.find("[data-fm-functionality=set_list]").removeClass("selected");
 
-                this._contentElement = $("[data-fm-value=grid_content]");
+                this._contentElement = this._container.find("[data-fm-value=grid_content]");
             }
 
             this._updateVisibility();
@@ -708,7 +702,7 @@ FileTreeView.prototype = {
     _resetEditStyles: function(){
         this._editMode = "none";
         if( this._editContext.selector !== false ){
-            $( this._editContext.selector).removeClass("mode-cut").removeClass("mode-copy");
+            this._container.find( this._editContext.selector).removeClass("mode-cut").removeClass("mode-copy");
             this._editContext.selector = false;
         }
 
@@ -726,10 +720,10 @@ FileTreeView.prototype = {
         if( context.file !== false && context.selector !== false ){
             switch( context.mode ){
                 case "cut":
-                    $( context.selector ).addClass("mode-cut");
+                    this._container.find( context.selector ).addClass("mode-cut");
                     break;
                 case "copy":
-                    $( context.selector ).addClass("mode-copy");
+                    this._container.find( context.selector ).addClass("mode-copy");
                     break;
                 case "none":
                     this._resetEditStyles();
@@ -818,33 +812,33 @@ FileTreeView.prototype = {
         };
 
         if( this._viewFormat == "list"){
-            $( showtag("list_view") ).show();
-            $( showtag("grid_view") ).hide();
+            this._container.find( showtag("list_view") ).show();
+            this._container.find( showtag("grid_view") ).hide();
         } else if( this._viewFormat == "grid" ) {
-            $( showtag("list_view") ).hide();
-            $( showtag("grid_view") ).show();
+            this._container.find( showtag("list_view") ).hide();
+            this._container.find( showtag("grid_view") ).show();
         }
 
-        $( showtag("no_content") ).hide();
-        $( showtag("no_search_results") ).hide();
+        this._container.find( showtag("no_content") ).hide();
+        this._container.find( showtag("no_search_results") ).hide();
         if( this._currentContent.length == 0 ){
             if( this._searching == false ){
                 if( this._apiCalled ){
-                    $( showtag("no_content") ).show();
+                    this._container.find( showtag("no_content") ).show();
                 }
             } else {
-                $( showtag("no_search_results") ).show();
+                this._container.find( showtag("no_search_results") ).show();
             }
         } else {
             if( this._searching == true ){
-                $( showtag("search_results") ).show();
+                this._container.find( showtag("search_results") ).show();
             }
         }
 
         if( this._currentDirectory !== ""){
-            $( showtag("no_root") ).show();
+            this._container.find( showtag("no_root") ).show();
         } else {
-            $( showtag("no_root") ).hide();
+            this._container.find( showtag("no_root") ).hide();
         }
     },
 
@@ -885,29 +879,29 @@ FileTreeView.prototype = {
         };
 
         // Directory up button
-        $("[data-fm-functionality=directory_up]").on('click', function(event){
+        this._container.find("[data-fm-functionality=directory_up]").on('click', function(event){
             self._eventHandler.trigger('filemanager:view:directory_up',{});
         }).on('keydown', keydownEvent).on('keyup', keyupEvent);
 
         // Refresh button
-        $("[data-fm-functionality=refresh]").on("click", function(){
+        this._container.find("[data-fm-functionality=refresh]").on("click", function(){
             self._eventHandler.trigger("filemanager:view:refresh", {});
         }).on('keydown', keydownEvent).on('keyup', keyupEvent);
 
         // Create directory button
-        $("[data-fm-functionality=create_directory]").on("click", function( event ){
+        this._container.find("[data-fm-functionality=create_directory]").on("click", function( event ){
             self._createDirectory( self._currentDirectory );
         }).on('keydown', keydownEvent).on('keyup', keyupEvent);
 
         // Set the overview as a list view
-        $("[data-fm-functionality=set_list]").on("click", function( event ){
+        this._container.find("[data-fm-functionality=set_list]").on("click", function( event ){
             self._setOverviewLayout("list");
 
             self.refreshContent();
         }).on('keydown', keydownEvent).on('keyup', keyupEvent);
 
         // Set the overview as a list view
-        $("[data-fm-functionality=set_grid]").on("click", function( event ){
+        this._container.find("[data-fm-functionality=set_grid]").on("click", function( event ){
             self._setOverviewLayout("grid");
 
             self.refreshContent();
@@ -915,7 +909,7 @@ FileTreeView.prototype = {
 
 
         // Sort button for properties
-        $("[data-fm-functionality^='sort_']").on("click", function( event ){
+        this._container.find("[data-fm-functionality^='sort_']").on("click", function( event ){
             var funcproperty = $( event.currentTarget).attr("data-fm-functionality");
             var property = funcproperty.substring( 5 );
 
@@ -937,7 +931,7 @@ FileTreeView.prototype = {
         }).on("keydown", keydownEvent).on("keyup", keyupEvent);
 
         // Search input
-        $("input[data-fm-functionality=search]").on('search', { directory: self._currentDirectory }, function( event ) {
+        this._container.find("input[data-fm-functionality=search]").on('search', { directory: self._currentDirectory }, function( event ) {
             self._searchEvent(event);
 
         }).on('keydown', function( event ){
@@ -970,17 +964,18 @@ FileTreeView.prototype = {
      */
     _addUploadFunctionality: function(){
         var self = this;
+        var inputname =  this._container.attr("id") + "_filemanager_upload";
 
         if( this._uploadFunctionalityReference !== null ){
             this._uploadFunctionalityReference.destroy();
         }
 
-        var progressBar = $("[data-fm-functionality=upload_progress]");
+        var progressBar = self._container.find("[data-fm-functionality=upload_progress]");
 
         // Add the AJAX upload functionality
         var uploader = new ss.SimpleUpload({
             url: "/admin/fileapi/create",
-            name: "filemanager_upload",
+            name: inputname,
             method: 'POST',
             hoverClass: 'focus',
             focusClass: 'active',
@@ -1019,16 +1014,16 @@ FileTreeView.prototype = {
                 }
             }
         });
-        uploader.setAbortBtn( $("[data-fm-functionality=abort_upload]") );
+        uploader.setAbortBtn( this._container.find("[data-fm-functionality=abort_upload]") );
 
         if( this._uploadFunctionalityReference === null ){
             // Ajax upload button
-            var uploadbutton = $("[data-fm-functionality=upload_button]");
+            var uploadbutton = self._container.find("[data-fm-functionality=upload_button]");
             if( uploadbutton.length !== 0 ){
 
                 // Keyboard focus for AJAX button
                 uploadbutton.on("click", function(){
-                    $("input[name=filemanager_upload]").trigger("click");
+                    $("input[name=" + inputname + "]").trigger("click");
 
                 }).on("keydown", function( event ){
 
@@ -1042,7 +1037,7 @@ FileTreeView.prototype = {
                     // ENTER
                     if( event.keyCode == 13 ){
                         uploadbutton.removeClass('active');
-                        $("input[name=filemanager_upload]").trigger("click");
+                        $("input[name=" + inputname + "]").trigger("click");
                     }
                 });
             }

@@ -2,5 +2,5 @@
     var recognize_filemanager_defaults_{{ id }} = { debug: true, api: { url: "/admin/fileapi", startingDirectory: "" } }
     var recognize_filemanager_config_{{ id }} = (true, recognize_filemanager_defaults_{{ id }}, {{ filemanager_config|json_encode|raw }} );
 
-    var filetree = $('.filetree').filemanager( recognize_filemanager_config_{{ id }} );
+    var filetree = $('#{{ id }}.filetree').filemanager( recognize_filemanager_config_{{ id }} );
 </script>

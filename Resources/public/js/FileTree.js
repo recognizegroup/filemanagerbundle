@@ -1,49 +1,48 @@
 "use_strict";
 
-var FileTree = function(options){
+var FileTree = function(config){
     var defaults = {
         debug: false
     };
-    this.options = $.extend(true, defaults, options);
-    this.init( this.options );
+
+    this._debug = false;
+    this._root = {
+        children: {}
+    };
+
+    this._currentPath = "";
+    this._currentFiles = [];
+    this._currentContentSort = null;
+    this._reverse = false;
+
+    /** Used for setting the ID of the jstree */
+    this._walk_itteration = 0;
+
+    this._eventHandler = null;
+
+    var options = $.extend(true, defaults, config);
+    if( options !== null && typeof options === 'object' ){
+        this._debug = options.debug;
+        this._eventHandler = options.eventHandler;
+    }
+
+    this._currentContentSort = this._naturalFilemanagerSort;
+
+    this.init( options );
 };
 
 /**
  * Manages the in-memory file tree
  */
 FileTree.prototype = {
-    _debug: false,
-    _root: {
-        children: {}
-    },
-    _currentPath: "",
-    _currentFiles: [],
-    _currentContentSort: null,
-    _reverse: false,
-
-    /** Used for setting the ID of the jstree */
-    _walk_itteration: 0,
-
-    _eventHandler: null,
 
     /**
      * Initialize the Tree configuration
      */
-    init: function (config ) {
-
-        if( config !== null && typeof config === 'object' ){
-            this._debug = config.debug;
-            this._eventHandler = config.eventHandler;
-
-            this._registerEvents();
-        }
-
-        this._currentContentSort = this._naturalFilemanagerSort;
-
+    init: function ( options ) {
         this.debug( "Initializing" );
-        this.debug( config );
-
-        return this;
+        this.debug( options );
+        this._registerEvents();
     },
 
     /**
@@ -130,9 +129,17 @@ FileTree.prototype = {
         var node = this._root;
         for( var i = 0, length = pathnodes.length; i < length; i++ ){
             var pathnode = pathnodes[ i ];
+            this.debug( pathnodes );
 
             if( typeof node.children[ pathnode ] === "undefined") {
-                node.children[ pathnode ] = this._generateNode( pathnode, pathnodes );
+
+                // Build the path for the nonexisting node
+                var subnodes = [];
+                for( var j = 0; j < i; j++ ){
+                    subnodes.push( pathnodes[j] );
+                }
+
+                node.children[ pathnode ] = this._generateNode( pathnode, subnodes );
             }
 
             node = node.children[ pathnode ];
@@ -160,10 +167,6 @@ FileTree.prototype = {
         var newpath = "";
         for( var i = 0; i < pathnodes.length; i++ ){
             newpath += pathnodes[ i ] + "/";
-
-            if( pathnodes[i + 1] == nodename ){
-                break;
-            }
         }
 
         node.directory = newpath;

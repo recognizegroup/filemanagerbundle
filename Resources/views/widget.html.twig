@@ -29,6 +29,9 @@
             </div>
             <script type="text/javascript">
                 $(document).ready(function(){
+
+                    var container_element = $('#{{ managerid }}').get(0);
+
                     var fileinput =  $('#{{ id }} .select-file input[type=file]');
                     fileinput.attr("type", "text").css("opacity", "0")
                             .attr("disabled", "disabled");
@@ -52,7 +55,7 @@
                         $("#{{ id }} .select-file").focus();
                     });
 
-                    $('#{{ managerid }}').data("filemanager").on("filemanager:view:select", function( event ){
+                    $.data(container_element, "filemanager").on("filemanager:view:select", function( event ){
                         if( event.file.type == "file" ){
                             $('#{{ id }} .filemanager-modal-overlay').hide();
                             $("#{{ id }} .select-file").focus();

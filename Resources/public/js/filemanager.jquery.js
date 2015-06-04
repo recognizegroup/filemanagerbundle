@@ -4,46 +4,47 @@
         if( typeof config === "undefined"){
             config = {};
         }
+
         config.eventHandler = new FilemanagerEventHandler( config );
 
         if( config.api !== null && typeof config.api === 'object' ) {
             if (typeof config.api.url !== 'undefined' && config.api.url != "") {
-                this.data("event", config.eventHandler );
-                this.data('view', new FileTreeView( config ) );
-                this.data('api', new FilemanagerAPI( config ) );
-                this.data('tree', new FileTree( config ) );
+                $.data(this.get(0), "event", config.eventHandler );
+                $.data(this.get(0), 'view', new FileTreeView( config, this.get(0) ) );
+                $.data(this.get(0), 'api', new FilemanagerAPI( config ) );
+                $.data(this.get(0), 'tree', new FileTree( config ) );
 
                 var self = this;
                 var methods = {
 
                     refresh: function(){
-                        self.data("tree").refresh();
-                        return self;
+                        $.data( self.get(0), "tree").refresh();
+                        return self.eq(0);
                     },
 
                     moveUpDirectory: function(){
-                        self.data("tree").moveUpDirectory();
+                        $.data( self.get(0), "tree").moveUpDirectory();
                     },
 
                     createDirectory: function(){
                         var path = self.data("tree").getCurrentPath();
-                        self.data("view")._createDirectory( path );
+                        $.data( self.eq(0), "view")._createDirectory( path );
 
-                        return self;
+                        return self.eq(0);
                     },
 
                     search: function( value ){
-                        self.data("tree").search( value );
-                        return self;
+                        $.data( self.get(0), "tree").search( value );
+                        return self.eq(0);
                     },
 
                     on: function( eventstring, listener ){
-                        self.data("event").register(eventstring, listener);
-                        return self;
+                        $.data( self.get(0), "event").register(eventstring, listener);
+                        return self.eq(0);
                     }
                 };
 
-                this.data("filemanager", methods);
+                $.data( this.get(0), "filemanager", methods);
 
             } else {
                 console.error("Filemanager: NO APILINK FOUND - Aborting creation");

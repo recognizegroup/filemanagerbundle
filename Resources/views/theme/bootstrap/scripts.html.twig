@@ -1,8 +1,8 @@
 <script type="text/javascript">
     $(document).ready(function(){
-        var directory_up = $(".filetree .directory-up");
-        var search_container = $(".filetree .search-input");
-        var search_input = $(".filetree .search-input input");
+        var directory_up = $("#{{ id }}.filetree .directory-up");
+        var search_container = $("#{{ id }}.filetree .search-input");
+        var search_input = $("#{{ id }}.filetree .search-input input");
 
         if( $(window).width() <= 768 ){
             search_container.hide();
@@ -12,11 +12,11 @@
             search_input.on("blur",function (){
                 var searchquery = search_input.val();
                 if( searchquery !== ""){
-                    $('.filetree').data("filemanager").search( searchquery );
+                    $('#{{ id }}.filetree').data('#{{ id }}', "filemanager").search( searchquery );
                 }
             });
 
-            $(".filetree .search-button").on("click", function(){
+            $("#{{ id }}.filetree .search-button").on("click", function(){
 
                 if( directory_up.is(":visible") ){
                     directory_up.hide();
@@ -106,43 +106,57 @@
         return "<div class=\"col-sm-2\"><a href=\"#\" class=\"btn\" id=\"" + buttonid + "\">Upload</a></div>";
     };
 
-    var filetree = $('.filetree').filemanager( recognize_filemanager_config_{{ id }} ).data("filemanager").on("filemanager:api:loading", function(){
-        var overlayreference = $( ".overlayreference" );
+    var filetree =  $('#{{ id }}');
+    var treelement_{{ id }} =  filetree.get(0);
+
+    filetree.filemanager( recognize_filemanager_config_{{ id }} );
+
+    $.data(treelement_{{ id }}, "filemanager")
+            .on("filemanager:api:loading", function(){
+        var overlayreference = $( "#{{ id }} .overlayreference" );
         var rowPos = overlayreference.offset();
         var bottomTop = rowPos.top;
         var bottomLeft = rowPos.left;
 
-        $(".overlay").css("top", bottomTop).css("left", bottomLeft).css("width", overlayreference.width())
+        $("#{{ id }} .overlay").css("top", bottomTop).css("left", bottomLeft).css("width", overlayreference.width())
                 .css("height", overlayreference.height())
                 .css("display", "table");
 
         // Hide the loading animation after the content has been rendered
-    }).data("filemanager").on("filemanager:view:rendered", function(){
-        $(".overlay").css("display", "none");
-    }).data("filemanager").on("filemanager:api:error", function(){
-        $(".overlay").css("display", "none");
-    }).data("filemanager").on("filemanager:api:uploading", function(){
+    });
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:view:rendered", function(){
+        $("#{{ id }} .overlay").css("display", "none");
+    });
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:error", function(){
+        $("#{{ id }} .overlay").css("display", "none");
+    });
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:uploading", function(){
+                console.log( "UPLOADING {{ id }}" );
 
-        $(".filetree .options").hide();
-        $(".filetree .upload-area").show();
+        $("#{{ id }} .options").hide();
+        $("#{{ id }} .upload-area").show();
 
-        $(".upload-cancel-button").focus();
+        $("#{{ id }} .upload-cancel-button").focus();
 
-    }).data("filemanager").on("filemanager:api:upload_done", function(){
+    });
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:upload_done", function(){
 
         $(".filetree .options").show();
         $(".filetree .upload-area").hide();
     });
 
-    $('.sort-by-filename').on("click",function( event ){
+    $('#{{ id }} .sort-by-filename').on("click",function( event ){
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
     });
 
-    $('.sort-by-filesize').on("click",function( event ){
+    $('#{{ id }} .sort-by-filesize').on("click",function( event ){
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
     });
 
-    $('.sort-by-date').on("click",function( event ){
+    $('#{{ id }} .sort-by-date').on("click",function( event ){
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
     });
 </script>
+
+Object({ children: Object({ one: Object({ name: 'one', directory: 'one/two/three/', path: 'one/two/three/one', children: Object({ two: Object({ name: 'two', directory: 'one/', path: 'one/two', children: Object({ three: Object({ name: 'three', directory: 'one/two/', path: 'one/two/three', children: Object({ four: Object({ path: 'one/two/three/four', directory: 'one/two/three/', name: 'four', children: Object({  }) }) }) }) }) }) }) }) }) })
+Object({ children: Object({ one: Object({ path: 'one', name: 'one', directory: '', children: Object({ two: Object({ path: 'one/two', directory: 'one/', name: 'two', children: Object({ three: Object({ path: 'one/two/three', directory: 'one/two/', name: 'three', children: Object({ four: Object({ path: 'one/two/three/four', directory: 'one/two/three/', name: 'four', children: Object({  }) }) }) }) }) }) }) }) }) }).

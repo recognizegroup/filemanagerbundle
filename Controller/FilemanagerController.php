@@ -59,12 +59,22 @@ class FilemanagerController extends Controller {
         $filemanager = $this->getFilemanager();
         $builder = new FilemanagerResponseBuilder();
 
-        if( $request->files->has('filemanager_upload') && $request->request->has('filemanager_directory') ){
+        // Attempt to find a parameter that ends with filemanager_upload
+        // This is to allow multiple filemanager upload inputfields in a single document
+        $file = false;
+        $files = $request->files->all();
+        $parameternames = array_keys( $files );
+        for( $i = 0, $length = count( $parameternames ); $i < $length; $i++ ){
+            if( preg_match("/filemanager_upload$/", $parameternames[$i]) ){
+                $file = $files[ $parameternames[$i] ];
+                break;
+            }
+        }
 
+        if( $file !== false && $request->request->has('filemanager_directory') ){
             $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
 
             /** @var UploadedFile $file */
-            $file = $request->files->get( 'filemanager_upload' );
             try {
                 $changes = $filemanager->saveUploadedFile($file, $file->getClientOriginalName());
                 $builder->addChange($changes);

@@ -29,7 +29,7 @@ describe('FileTreeView', function() {
         };
         config = $.extend( defaults, config, true);
 
-        treeviews = new FileTreeView( config );
+        treeviews = new FileTreeView( config, $('.filetree').eq(0) );
     }
 
     it('should be able to find views when initialized', function () {

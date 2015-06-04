@@ -16,23 +16,24 @@ var FilemanagerAPI = function( options) {
             }
         }
     };
-    this.options = $.extend(true, defaults, options);
-    this.init( this.options );
+    var options = $.extend(true, defaults, options);
+
+    this._debug = false;
+    this._url = "";
+    this._path_create = "";
+    this._path_move = "";
+    this._path_rename = "";
+    this._path_read_directory = "";
+    this._path_delete = "";
+    this._path_search = "";
+    this._path_download = "";
+    this._eventHandler = false;
+    this._disableRequests = false;
+
+    this.init( options );
 };
 
 FilemanagerAPI.prototype = {
-
-    _debug: false,
-    _url: "",
-    _path_create: "",
-    _path_move: "",
-    _path_rename: "",
-    _path_read_directory: "",
-    _path_delete: "",
-    _path_search: "",
-    _path_download: "",
-    _eventHandler: false,
-    _disableRequests: false,
 
     /**
      * Initialize the API configuration
