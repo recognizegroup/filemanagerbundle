@@ -1,7 +1,7 @@
 RecognizeFilemanagerBundle
 ========================
 
-<img src="filemanager.png" />
+![filemanager](https://bitbucket.org/recognize/filemanagerbundle/raw/master/filemanager.png)
 
 This bundle allows you to use a custom filemanager that works simular to Moxiemanager.
 It gives users the option to organize files withouts links in the database breaking as long as
