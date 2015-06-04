@@ -1,7 +1,7 @@
 services:
     recognize.filemanager.twig.filemanager_extension:
         class: Recognize\FilemanagerBundle\Twig\FilemanagerExtension
-        arguments: [@service_container]
+        arguments: [@service_container, %recognize_filemanager.config%]
         public: false
         tags:
              - { name: twig.extension }

@@ -51,7 +51,6 @@ FilemanagerAPI.prototype = {
                 if( typeof config.api.url !== 'undefined' && config.api.url !== ""){
                     this._url = config.api.url;
                 } else {
-
                     this._disableRequests = true;
                     console.error( "NO APILINK FOUND !!!" );
                 }
@@ -134,8 +133,7 @@ FilemanagerAPI.prototype = {
 
         // Make sure to do an absolute request
         var fullpath = "";
-        var httpmatcher = new RegExp('^(?:[a-z]+:)?//', 'i');
-        if( httpmatcher.test( path ) ){
+        if( path.indexOf("http") == 0 ){
             fullpath = path;
         } else {
             var origin = "";

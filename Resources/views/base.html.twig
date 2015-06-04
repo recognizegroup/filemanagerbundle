@@ -17,9 +17,8 @@
     "paste": 'Paste'|trans({}, 'filemanager', locale),
     "download": 'Download file'|trans({}, 'filemanager', locale),
     "delete": 'Delete'|trans({}, 'filemanager', locale)
-}} %}
-{% set filemanager_config = default_filemanager_config | merge( filemanager_config ) %}
-
+}}|merge( filemanager_api ) %}
+{% set filemanager_config = default_filemanager_config|config_merge( filemanager_config ) %}
 <div id="{{ id }}" class="filetree">
     {% block html %}
         {% include "RecognizeFilemanagerBundle::theme/default/template.html.twig" %}

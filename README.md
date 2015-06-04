@@ -97,6 +97,8 @@ recognize_filemanager:
 Finally, add a new Controller class with routes that serves as the API entrance.
 
 ```php
+// src/AppBundle/Controller/FileController.php
+
 class FileController extends FilemanagerController {
 
     /**
@@ -173,6 +175,47 @@ class FileController extends FilemanagerController {
 }
 ```
 
+Usage
+--------------
+
+You can use the filemanager in two major ways. In forms as a widget and as a standalone element.
+
+**Form widget**
+
+Using a filemanager element in your form is quite easy. Simply use the filereference form type. 
+This form type gives you a FileReference entity after a submit. 
+You can decide whether you want to use the absolute path of the file or the database ID, 
+although it is recommended to use the ID to make sure the file can be moved and renamed without causing errors somewhere else in the application.
+
+This formtype supports the same validation constraints as file uploads and image uploads.
+
+```php
+$form = $this->createFormBuilder( array() )
+    ->add('image', 'filereference', array("is_simple" => false,
+        "constraints" => array(
+            new Image(
+                array(
+                    'maxWidth' => "500",    
+                    'maxHeight' => "500"
+                )
+            )
+        ))
+    );
+```                
+
+**Standalone**
+
+Using it as a standalone element can be done using the twig function. 
+
+```twig
+
+{{ filemanager("unique_id", recognize_filemanager_config, "bootstrap" ) }}
+```
+
+This will create a standalone element with the bootstrap theme of the filemanager. 
+It uses the filemanager configuration variable that is pushed into the globally into the twig templates.
+You can override this with your own configuration object if you want to use a different configuration for the standalone element.
+
 Configuration
 --------------
 
@@ -203,7 +246,6 @@ This can be useful if you want to show a different set of folders for users and 
         return $manager;
     }
 
-
 ```
 
 **Api paths**
@@ -226,11 +268,6 @@ recognize_filemanager:
         move: [ ROLE_ADMIN ]
 ```
 
-Documentation
--------------
-
-
-
 Testing PHP
 --------------
 
@@ -246,7 +283,7 @@ After this, you can simply run the following command to test all the files.
 phpunit --testsuite all
 ```
 
-NOTE: This testsuite requires a testdatabase. If you just want to test the units without a database, run the following command.
+**NOTE:** This testsuite requires a testdatabase. If you just want to test the units without a database, run the following command.
 
 ```sh
 phpunit --testsuite unit
@@ -268,3 +305,5 @@ Then, you can run the following command to test the javascript
 grunt jasmine
 ```
 
+Documentation
+-------------

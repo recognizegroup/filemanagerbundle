@@ -81,10 +81,10 @@ class FilemanagerService {
      */
     public function goToDeeperDirectory( $relative_path ){
         $formatted_path = ltrim( rtrim($relative_path, '/'), '/' );
-        $path = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
+        $path = PathUtils::addTrailingSlash( $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path );
 
-        if( $this->hasDotFiles($this->current_directory) == false ){
-            $this->current_directory = $this->working_directory . DIRECTORY_SEPARATOR . $formatted_path;
+        if( $this->hasDotFiles( $path ) == false ){
+            $this->current_directory = $path;
         } else {
             throw new DotfilesNotAllowedException();
         }

@@ -19,12 +19,7 @@
                         <div style="margin-left: 36px; margin-right: 36px;">
                             <h1>Filemanager<a class="pull-right text-danger close-modal" href="#"><i class="fa fa-close"></i></a></h1></div>
                     </div>
-                    {{ filemanager(managerid, {
-                                "api": {
-                                    "url": "/admin/fileapi",
-                                    "startingDirectory": ""
-                                }
-                    }, "bootstrap") }}
+                    {{ filemanager(managerid, {}, "bootstrap") }}
                 </div>
             </div>
             <script type="text/javascript">
