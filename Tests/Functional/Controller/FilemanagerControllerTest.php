@@ -163,7 +163,7 @@ class FilemanagerControllerTest extends FilesystemTestCase {
 
     protected function getController() {
         $container = new Container();
-        $filemanager = new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanager = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
         $container->set("recognize.file_manager", $filemanager);
 
         $controller = new FilemanagerController();

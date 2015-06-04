@@ -27,13 +27,31 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     }
 
     protected function getFilemanagerService(){
-        return new FilemanagerService( array("default_directory" => $this->workspace), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        return new FilemanagerService( array("directories" => array( "default" => $this->workspace) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
     }
 
     public function testGetWorkingDirectory(){
-        $filemanagerservice = new FilemanagerService( array("default_directory" => "abc"), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => "abc") ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
         $this->assertEquals( "abc", $filemanagerservice->getWorkingDirectory() );
     }
+
+    public function testSetWorkingDirectory(){
+        $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => $this->workspace,
+            "user_directory" => "users" ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanagerservice->setWorkingDirectory( "user_directory" );
+        $this->assertEquals( "users", $filemanagerservice->getWorkingDirectory() );
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testSetInvalidWorkingDirectory(){
+        $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => $this->workspace,
+            "user_directory" => "users" ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanagerservice->setWorkingDirectory( "asdfasdf" );
+        $this->assertEquals( "users", $filemanagerservice->getWorkingDirectory() );
+    }
+
 
     public function testWorkspace(){
         $filemanagerservice = $this->getFilemanagerService();

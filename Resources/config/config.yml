@@ -1,9 +1,23 @@
 recognize_filemanager:
+    directories:
+        default: /var/www/Filemanager/app/cache
+        user: /dev/null
+
+    api_paths:
+        read: _fileapi_read
+        create: _fileapi_create
+        upload: _fileapi_create
+        rename: _fileapi_rename
+        move: _fileapi_move
+        delete: _fileapi_delete
+        download: _fileapi_download
+        preview: _fileapi_preview
+
     security:
         actions:
             open: [ ROLE_USER ]
             upload: [ ROLE_USER ]
-            create: [ ROLE_ADMIN ]
-            move: [ ROLE_ADMIN ]
-            rename: [ ROLE_ADMIN ]
-            delete: [ ROLE_ADMIN ]
+            create: [ ROLE_USER ]
+            move: [ ROLE_USER ]
+            rename: [ ROLE_USER ]
+            delete: [ ROLE_USER ]

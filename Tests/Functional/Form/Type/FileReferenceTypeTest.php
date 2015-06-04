@@ -147,7 +147,7 @@ class FileReferenceTypeTest extends FilesystemTestCase {
         // Create existing file
         file_put_contents($this->workspace . "/derp.txt", "testcontents");
 
-        $filemanagerservice = new FilemanagerService( array("default_directory" => $this->workspace),
+        $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ),
             new MockFileSecurityContext(), new MockFiledataSynchronizer() );
         $datasynchroniser = new MockFiledataSynchronizer( $filereference );
 

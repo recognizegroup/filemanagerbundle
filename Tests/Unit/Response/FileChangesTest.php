@@ -18,7 +18,7 @@ class FileChangesTest extends FilesystemTestCase {
     public function setUp(){
         parent::setUp();
 
-        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace),
+        $this->filemanager = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ),
             new MockFileSecurityContext(), new MockFiledataSynchronizer() );
 
         mkdir( $this->workspace . DIRECTORY_SEPARATOR . "Old directory" , 0777);

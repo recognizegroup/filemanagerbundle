@@ -25,7 +25,7 @@ class FilemanagerResponseBuilderTest extends FilesystemTestCase {
         parent::setUp();
 
         $this->builder = new FilemanagerResponseBuilder();
-        $this->filemanager = new FilemanagerService( array("default_directory" => $this->workspace),
+        $this->filemanager = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ),
             new MockFileSecurityContext(), new MockFiledataSynchronizer() );
 
         // Fill the test directory

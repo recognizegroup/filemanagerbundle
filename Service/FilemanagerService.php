@@ -26,6 +26,8 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class FilemanagerService {
 
+    private $configuration;
+
     private $working_directory;
     protected $current_directory;
 
@@ -42,8 +44,9 @@ class FilemanagerService {
     public function __construct( array $configuration, FileSecurityContextInterface $security_context,
                                  FiledataSynchronizerInterface $synchronizer ){
 
-        if( isset( $configuration['default_directory'] ) ){
-            $this->working_directory = $configuration['default_directory'];
+        $this->configuration = $configuration;
+        if( isset( $configuration['directories']) && isset( $configuration['directories']['default'] ) ){
+            $this->working_directory = $configuration['directories']['default'];
         } else {
             throw new \RuntimeException( "Default upload and file management directory should be set! " );
         }
@@ -51,6 +54,23 @@ class FilemanagerService {
         $this->current_directory = $this->working_directory;
         $this->security_context = $security_context;
         $this->synchronizer = $synchronizer;
+    }
+
+    /**
+     * Set the working directory using the configuration
+     *
+     * @param string $config_directory_key              The key string inside the directories array
+     * @throws RuntimeException
+     */
+    public function setWorkingDirectory( $config_directory_key = "" ){
+        if( isset( $this->configuration['directories'] )
+            && isset( $this->configuration['directories'][ $config_directory_key ]) ){
+            $this->working_directory = $this->configuration['directories'][ $config_directory_key ];
+            $this->current_directory = $this->working_directory;
+
+        } else {
+            throw new \RuntimeException( sprintf( "Key '%s' doesn't exist in the recognize_filemanager.directories configuration", $config_directory_key) );
+        }
     }
 
     /**
