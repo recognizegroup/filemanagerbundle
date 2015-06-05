@@ -127,4 +127,17 @@ class PathUtils {
         return $copyfilename;
     }
 
+    /**
+     * Remove the working directory from the absolute path if it exists, turning the path into a relative path
+     * from the working directory
+     *
+     * @param $working_directory
+     * @param $path
+     * @return mixed
+     */
+    public static function stripWorkingDirectoryFromAbsolutePath($working_directory, $path){
+        $count = 1;
+        return str_replace(self::addTrailingSlash( $working_directory ), "", $path, $count );
+    }
+
 }

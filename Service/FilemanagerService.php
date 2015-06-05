@@ -244,8 +244,7 @@ class FilemanagerService {
      * @return mixed
      */
     protected function absolutePathToRelativePath( $path ){
-        $count = 1;
-        return str_replace($this->working_directory . DIRECTORY_SEPARATOR, "", $path, $count );
+        return PathUtils::stripWorkingDirectoryFromAbsolutePath( $this->working_directory, $path );
     }
 
     /**

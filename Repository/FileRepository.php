@@ -60,4 +60,28 @@ class FileRepository extends EntityRepository {
             return null;
         }
     }
+
+    /**
+     * Check if there are filereferences below this path in the database
+     *
+     * @param string $working_directory
+     * @param string $relative_path
+     * @return bool
+     */
+    public function referencesExistBelowPath($working_directory, $relative_path){
+        $qb = $this->createQueryBuilder('d');
+        $qb->where("d.working_directory = :working_directory AND ( d.relative_path = :relative_path OR d.relative_path LIKE :relative_path_percent )")
+            ->setParameters(
+                array(
+                    "working_directory" => $working_directory,
+                    "relative_path" => $relative_path,
+                    "relative_path_percent" => $relative_path . "%"
+                )
+            );
+        $qb->setMaxResults(1);
+
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return count($results) > 0;
+    }
 }

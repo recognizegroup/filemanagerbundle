@@ -3,6 +3,7 @@ namespace Recognize\FilemanagerBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
+use Symfony\Component\Finder\SplFileInfo;
 
 
 /**

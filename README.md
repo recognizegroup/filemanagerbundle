@@ -74,6 +74,7 @@ recognize_filemanager:
 	directories:
 		default: /var/www/Filemanager/app/cache
 		example_directory: /var/www/Filemanager/app/cache/example
+		
     api_paths:
         read: _fileapi_read
         create: _fileapi_create
@@ -307,3 +308,4 @@ grunt jasmine
 
 Documentation
 -------------
+

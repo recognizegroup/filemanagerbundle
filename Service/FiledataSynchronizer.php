@@ -193,7 +193,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             }
 
             if( $current_file !== null ){
-                $newdir = $this->loadDirectoryForFilepath( $working_directory,  $changes_array['updatedfile']['directory'] );
+                $newdir = $this->loadDirectoryForFilepath( $working_directory,  $changes_array['updatedfile']['directory'], true );
                 if($newdir !== null ){
 
                     $current_file->setFileName( $changes_array['updatedfile']['name']);
@@ -220,7 +220,6 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
 
         $this->em->beginTransaction();
         if( $file['type'] == "dir" ){
-
             // Get all the directories that match this pattern
             $directories = $this->directoryRepository->findDirectoryByLocation( $working_directory, $file['directory'], $file['name'] );
             for( $i = 0, $length = count($directories); $i < $length; $i++ ){
@@ -335,4 +334,68 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         return $fileref;
     }
 
+    /**
+     * Delete a file reference
+     *
+     * @param FileReference $fileReference
+     */
+    public function deleteFileReference( FileReference $fileReference ){
+        $this->em->remove( $fileReference );
+        $this->em->flush();
+    }
+
+    /**
+     * Delete a directory from the database including its children
+     *
+     * @param Directory $directory
+     */
+    public function deleteDirectory( Directory $directory ){
+        $this->aclservice->clearAccessRightsForDirectory( $directory );
+
+        // Remove the file references underneath this directory
+        $files = $this->fileRepository->getFilesInDirectory( $directory );
+        for( $i = 0, $length = count( $files ); $i < $length; $i++ ){
+            $this->em->remove( $files[ $i ] );
+        }
+
+        // Get all the directories below the current directory
+        $childdirectories = $this->directoryRepository->findDirectoryChildrenByLocation(
+            $directory->getWorkingDirectory(), $directory->getRelativePath(), $directory->getDirectoryName());
+        for( $i = 0, $length = count($childdirectories); $i < $length; $i++ ){
+            $this->aclservice->clearAccessRightsForDirectory( $childdirectories[$i] );
+
+            // Remove the file references underneath this directory
+            $files = $this->fileRepository->getFilesInDirectory( $childdirectories[ $i ]);
+            for( $j = 0, $jlength = count( $files ); $j < $jlength; $j++ ){
+                $this->em->remove( $files[ $j ] );
+            }
+
+            $this->em->remove( $childdirectories[$i] );
+        }
+
+        $this->em->remove( $directory );
+        $this->em->flush();
+    }
+
+    /**
+     * Check if the directory can be removed from the filesystem because it:
+     * Doesn't have any filereferences below it or
+     * Doesn't have any directories below it or
+     * Doesn't exist in the database
+     *
+     * @return bool
+     */
+    public function canDirectoryBeDeletedFromTheFilesystem( $working_directory, $absolute_path ){
+        $path = PathUtils::stripWorkingDirectoryFromAbsolutePath($working_directory, $absolute_path );
+        $relative_path = PathUtils::removeFirstSlash( PathUtils::addTrailingSlash( PathUtils::moveUpPath( $path ) ) );
+        $name = PathUtils::getLastNode( $path );
+
+        if( $this->fileRepository->referencesExistBelowPath( $working_directory, PathUtils::addTrailingSlash( $path ) ) == true
+         || count( $this->directoryRepository->findDirectoryChildrenByLocation($working_directory, $relative_path, $name) ) > 0
+         || count( $this->directoryRepository->findDirectoryByLocation($working_directory, $relative_path, $name ) ) > 0 ){
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
