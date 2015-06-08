@@ -87,7 +87,7 @@ class FilemanagerExtension extends Twig_Extension {
 
                 $requestcontext = $router->getGenerator()->getContext();
 
-                $apiconfig['startingDirectory'] = "";
+                $apiconfig['startingDirectory'] = $this->container->get('recognize.file_manager')->getCurrentRelativeDirectory();
                 $apiconfig['url'] = $requestcontext->getScheme() . "://" . $requestcontext->getHost();
                 $apiconfig['paths'] = $this->pathconfig;
 

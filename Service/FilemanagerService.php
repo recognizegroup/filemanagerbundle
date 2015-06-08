@@ -46,6 +46,7 @@ class FilemanagerService {
 
         $this->configuration = $configuration;
         if( isset( $configuration['directories']) && isset( $configuration['directories']['default'] ) ){
+            $this->checkValidWorkingDirectories( $configuration['directories'] );
             $this->working_directory = $configuration['directories']['default'];
         } else {
             throw new \RuntimeException( "Default upload and file management directory should be set! " );
@@ -54,6 +55,26 @@ class FilemanagerService {
         $this->current_directory = $this->working_directory;
         $this->security_context = $security_context;
         $this->synchronizer = $synchronizer;
+    }
+
+    /**
+     * Check if the working directories are valid
+     *
+     * @param $directories
+     */
+    protected function checkValidWorkingDirectories( $directories ){
+        $paths = array_values( $directories );
+
+        for( $i = 0, $length = count( $paths ); $i < $length; $i++ ){
+            for( $j = 0, $jlength = count( $paths ); $j < $jlength; $j++ ){
+                $contains = strpos( PathUtils::addTrailingSlash( $paths[$i] ),PathUtils::addTrailingSlash( $paths[$j] ) );
+                if( $j != $i && $contains !== false ){
+                    throw new \RuntimeException( sprintf("Working directories are ment as ROOT directories - As such they cannot intersect. (%s cannot exist together with %s)",
+                        $paths[$i], $paths[$j]));
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -608,5 +629,17 @@ class FilemanagerService {
      */
     public function getWorkingDirectory(){
         return $this->working_directory;
+    }
+
+    /**
+     * Returns the relative path from the working directory where the filemanager is currently in
+     *
+     * @return mixed
+     */
+    public function getCurrentRelativeDirectory(){
+        return PathUtils::stripWorkingDirectoryFromAbsolutePath(
+            PathUtils::addTrailingSlash( $this->working_directory ),
+            PathUtils::addTrailingSlash( $this->current_directory )
+        );
     }
 }

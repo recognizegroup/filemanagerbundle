@@ -73,7 +73,7 @@ twig:
 recognize_filemanager:
 	directories:
 		default: /var/www/Filemanager/app/cache
-		example_directory: /var/www/Filemanager/app/cache/example
+		example_directory: /var/www/Filemanager/app/example
 		
     api_paths:
         read: _fileapi_read
@@ -192,7 +192,7 @@ This formtype supports the same validation constraints as file uploads and image
 
 ```php
 $form = $this->createFormBuilder( array() )
-    ->add('image', 'filereference', array("is_simple" => false,
+    ->add('image', 'filereference', array(
         "constraints" => array(
             new Image(
                 array(
@@ -203,6 +203,27 @@ $form = $this->createFormBuilder( array() )
         ))
     );
 ```                
+
+You can navigate to a directory in the widget as well. 
+The following configuration will make sure the user starts off in the working directory's images directory.
+This also means that submitted uploaded files will end up in this directory if it isn't changed by the user.
+
+```php
+$form = $this->createFormBuilder( array() )
+    ->add('image', 'filereference', 
+        array( 'directory' => "images/" );
+    );
+```
+
+If you only want to use the file uploader, you can turn set the 'is_simple' option to true. 
+This will disable the modal window which includes the filemanager widget.
+
+```php
+$form = $this->createFormBuilder( array() )
+    ->add('image', 'filereference', 
+        array("is_simple" => false )
+    );
+```      
 
 **Standalone**
 

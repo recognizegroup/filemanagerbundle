@@ -66,7 +66,7 @@ class FileReferenceType extends AbstractType {
                     // Allow UploadFile for fallback when there is no javascript
                     if ($data instanceof UploadedFile) {
                         /** @var FileChanges $changes */
-                        $changes = $this->filemanager->saveUploadedFile($data, $data->getClientOriginalName(), true);
+                        $changes = $this->filemanager->saveUploadedFile($data, $options['directory'] . $data->getClientOriginalName(), true);
                         $fileref = $this->synchronizer->loadFileReference($this->filemanager->getWorkingDirectory(), $changes->getFile()->getRelativePath() . $changes->getFile()->getFilename());
 
                     // Allow a relative path to the file as well
@@ -115,6 +115,7 @@ class FileReferenceType extends AbstractType {
         }
 
         $view->vars['is_simple'] = $options['is_simple'];
+        $view->vars['directory'] = $options['directory'];
     }
 
     /**
@@ -122,10 +123,13 @@ class FileReferenceType extends AbstractType {
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver){
         $resolver->setDefaults(array(
-            'is_simple' => false
+            'is_simple' => false,
+            'directory' => ""
         ));
 
         $resolver->setAllowedTypes(array( 'is_simple' => array("bool") ));
+        $resolver->setAllowedTypes(array( 'directory' => array("string") ));
+
     }
 
 

@@ -45,6 +45,17 @@ class FilemanagerServiceTest extends FilesystemTestCase {
     /**
      * @expectedException Exception
      */
+    public function testSetFaultyWorkingDirectory(){
+        $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => $this->workspace,
+            "user_directory" => $this->workspace . "/users" ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanagerservice->setWorkingDirectory( "user_directory" );
+        $this->assertEquals( "users", $filemanagerservice->getWorkingDirectory() );
+    }
+
+
+    /**
+     * @expectedException Exception
+     */
     public function testSetInvalidWorkingDirectory(){
         $filemanagerservice = new FilemanagerService( array("directories" => array( "default" => $this->workspace,
             "user_directory" => "users" ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
