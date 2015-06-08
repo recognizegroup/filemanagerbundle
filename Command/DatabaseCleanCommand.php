@@ -44,7 +44,10 @@ class DatabaseCleanCommand extends Command implements ContainerAwareInterface {
             $path = $directories[$i]->getAbsolutePath();
             if( $filesystem->exists( $path ) == false ){
                 $unlinked_directories[] = $directories[$i];
-                $output->writeln( $path );
+
+                if( OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity() ) {
+                    $output->writeln($path);
+                }
             }
         }
 
@@ -55,7 +58,10 @@ class DatabaseCleanCommand extends Command implements ContainerAwareInterface {
             $path = $references[$i]->getAbsolutePath();
             if( $filesystem->exists( $path ) == false ){
                 $unlinked_files[] = $references[$i];
-                $output->writeln( $path );
+
+                if( OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity() ) {
+                    $output->writeln($path);
+                }
             }
         }
 

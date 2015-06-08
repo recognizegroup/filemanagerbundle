@@ -24,7 +24,7 @@ class FilesystemCleanCommand extends Command implements ContainerAwareInterface 
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    public function execute(InputInterface $input, OutputInterface $output) {
 
         /** @var FileDataSynchronizer $synchronizer */
         $synchronizer = $this->container->get("recognize.filedata_synchronizer");

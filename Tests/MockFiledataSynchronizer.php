@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Tests;
 
+use Recognize\FilemanagerBundle\Entity\Directory;
 use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Service\FiledataSynchronizerInterface;
@@ -21,5 +22,17 @@ class MockFiledataSynchronizer implements FiledataSynchronizerInterface {
         if( $this->filereference !== null ){
             return $this->filereference;
         }
+    }
+
+    public function canDirectoryBeDeletedFromTheFilesystem() {
+        return true;
+    }
+
+    public function deleteDirectory( Directory $directory) {
+        return true;
+    }
+
+    public function deleteFileReference( FileReference $reference) {
+        return true;
     }
 }

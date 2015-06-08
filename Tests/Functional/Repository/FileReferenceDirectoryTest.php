@@ -41,6 +41,14 @@ class FileRepositoryTest extends KernelTestCase {
         $this->assertEquals( $this->getExpectedFile(), $file );
     }
 
+    public function testReferencesExistBelowExistingPath(){
+        $this->assertTrue( $this->repository->referencesExistBelowPath( "testroot/", "" ) );
+    }
+
+    public function testReferencesExistBelowNonexistingPath(){
+        $this->assertFalse( $this->repository->referencesExistBelowPath( "testroot/", "abcdefg/" ) );
+    }
+
 
     protected function getExpectedRootFiles(){
         $file = new FileReference();

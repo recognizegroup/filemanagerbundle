@@ -8,6 +8,7 @@ use Recognize\FilemanagerBundle\Service\FiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockSplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\HttpFoundation\File\File;
 
 class FiledataSynchronizerTest extends KernelTestCase {
 
@@ -354,6 +355,154 @@ class FiledataSynchronizerTest extends KernelTestCase {
 
     }
 
+    /**
+     * @depends testDeleteDirectory
+     *
+     * Virtual filesystem before deleting
+     * /test/workingdirectory/testdir
+     * /test/workingdirectory/testdir/file.txt
+     * /test/workingdirectory/testdir/test/
+     * /test/workingdirectory/testdir/test/file.txt
+     */
+    public function testDeleteDirectoryMethod(){
+        $dir = new MockSplFileInfo( "/test/workingdirectory", "", "" );
+        $dir->setAsDir();
+        $dir->setFilename("testdir");
+        $filechanges = new FileChanges("create", $dir);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $dir = new MockSplFileInfo( "/test/workingdirectory/testdir", "", "" );
+        $dir->setAsDir();
+        $dir->setFilename("test");
+        $filechanges = new FileChanges("create", $dir);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $file = new MockSplFileInfo( "/test/workingdirectory/testdir/file.txt", "testdir/", "" );
+        $file->setFilename( "file.txt" );
+        $file->setAsFile();
+        $filechanges = new FileChanges("create", $file);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $file = new MockSplFileInfo( "/test/workingdirectory/testdir/test/file.txt", "testdir/test/", "" );
+        $file->setFilename( "file.txt" );
+        $file->setAsFile();
+        $filechanges = new FileChanges("create", $file);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+
+        // EXECUTE THE METHOD
+        $directory = $this->dir_repository->findOneBy( array(
+            "working_directory" => "/test/workingdirectory/",
+            "relative_path" => "",
+            "name" => "testdir"
+        ));
+        $this->synchronizer->deleteDirectory( $directory );
+
+        // TEST THE OUTCOME
+        $deleteddirectory = $this->dir_repository->findOneBy( array(
+            "working_directory" => "/test/workingdirectory/",
+            "relative_path" => "",
+            "name" => "testdir"
+        ));
+
+        $directorydeleted = "Directory not deleted";
+        if( $deleteddirectory == null ){
+            $directorydeleted = "Directory deleted!";
+        }
+
+        $deletedfile = $this->file_repository->findOneBy( array(
+            "working_directory" => "/test/workingdirectory/",
+            "relative_path" => "testdir/",
+            "filename" => "file.txt"
+        ));
+
+
+        $filedeleted = "Child file not deleted";
+        if( $deletedfile == null ){
+            $filedeleted = "Child file deleted!";
+        }
+
+        $this->assertEquals( $directorydeleted, "Directory deleted!" );
+        $this->assertEquals( $filedeleted, "Child file deleted!" );
+    }
+
+    /**
+     * @depends testDeleteDirectoryMethod
+     *
+     * Virtual filesystem state:
+     */
+    public function testDeleteFileReferenceMethod(){
+        $file = new MockSplFileInfo( "/test/workingdirectory/testdir.txt", "", "" );
+        $file->setFilename( "testdir.txt" );
+        $file->setAsFile();
+        $filechanges = new FileChanges("create", $file);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $reference = $this->file_repository->findOneBy( array(
+            "working_directory" => "/test/workingdirectory/",
+            "relative_path" => "",
+            "filename" => "testdir.txt"
+        ));
+
+
+        $this->synchronizer->deleteFileReference( $reference );
+        $deletedreference = $this->file_repository->findOneBy( array(
+            "working_directory" => "/test/workingdirectory/",
+            "relative_path" => "",
+            "filename" => "testdir.txt"
+        ));
+
+        $this->assertTrue( $deletedreference == null );
+
+    }
+
+    /**
+     * @depends testDeleteFileReferenceMethod
+     *
+     * Virtual filesystem state:
+     */
+    public function testNonindexedDirectoryDeleteCheck(){
+        $this->assertTrue( $this->synchronizer->canDirectoryBeDeletedFromTheFilesystem( "/test/workingdirectory/",
+            "/test/workingdirectory/test" ) );
+    }
+
+    /**
+     * @depends testNonindexedDirectoryDeleteCheck
+     *
+     * Virtual filesystem state:
+     */
+    public function testNonindexedDirectoryWithIndexedFilesDeleteCheck(){
+        $file = new MockSplFileInfo( "/test/workingdirectory/file.txt", "", "" );
+        $file->setFilename( "fil.txt" );
+        $file->setAsFile();
+        $filechanges = new FileChanges("create", $file);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $this->assertFalse( $this->synchronizer->canDirectoryBeDeletedFromTheFilesystem( "/test/workingdirectory/",
+            "/test/workingdirectory/" ) );
+
+        $filechanges = new FileChanges("delete", $file);
+        $this->synchronizer->synchronize( $filechanges, "/test/workingdirectory/" );
+    }
+
+    /**
+     * @depends testNonindexedDirectoryDeleteCheck
+     *
+     * Virtual filesystem state:
+     */
+    public function testNonindexedDirectoryWithIndexedDirectoriesDeleteCheck(){
+        $file = new MockSplFileInfo( "/test/workingdirectory/test", "", "" );
+        $file->setFilename( "test" );
+        $file->setAsDir();
+        $filechanges = new FileChanges("create", $file);
+        $this->synchronizer->synchronize($filechanges, "/test/workingdirectory");
+
+        $this->assertFalse( $this->synchronizer->canDirectoryBeDeletedFromTheFilesystem( "/test/workingdirectory/",
+            "/test/workingdirectory/" ) );
+
+        $filechanges = new FileChanges("delete", $file);
+        $this->synchronizer->synchronize( $filechanges, "/test/workingdirectory/" );
+    }
 
     public function getExpectedFileReference(){
         $file = new FileReference();

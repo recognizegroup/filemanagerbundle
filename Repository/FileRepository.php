@@ -70,15 +70,28 @@ class FileRepository extends EntityRepository {
      */
     public function referencesExistBelowPath($working_directory, $relative_path){
         $qb = $this->createQueryBuilder('d');
-        $qb->where("d.working_directory = :working_directory AND ( d.relative_path = :relative_path OR d.relative_path LIKE :relative_path_percent )")
-            ->setParameters(
-                array(
-                    "working_directory" => $working_directory,
-                    "relative_path" => $relative_path,
-                    "relative_path_percent" => $relative_path . "%"
-                )
-            );
+
+        // The root dir
+        if( $relative_path == "" ) {
+            $qb->where("d.working_directory = :working_directory")
+                ->setParameters(
+                    array(
+                        "working_directory" => $working_directory,
+                    )
+                );
+        // The dirs below the root dir
+        } else {
+            $qb->where("d.working_directory = :working_directory AND ( d.relative_path = :relative_path OR d.relative_path LIKE :relative_path_percent )")
+                ->setParameters(
+                    array(
+                        "working_directory" => $working_directory,
+                        "relative_path" => $relative_path,
+                        "relative_path_percent" => $relative_path . "%"
+                    )
+                );
+        }
         $qb->setMaxResults(1);
+
 
         $query = $qb->getQuery();
         $results = $query->getResult();
