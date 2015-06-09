@@ -491,10 +491,22 @@ class FilemanagerService {
                     $this->throwFileExceptions($file->getError());
                 } else {
                     try {
-                        $file->move($this->current_directory, $new_filename);
+
+                        $movedirectory = $this->current_directory;
+                        $movefilename = $new_filename;
+
+                        // If the filename is a path, make sure to seperate the directory from the filename
+                        if( strpos($new_filename, "/") !== false ){
+                            $directory = PathUtils::moveUpPath( $new_filename );
+                            $movedirectory = PathUtils::addTrailingSlash( $this->current_directory ) .
+                                PathUtils::removeFirstSlash(PathUtils::addTrailingSlash( $directory));
+                            $movefilename = PathUtils::getLastNode( $new_filename );
+                        }
+
+                        $file->move($movedirectory, $movefilename);
 
                         $finder = new Finder();
-                        $finder->in($this->current_directory)->path("/^" . $this->escapeRegex($new_filename) . "$/");
+                        $finder->in($movedirectory)->path("/^" . $this->escapeRegex($movefilename) . "$/");
                         if ($finder->count() > 0) {
                             $movedfile = $this->getFirstFileInFinder($finder);
                             $filechanges = new FileChanges("create", $movedfile);
