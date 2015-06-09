@@ -112,11 +112,11 @@
     $.data(treelement_{{ id }}, "filemanager")
             .on("filemanager:api:loading", function(){
         var overlayreference = $( "#{{ id }} .overlayreference" );
-        var rowPos = overlayreference.offset();
+        var rowPos = overlayreference.position();
         var bottomTop = rowPos.top;
         var bottomLeft = rowPos.left;
 
-        $("#{{ id }} .overlay").css("top", bottomTop).css("left", bottomLeft).css("width", overlayreference.width())
+        $("#{{ id }} .overlay").css("top", bottomTop).css("left", bottomLeft ).css("width", overlayreference.parent().width())
                 .css("height", overlayreference.height())
                 .css("display", "table");
 
