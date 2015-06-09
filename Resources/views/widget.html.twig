@@ -69,6 +69,15 @@
                     });
                 });
             </script>
+            {% else %}
+            <script type="text/javascript">
+                // Enable keyboard accessability for
+                $('#{{ id }} .select-file').on('keyup', function( event ){
+                    if( event.keyCode == 13 ){
+                        $('#{{ id }} .select-file input').click();
+                    }
+                });
+            </script>
             {% endif %}
         </div>
     {% endspaceless %}
