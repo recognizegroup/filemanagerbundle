@@ -34,7 +34,7 @@
                             .attr("disabled", "disabled");
 
                     fileinput.on("focus", function( event){
-                       $( event.target).parents(".select-file").focus();
+                       $('#{{ id }} .select-file').focus();
                     });
 
                     fileinput.parents("form").on("submit", function(){
@@ -94,25 +94,18 @@
             </script>
             {% else %}
             <script type="text/javascript">
-                // Enable keyboard accessability for
+
+                var fileinput =  $('#{{ id }} .select-file input[type=file]');
+                fileinput.attr("tabindex", "-1");
+
                 $('#{{ id }} .select-file').on('keyup', function( event ){
                     if( event.keyCode == 13 ){
-                        $('#{{ id }} .select-file input').click();
+                        fileinput.click();
                     }
                 });
 
-                var fileinput =  $('#{{ id }} .select-file input[type=file]');
-
-                fileinput.on("click", function(){
-                    fileinput.removeAttr("disabled");
-                });
-
-                fileinput.on("change", function(){
-                    fileinput.attr("disabled", "disabled");
-                });
-
-                fileinput.parents("form").on("submit", function(){
-                    fileinput.removeAttr("disabled");
+                fileinput.on("focus", function( event){
+                    $('#{{ id }} .select-file').focus();
                 });
             </script>
             {% endif %}

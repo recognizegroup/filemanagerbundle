@@ -104,13 +104,16 @@
 </div>
 
 <div class="filemanager-alert alert" data-fm-show="error" style="z-index: 150; width: 100%; height: 100%; top: 0px; left: 0px; position: fixed; display: none;">
-    <div class="error-background close-error-modal" style="background: rgba(0,0,0, 0.3); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute;"></div>
-    <div class="bg-danger" style="position: absolute; top: 100px; left: 35%; width: 30%; border-radius: 20px; padding: 20px;">
+    <div class="error-background close-error-modal"></div>
+    <div class="bg-danger filemanager-error-content">
         <a class="pull-right text-danger close-error-modal" href="#">
             <i class="fa fa-close" style="font-size: 20px;"></i>
         </a>
         <i class="fa fa-exclamation-triangle text-danger" style="width: 100%; text-align: center; font-size: 50px;"></i>
         <hr />
         <p class="error-message" data-fm-value="error-message" style="text-align: center;"></p>
+        <div style="float: left; width: 100%;">
+            <a tabindex="0" style="margin: 0 auto; display: block; width: 100px;" class="btn error-focus-button close-error-modal">{{ 'Close'|trans }}</a>
+        </div>
     </div>
 </div>

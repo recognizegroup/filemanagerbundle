@@ -70,6 +70,10 @@
                 <source>Download file</source>
                 <target>Datei herunterladen</target>
             </trans-unit>
+            <trans-unit id="18">
+                <source>Close</source>
+                <target>Schließen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

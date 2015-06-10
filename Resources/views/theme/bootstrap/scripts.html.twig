@@ -153,6 +153,10 @@
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
     });
 
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:error", function( response ) {
+        $("#{{ id }} .error-focus-button").focus();
+    });
+
     var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
 
     // Manage the backbutton for Android

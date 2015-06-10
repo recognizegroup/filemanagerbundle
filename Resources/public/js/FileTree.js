@@ -129,7 +129,6 @@ FileTree.prototype = {
         var node = this._root;
         for( var i = 0, length = pathnodes.length; i < length; i++ ){
             var pathnode = pathnodes[ i ];
-            this.debug( pathnodes );
 
             if( typeof node.children[ pathnode ] === "undefined") {
 
