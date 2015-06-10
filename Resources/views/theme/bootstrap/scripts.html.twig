@@ -153,8 +153,32 @@
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
     });
 
+    var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
+
+    // Manage the backbutton for Android
+    if( isAndroid ){
+        $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:error", function( response ){
+            history.pushState("{{ id }} error", null, location.href);
+            history.pushState("#", null, location.href);
+        });
+
+        $(window).bind('popstate', function( event ){
+            var state = event.originalEvent.state;
+            if( state == "{{ id }} error"){
+                $("#{{ id }} .overlay").css("display", "none");
+                $('#{{ id }} .filemanager-alert').hide();
+                history.back();
+            }
+        });
+    }
+
     $('#{{ id }} .close-error-modal').on("click",function(){
         $("#{{ id }} .overlay").css("display", "none");
         $('#{{ id }} .filemanager-alert').hide();
+
+        // Manage the backbutton for Android
+        if( isAndroid ){
+            history.back();
+        }
     });
 </script>
