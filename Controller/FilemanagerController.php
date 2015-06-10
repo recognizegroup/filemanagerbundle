@@ -26,10 +26,11 @@ class FilemanagerController extends Controller {
      */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
-        $contents = $filemanager->getDirectoryContents($request->get('directory'));
 
         $builder = new FilemanagerResponseBuilder();
-        $builder->addFiles( $contents );
+        $builder->attemptRead( function() use ($filemanager, $request) {
+            return $filemanager->getDirectoryContents($request->get('directory'));
+        });
         return $builder->build();
     }
 
@@ -42,9 +43,11 @@ class FilemanagerController extends Controller {
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
 
-        $files = $filemanager->searchDirectoryContents($request->get('directory'), "/" . preg_quote( strtolower( $request->get('q') ), "/" ) . "/" );
         $builder = new FilemanagerResponseBuilder();
-        $builder->addFiles( $files );
+        $builder->attemptRead( function() use ($filemanager, $request) {
+            return $filemanager->searchDirectoryContents($request->get('directory'), "/" . preg_quote( strtolower( $request->get('q') ), "/" ) . "/" );
+        }, $this->get('translator'));
+
         return $builder->build();
     }
 
@@ -72,27 +75,21 @@ class FilemanagerController extends Controller {
         }
 
         if( $file !== false && $request->request->has('filemanager_directory') ){
-            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
+            $builder->attemptChange( function() use ($filemanager, $request, $file) {
+                $filemanager->goToDeeperDirectory($request->get('filemanager_directory'));
 
-            /** @var UploadedFile $file */
-            try {
-                $changes = $filemanager->saveUploadedFile($file, $file->getClientOriginalName());
-                $builder->addChange($changes);
-            } catch( \Exception $e ){
-                $builder->fail( $e->getMessage(), 400 );
-            }
+                /** @var UploadedFile $file */
+                return $filemanager->saveUploadedFile($file, $file->getClientOriginalName());
+            }, $this->get('translator'));
 
         } else if( $request->request->has('directory_name') && $request->request->has('filemanager_directory') ) {
 
-            $directoryname = $request->request->get('directory_name');
-            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
+            $builder->attemptChange( function() use ($filemanager, $request) {
+                $directoryname = $request->request->get('directory_name');
+                $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
 
-            try {
-                $changes = $filemanager->createDirectory($directoryname);
-                $builder->addChange( $changes );
-            } catch( \Exception $e ){
-                $builder->fail( $e->getMessage(), 400 );
-            }
+                return $filemanager->createDirectory($directoryname);
+            }, $this->get('translator'));
 
         } else {
 
@@ -114,11 +111,13 @@ class FilemanagerController extends Controller {
         if( $request->request->has('filemanager_filepath')
             && $request->request->has('filemanager_newdirectory') ){
 
-            $oldfilepath = $request->get('filemanager_filepath');
-            $newdirectory = $request->get('filemanager_newdirectory');
-            $changes = $filemanager->move( $oldfilepath, $newdirectory );
+            $builder->attemptChange( function() use ($filemanager, $request) {
+                $oldfilepath = $request->get('filemanager_filepath');
+                $newdirectory = $request->get('filemanager_newdirectory');
 
-            $builder->addChange( $changes );
+                return $filemanager->move($oldfilepath, $newdirectory);
+            }, $this->get('translator'));
+
 
         } else {
             $builder->fail( "Invalid request");
@@ -141,13 +140,14 @@ class FilemanagerController extends Controller {
             && $request->request->has('filemanager_newfilename')
             && $request->request->has('filemanager_directory') ){
 
-            $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
+            $builder->attemptChange( function() use ($filemanager, $request){
+                $filemanager->goToDeeperDirectory( $request->get('filemanager_directory') );
 
-            $oldfilename = $request->get('filemanager_filename');
-            $newfilename = $request->get('filemanager_newfilename');
-            $changes = $filemanager->rename( $oldfilename, $newfilename );
+                $oldfilename = $request->get('filemanager_filename');
+                $newfilename = $request->get('filemanager_newfilename');
 
-            $builder->addChange( $changes );
+                return $filemanager->rename( $oldfilename, $newfilename );
+            }, $this->get('translator'));
 
         } else {
             $builder->fail( "Invalid request");
@@ -167,12 +167,12 @@ class FilemanagerController extends Controller {
         $builder = new FilemanagerResponseBuilder();
 
         if( $request->request->has('filemanager_directory') && $request->request->has('filemanager_filename') ){
-            $filemanager->goToDeeperDirectory( $request->request->get('filemanager_directory') );
+            $builder->attemptChange( function() use ($filemanager, $request) {
+                $filemanager->goToDeeperDirectory($request->request->get('filemanager_directory'));
 
-            $filename = $request->request->get('filemanager_filename');
-
-            $changes = $filemanager->delete( $filename );
-            $builder->addChange( $changes );
+                $filename = $request->request->get('filemanager_filename');
+                return $filemanager->delete($filename);
+            }, $this->get('translator'));
 
         } else {
             $builder->fail( "Invalid request");

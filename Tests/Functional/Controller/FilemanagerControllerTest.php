@@ -10,6 +10,7 @@ use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Translation\Translator;
 
 class FilemanagerControllerTest extends FilesystemTestCase {
 
@@ -165,6 +166,7 @@ class FilemanagerControllerTest extends FilesystemTestCase {
         $container = new Container();
         $filemanager = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
         $container->set("recognize.file_manager", $filemanager);
+        $container->set("translator", new Translator("en"));
 
         $controller = new FilemanagerController();
         $controller->setContainer( $container );

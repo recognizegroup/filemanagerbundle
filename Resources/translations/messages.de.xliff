@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="en" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>You are not allowed to perform this action</source>
+                <target>Sie dürfen diese Aktion nicht ausführen</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>File not created</source>
+                <target>Datei nicht gespeichert</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>File not found</source>
+                <target>Datei nicht gefunden</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>File already exists</source>
+                <target>Diese Datei mit dieser Dateiname ist schon vorhanden</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>No access to file</source>
+                <target>Sie können diese Datei nicht zugreifen.</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>File too large</source>
+                <target>Diese Datei ist zu groß</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>File not uploaded</source>
+                <target>Diese Datei ist nicht hochgeladen</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>Action failed</source>
+                <target>Diese Aktion ist gescheitert</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

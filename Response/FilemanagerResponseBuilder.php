@@ -1,8 +1,16 @@
 <?php
 namespace Recognize\FilemanagerBundle\Response;
 
+use Recognize\FilemanagerBundle\Exception\ConflictException;
+use Recognize\FilemanagerBundle\Exception\FileTooLargeException;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Translation\Translator;
+use Symfony\Component\Translation\TranslatorInterface;
 
 class FilemanagerResponseBuilder {
 
@@ -78,6 +86,26 @@ class FilemanagerResponseBuilder {
         $this->config['data']['changes'][] = $filechange->toArray();
         return $this;
     }
+
+
+    /**
+     * Attempt to make a change with the supplied function, catching all the exceptions to translate them
+     *
+     * @param $function
+     */
+    public function attemptChange( $function, TranslatorInterface $translator = null ){
+        $this->attempt( "change", $function, $translator );
+    }
+
+    /**
+     * Attempt to read a directory, catching all the exceptions to translate them
+     *
+     * @param $function
+     */
+    public function attemptRead( $function, TranslatorInterface $translator = null ){
+        $this->attempt( "read", $function, $translator );
+    }
+
 
     /**
      * Set the translation function that will be called right before the response is made
@@ -181,6 +209,74 @@ class FilemanagerResponseBuilder {
             $response->setStatusCode( $this->statuscode, $this->error_message );
         }
         return $response;
+    }
+
+    /**
+     * Attempts something and catches all the exceptions to translate them
+     *
+     * @param string $type                               change or read
+     * @param callable $function                         The function to execute and use the return value from
+     * @param TranslatorInterface $translator
+     */
+    private function attempt($type, $function, TranslatorInterface $translator = null){
+        $message = null;
+
+        try {
+
+            if( $type == "change" ) {
+                $this->addChange( $function() );
+            } else {
+                $this->addFiles( $function() );
+            }
+
+        } catch (AccessDeniedException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("You are not allowed to perform this action");
+            }
+        } catch (\Symfony\Component\Finder\Exception\AccessDeniedException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("No access to file");
+            }
+        } catch (FileNotFoundException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("File not found");
+            }
+        } catch (ConflictException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("File already exists");
+            }
+        } catch (FileException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("File not created");
+            }
+        } catch (FileTooLargeException $e ){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("File too large");
+            }
+        } catch (IOException $e){
+
+            $message = $e->getMessage();
+            if( $translator != null ){
+                $message = $translator->trans("Action failed");
+            }
+        }
+
+        if( $message != null ){
+            $this->fail( $message );
+        }
+
     }
 
 }
