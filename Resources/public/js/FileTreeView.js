@@ -1078,8 +1078,8 @@ FileTreeView.prototype = {
 
         this._eventHandler.register('filemanager:api:error', function( response ) {
             self._apiCalled = true;
-
-            alert( response.message );
+            self._container.find( "[data-fm-value=error-message]" ).html( response.message );
+            self._container.find( "[data-fm-show=error]" ).show();
         });
 
         this._eventHandler.register('filemanager:model:directories_changed', function( jstreedata ){

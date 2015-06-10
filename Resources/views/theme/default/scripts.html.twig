@@ -3,4 +3,9 @@
     var recognize_filemanager_config_{{ id }} = (true, recognize_filemanager_defaults_{{ id }}, {{ filemanager_config|json_encode|raw }} );
 
     var filetree = $('#{{ id }}.filetree').filemanager( recognize_filemanager_config_{{ id }} );
+
+    $.data( filetree, "filemanager").on("filemanager:api:error", function( response ){
+        alert( response.message );
+    });
+
 </script>

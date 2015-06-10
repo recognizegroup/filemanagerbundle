@@ -1186,10 +1186,19 @@ li[aria-expanded=true] > .jstree-anchor .jstree-themeicon:before {
     position: fixed;
     overflow-y: scroll;
     z-index: 1999;
+}
+
+.filemanager-modal-background {
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    position: fixed;
     background: rgba(1,1,1,0.7);
 }
 
-.filemanager-modal-overlay::-webkit-scrollbar {
+.filemanager-modal-overlay::-webkit-scrollbar,
+.filemanager-modal-background::-webkit-scrollbar {
     display: none;
 }
 

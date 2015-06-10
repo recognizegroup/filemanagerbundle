@@ -14,6 +14,7 @@
 
             {% if is_simple == false %}
             <div class="filemanager-modal-overlay" style="display:none">
+                <div class="filemanager-modal-background"></div>
                 <div class="filemanager-modal">
                     <div class="row">
                         <div style="margin-left: 36px; margin-right: 36px;">
@@ -24,6 +25,7 @@
             </div>
             <script type="text/javascript">
                 $(document).ready(function(){
+                    var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
 
                     var container_element = $('#{{ managerid }}').get(0);
 
@@ -42,13 +44,35 @@
                     $('#{{ id }} .select-file').on("click", function(){
                         $('#{{ id }} .filemanager-modal-overlay').toggle();
                         $("#{{ id }} .upload-button").focus();
+
+                        if( isAndroid ) {
+                            history.pushState("{{ id }}", null, location.href);
+                        }
                     });
 
+                    // Manage the backbutton if we are using android
+                    if( isAndroid ){
+                        $(window).bind('popstate', function( event ){
+                            var state = event.originalEvent.state;
+                            if( state == "{{ id }}"){
+                                $('#{{ id }} .filemanager-modal-overlay').hide();
+                                history.back();
+                            }
+                        });
+                    }
 
-                    $('#{{ id }} .filemanager-modal a.close-modal').on("click", function(){
+                    var closeModal = function(){
                         $('#{{ id }} .filemanager-modal-overlay').hide();
                         $("#{{ id }} .select-file").focus();
-                    });
+
+                        if( isAndroid ) {
+                            history.back();
+                        }
+                    };
+
+                    $('#{{ id }} .filemanager-modal a.close-modal').on("click", closeModal);
+                    $('#{{ id }} .filemanager-modal-background').on("click", closeModal);
+
 
                     $.data(container_element, "filemanager").on("filemanager:view:select", function( event ){
                         if( event.file.type == "file" ){
@@ -75,6 +99,20 @@
                     if( event.keyCode == 13 ){
                         $('#{{ id }} .select-file input').click();
                     }
+                });
+
+                var fileinput =  $('#{{ id }} .select-file input[type=file]');
+
+                fileinput.on("click", function(){
+                    fileinput.removeAttr("disabled");
+                });
+
+                fileinput.on("change", function(){
+                    fileinput.attr("disabled", "disabled");
+                });
+
+                fileinput.parents("form").on("submit", function(){
+                    fileinput.removeAttr("disabled");
                 });
             </script>
             {% endif %}

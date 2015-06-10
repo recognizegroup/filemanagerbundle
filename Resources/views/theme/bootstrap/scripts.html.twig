@@ -125,9 +125,7 @@
     $.data(treelement_{{ id }}, "filemanager").on("filemanager:view:rendered", function(){
         $("#{{ id }} .overlay").css("display", "none");
     });
-    $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:error", function(){
-        $("#{{ id }} .overlay").css("display", "none");
-    });
+
     $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:uploading", function(){
                 console.log( "UPLOADING {{ id }}" );
 
@@ -153,5 +151,10 @@
 
     $('#{{ id }} .sort-by-date').on("click",function( event ){
         $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
+    });
+
+    $('#{{ id }} .close-error-modal').on("click",function(){
+        $("#{{ id }} .overlay").css("display", "none");
+        $('#{{ id }} .filemanager-alert').hide();
     });
 </script>
