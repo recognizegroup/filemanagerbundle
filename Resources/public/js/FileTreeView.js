@@ -875,6 +875,7 @@ FileTreeView.prototype = {
         var keyupEvent = function(event){
             if( event.keyCode == 13 ){
                 $( event.currentTarget).removeClass('active').trigger('click');
+                event.preventDefault();
             }
         };
 
@@ -914,7 +915,7 @@ FileTreeView.prototype = {
             var property = funcproperty.substring( 5 );
 
             if( property === "filename" ){
-                self._eventHandler.trigger("filemanager:view:sort");
+                self._eventHandler.trigger("filemanager:view:sort", { type: property });
             } else {
                 self._eventHandler.trigger("filemanager:view:sort", {
                     sortfunction: function(a, b){
@@ -925,10 +926,11 @@ FileTreeView.prototype = {
                         } else {
                             return 0;
                         }
-                    }
+                    },
+                    type: property
                 });
             }
-        }).on("keydown", keydownEvent).on("keyup", keyupEvent);
+        });
 
         // Search input
         this._container.find("input[data-fm-functionality=search]").on('search', { directory: self._currentDirectory }, function( event ) {

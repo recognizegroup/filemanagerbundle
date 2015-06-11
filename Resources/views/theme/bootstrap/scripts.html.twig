@@ -141,16 +141,24 @@
         $(".filetree .upload-area").hide();
     });
 
-    $('#{{ id }} .sort-by-filename').on("click",function( event ){
-        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
-    });
+    $.data(treelement_{{ id }}, "filemanager").on("filemanager:tree:sort", function( eventobj ) {
+        $("#{{ id }} .sorting-container").find("i").removeClass("fa-caret-up").removeClass("fa-caret-down").addClass("fa-sort");
 
-    $('#{{ id }} .sort-by-filesize').on("click",function( event ){
-        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
-    });
+        var element = $("#{{ id }} .sort-by-filename");
+        switch( eventobj.type ){
+            case "date_modified":
+                element = $('#{{ id }} .sort-by-date');
+                break;
+            case "size":
+                element = $('#{{ id }} .sort-by-filesize');
+                break;
+        }
 
-    $('#{{ id }} .sort-by-date').on("click",function( event ){
-        $( this ).children("i").toggleClass('fa-caret-up').toggleClass('fa-caret-down');
+        if( eventobj.reverse ){
+            element.children("i").removeClass('fa-caret-down').removeClass('fa-sort').addClass('fa-caret-up');
+        } else {
+            element.children("i").removeClass('fa-caret-up').removeClass('fa-sort').addClass('fa-caret-down');
+        }
     });
 
     $.data(treelement_{{ id }}, "filemanager").on("filemanager:api:error", function( response ) {

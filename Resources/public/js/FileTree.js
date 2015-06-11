@@ -516,8 +516,9 @@ FileTree.prototype = {
      * Also toggles the sorting if the same sort function is set
      *
      * @param sortfunction
+     * @param type
      */
-    sortContent: function( sortfunction ){
+    sortContent: function( sortfunction, type ){
         if( typeof sortfunction !== "function" ) {
             sortfunction = this._naturalFilemanagerSort;
         }
@@ -532,13 +533,19 @@ FileTree.prototype = {
 
         this._updateViews(false, true, false);
 
+        // Update the sorting views
+        var eventobj = {
+            type: type,
+            reverse: this._reverse
+        };
+        this._eventHandler.trigger("filemanager:tree:sort", eventobj);
     },
 
     /**
      * Reset the sorting
      */
     resetSort: function(){
-        this.sortContent( this._naturalFilemanagerSort );
+        this.sortContent( this._naturalFilemanagerSort, "filename" );
     },
 
     /**
@@ -647,9 +654,9 @@ FileTree.prototype = {
 
         this._eventHandler.register("filemanager:view:sort", function( eventobj ){
             if( eventobj !== undefined && typeof eventobj.sortfunction === "function"){
-                self.sortContent( eventobj.sortfunction );
+                self.sortContent( eventobj.sortfunction, eventobj.type );
             } else {
-                self.sortContent();
+                self.sortContent( self._naturalFilemanagerSort, eventobj.type );
             }
         });
 

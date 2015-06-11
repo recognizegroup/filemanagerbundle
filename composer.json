@@ -1,0 +1,23 @@
+{
+  "name": "recognize/filemanager-bundle",
+  "type": "symfony-bundle",
+  "description": "Symfony2 RecognizeFilemanagerBundle",
+  "keywords": ["recognize-filemanager-bundle", "RecognizeFilemanagerBundle"],
+  "homepage": "http://www.recognize.nl",
+  "authors": [
+    {
+      "name": "Kevin te Raa",
+      "email": "k.teraa@recognize.nl",
+      "homepage": "http://www.recognize.nl/"
+    }
+  ],
+  "require": {
+    "symfony/symfony": "~2.6",
+    "doctrine/doctrine-fixtures-bundle": "~2.2"
+  },
+  "target-dir": "Recognize/FilemanagerBundle",
+  "autoload": {
+    "psr-0": { "Recognize\\FilemanagerBundle": "" }
+  },
+  "minimum-stability": "alpha"
+}
