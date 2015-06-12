@@ -34,6 +34,7 @@ class Configuration implements ConfigurationInterface {
                 ->arrayNode('api_paths')
                     ->children()
                         ->scalarNode('read')->defaultValue('')->end()
+                        ->scalarNode('search')->defaultValue('')->end()
                         ->scalarNode('create')->defaultValue('')->end()
                         ->scalarNode('upload')->defaultValue('')->end()
                         ->scalarNode('move')->defaultValue('')->end()

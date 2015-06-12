@@ -77,6 +77,7 @@ recognize_filemanager:
 		
     api_paths:
         read: _fileapi_read
+        search: _fileapi_search
         create: _fileapi_create
         upload: _fileapi_create
         rename: _fileapi_rename
