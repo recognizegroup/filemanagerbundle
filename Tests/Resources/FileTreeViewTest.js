@@ -29,7 +29,7 @@ describe('FileTreeView', function() {
         };
         config = $.extend( defaults, config, true);
 
-        treeviews = new FileTreeView( config, $('.filetree').eq(0) );
+        treeviews = new FileTreeView( config, $('.filetree').get(0) );
     }
 
     it('should be able to find views when initialized', function () {
@@ -67,18 +67,18 @@ describe('FileTreeView', function() {
     });
 
     it('should update the content if the file tree content change event has been triggered', function () {
-        var eventhandler = new FilemanagerEventHandler();
         var files = [
             { name: "one", path: "two" },
             { name: "one", path: "three" },
             { name: "one", path: "one" }
         ];
 
-        initializeTreeView( {
-            eventHandler: eventhandler
+        var eventH = new FilemanagerEventHandler();
+        initializeTreeView({
+            eventHandler: eventH
         });
 
-        eventhandler.trigger( "filemanager:model:content_changed", files );
+        treeviews._eventHandler.trigger( "filemanager:model:content_changed", files );
         expect( treeviews._contentElement.children().length ).toEqual( 3 );
     });
 

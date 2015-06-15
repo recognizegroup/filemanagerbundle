@@ -5,6 +5,7 @@
     "grunt-cli": "latest",
     "grunt-contrib-jasmine": "latest",
     "jasmine-jquery": "latest",
+    "jquery": "latest",
     "grunt-contrib-uglify": "latest"
   }
 }
