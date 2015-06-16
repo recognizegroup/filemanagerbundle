@@ -74,6 +74,8 @@ recognize_filemanager:
 	directories:
 		default: /var/www/Filemanager/app/cache
 		example_directory: /var/www/Filemanager/app/example
+	
+	thumbnail_dir: /var/www/Filemanager/web/cache
 		
     api_paths:
         read: _fileapi_read

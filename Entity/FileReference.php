@@ -137,4 +137,14 @@ class FileReference {
     public function setDirectoryObject( $directory ){
         $this->directory = $directory;
     }
+
+    public function getExtension(){
+        $extension = "";
+        if( $this->filename != null ){
+            $nodes = explode(".", $this->filename);
+            $extension = $nodes[ count($nodes) - 1 ];
+        }
+
+        return $extension;
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Twig;
 
+use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class FilemanagerExtensionTest extends WebTestCase {
@@ -11,8 +12,10 @@ class FilemanagerExtensionTest extends WebTestCase {
     public function setUp(){
         parent::setUp();
         $client = static::createClient();
+        $container = $client->getContainer();
+        $container->set('recognize.filedata_synchronizer', new MockFiledataSynchronizer() );
 
-        $this->extension = new FilemanagerExtension( $client->getContainer() );
+        $this->extension = new FilemanagerExtension( $container );
     }
 
     public function testIfFilemanagerAccessibleFromTwig(){

@@ -32,11 +32,18 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
      */
     private $aclservice;
 
-    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository, FileRepository $fileRepository, FileACLManagerService $aclservice ){
+    /**
+     * @var ThumbnailGeneratorInterface
+     */
+    private $thumbnailGenerator;
+
+
+    public function __construct( EntityManagerInterface $em, DirectoryRepository $directoryRepository, FileRepository $fileRepository, FileACLManagerService $aclservice, ThumbnailGeneratorInterface $thumbnailGenerator ){
         $this->em = $em;
         $this->directoryRepository = $directoryRepository;
         $this->aclservice = $aclservice;
         $this->fileRepository = $fileRepository;
+        $this->thumbnailGenerator = $thumbnailGenerator;
     }
 
     /**
@@ -99,7 +106,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                     $mimetype = "";
                 }
                 $fileref->setMimetype( $mimetype );
-
+                $fileref->setPreviewUrl( $this->thumbnailGenerator->generateThumbnailForFile( $fileref ) );
 
                 $this->em->persist( $fileref );
             }

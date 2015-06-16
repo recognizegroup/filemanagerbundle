@@ -31,6 +31,7 @@ class Configuration implements ConfigurationInterface {
                     ->requiresAtLeastOneElement()
                     ->prototype('scalar')->cannotBeEmpty()->end()
                 ->end()
+                ->scalarNode('thumbnail_directory')->defaultValue('')->end()
                 ->arrayNode('api_paths')
                     ->children()
                         ->scalarNode('read')->defaultValue('')->end()

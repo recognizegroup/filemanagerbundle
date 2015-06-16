@@ -6,6 +6,7 @@ use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Service\FiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockSplFileInfo;
+use Recognize\FilemanagerBundle\Tests\MockThumbnailGenerator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpFoundation\File\File;
@@ -37,7 +38,7 @@ class FiledataSynchronizerTest extends KernelTestCase {
             ));
 
         $this->synchronizer = new FiledataSynchronizer( $em, $this->dir_repository, $this->file_repository,
-            $this->container->get("recognize.file_acl_manager") );
+            $this->container->get("recognize.file_acl_manager"), new MockThumbnailGenerator() );
     }
 
     public function testGetExistingFile(){

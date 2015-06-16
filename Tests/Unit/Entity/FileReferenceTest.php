@@ -64,6 +64,16 @@ class FileReferenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals("test/test1/test2/testing.txt", $fileref->getAbsolutePath() );
     }
 
+    public function testExtension(){
+        $fileref = new FileReference();
+        $fileref->setFileName("testing.txt");
+        $this->assertEquals("txt", $fileref->getExtension() );
+
+        $fileref->setFileName("testing.html.twig");
+        $this->assertEquals("twig", $fileref->getExtension() );
+    }
+
+
     /**
      * @depends testParentDirectory
      */
