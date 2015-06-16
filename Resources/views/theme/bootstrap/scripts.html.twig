@@ -76,7 +76,12 @@
         }
 
         if( typeof file.preview !== "undefined") {
-            icon = "<img src=\"" + location.origin + file.preview + "\" style=\"max-width: 70px; max-height: 70px;\" />";
+            var directorysep = "";
+            if( file.preview.charAt(0) != "/"){
+                directorysep = "/";
+            }
+
+            icon = "<img src=\"" + location.origin + directorysep + file.preview + "\" style=\"max-width: 100px; max-height: 100px;\" />";
         }
 
         var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";
@@ -91,6 +96,15 @@
         var icon = "<i class=\"fa fa-file-o\" style=\"display: block; font-size: 70px;\"></i>";
         if( file.type == "dir" ){
             icon = "<i class=\"fa fa-folder-open\" style=\"display: block; font-size: 70px;\"></i>";
+        }
+
+        if( typeof file.preview !== "undefined") {
+            var directorysep = "";
+            if( file.preview.charAt(0) != "/"){
+                directorysep = "/";
+            }
+
+            icon = "<img src=\"" + location.origin + directorysep + file.preview + "\" style=\"max-width: 100px; max-height: 100px;\" />";
         }
 
         var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";

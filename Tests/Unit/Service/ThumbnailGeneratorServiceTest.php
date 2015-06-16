@@ -14,7 +14,8 @@ use Symfony\Component\Finder\SplFileInfo;
 class ThumbnailGeneratorServiceTest extends FilesystemTestCase {
 
     protected function getThumbnailGeneratorService(){
-        return new ThumbnailGeneratorService( array("thumbnail_directory" => $this->workspace ) );
+        return new ThumbnailGeneratorService( array("thumbnail" =>
+            array("directory" => $this->workspace, "size" => 50 ) ) );
     }
 
     public function testNullReference(){

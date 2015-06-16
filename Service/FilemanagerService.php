@@ -41,8 +41,13 @@ class FilemanagerService {
      */
     private $security_context;
 
+    /**
+     * @var string $webdirectory
+     */
+    private $webdir;
+
     public function __construct( array $configuration, FileSecurityContextInterface $security_context,
-                                 FiledataSynchronizerInterface $synchronizer ){
+                                 FiledataSynchronizerInterface $synchronizer, $kernelRootDir = null ){
 
         $this->configuration = $configuration;
         if( isset( $configuration['directories']) && isset( $configuration['directories']['default'] ) ){
@@ -55,6 +60,13 @@ class FilemanagerService {
         $this->current_directory = $this->working_directory;
         $this->security_context = $security_context;
         $this->synchronizer = $synchronizer;
+
+        // Set the web directory
+        if( $kernelRootDir != null ){
+            $this->webdir = PathUtils::addTrailingSlash(
+                    PathUtils::moveUpPath( $kernelRootDir )
+                ) . "web";
+        }
     }
 
     /**
@@ -513,7 +525,12 @@ class FilemanagerService {
                             $filechanges->setFileMimetype($file->getClientMimeType());
 
                             // Synchronize the filesystem in the database
-                            $this->synchronizer->synchronize($filechanges, $this->working_directory);
+                            $files = $this->synchronizer->synchronize($filechanges, $this->working_directory);
+
+                            // Add the preview url
+                            if( $this->webdir != null && $files != null ){
+                                $filechanges->setFilePreview( $files[0]->getPreviewUrl(), $this->webdir );
+                            }
 
                             return $filechanges;
                         } else {

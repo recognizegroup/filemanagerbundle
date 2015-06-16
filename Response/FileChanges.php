@@ -27,6 +27,8 @@ class FileChanges {
 
     protected $mimetype = null;
 
+    protected $previewurl = null;
+
     /**
      * @param string $type                  The type of change done - For example rename
      * @param SplFileInfo $oldfile
@@ -81,8 +83,12 @@ class FileChanges {
         }
 
         $filedata['mimetype'] = $mimetype;
-        if( strpos( $mimetype, "image") !== false ){
-            $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+        if( $this->previewurl != null ){
+            $filedata['preview'] = $this->previewurl;
+        } else {
+            if( strpos( $mimetype, "image") !== false ){
+                $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+            }
         }
 
         if( $file->isDir() ){
@@ -138,10 +144,20 @@ class FileChanges {
     /**
      * Set the mimetype of the files
      *
-     * @param $getClientMimeType
+     * @param string $mimetype
      */
     public function setFileMimetype( $mimetype) {
         $this->mimetype = $mimetype;
+    }
+
+    /**
+     * Set the file preview url
+     *
+     * @param string $previewurl               The absolute preview path
+     * @param string $webdir                   The web directory
+     */
+    public function setFilePreview( $previewurl, $webdir ){
+        $this->previewurl = PathUtils::stripWorkingDirectoryFromAbsolutePath( $webdir, $previewurl );
     }
 
 }

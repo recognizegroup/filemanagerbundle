@@ -2,6 +2,7 @@
 namespace Recognize\FilemanagerBundle\Tests\Functional\Controller;
 
 use Recognize\FilemanagerBundle\Controller\FilemanagerController;
+use Recognize\FilemanagerBundle\Repository\FileRepository;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;

@@ -53,9 +53,10 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
      */
     public function synchronize( FileChanges $changes, $working_directory ){
 
+        $files = null;
         switch( $changes->getType() ){
             case "create":
-                $this->create( $changes, $working_directory );
+                $files = $this->create( $changes, $working_directory );
                 break;
             case "move":
             case "rename":
@@ -65,6 +66,8 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $this->delete( $changes, $working_directory );
                 break;
         }
+
+        return $files;
     }
 
     /**
@@ -77,6 +80,8 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         $changes_array = $changes->toArray();
         $file = $changes_array['file'];
 
+        $created = array();
+
         $this->em->beginTransaction();
         if( $file['type'] == "dir" ){
 
@@ -87,6 +92,8 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
             $directory->setDirectoryName( $file['name'] );
 
             $this->em->persist( $directory );
+
+            $created[] = $directory;
         } else if( $file['type'] == "file") {
 
             // Find the directory in the database
@@ -109,11 +116,15 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                 $fileref = $this->generateThumbnail( $fileref );
 
                 $this->em->persist( $fileref );
+
+                $created[] = $fileref;
             }
         }
 
         $this->em->commit();
         $this->em->flush();
+
+        return $created;
     }
 
     /**
@@ -428,5 +439,14 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         }
 
         return $ref;
+    }
+
+    /**
+     * Get all the pdf files from the database
+     *
+     * @return FileReference[]
+     */
+    public function getAllPDFFiles(){
+        return $this->fileRepository->getAllPDFFiles();
     }
 }

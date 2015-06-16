@@ -2,6 +2,7 @@
 namespace Recognize\FilemanagerBundle\Service;
 
 
+use Imagick;
 use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Filesystem\Filesystem;
@@ -10,13 +11,18 @@ use Symfony\Component\Finder\Finder;
 class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
 
     private $thumbnail_directory = null;
+    private $thumbnail_size = 50;
 
     public function __construct( array $configuration ){
 
-        if( isset( $configuration['thumbnail_directory']) ){
-            $this->thumbnail_directory = $configuration['thumbnail_directory'];
-        } else {
-            throw new \RuntimeException( "Default upload and file management directory should be set! " );
+        if( isset( $configuration['thumbnail'] ) ){
+            if( isset( $configuration['thumbnail']['directory'] ) ){
+                $this->thumbnail_directory = $configuration['thumbnail']['directory'];
+            }
+
+            if( isset( $configuration['thumbnail']['size'] ) ) {
+                $this->thumbnail_size = $configuration['thumbnail']['size'];
+            }
         }
     }
 
@@ -33,7 +39,7 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         $fs = new FileSystem();
         if( $this->thumbnail_directory != null && $reference != null
             && $fs->exists( $reference->getAbsolutePath() )
-            && $this->isImage( $reference->getMimetype() ) ){
+            && $this->canGenerateThumbnail( $reference->getMimetype() ) ){
 
             $thumbnailname = $this->generateThumbnailName( $reference->getAbsolutePath(), $reference->getExtension() );
             $thumbnaillink = PathUtils::addTrailingSlash( $this->thumbnail_directory ) . $thumbnailname;
@@ -41,8 +47,13 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
             if( strpos( $reference->getMimetype(), "png" ) !== false ){
                 $this->createThumbnailFileForPNG( $reference->getAbsolutePath(), $thumbnaillink );
             } else if( strpos( $reference->getMimetype(), "jpg" ) !== false ||
-                strpos( $reference->getMimetype(), "jpeg" ) ){
+                strpos( $reference->getMimetype(), "jpeg" ) !== false ){
                 $this->createThumbnailFileForJPG( $reference->getAbsolutePath(), $thumbnaillink );
+            } else if ( extension_loaded('imagick') == true &&
+                strpos( $reference->getMimetype(), "pdf" ) !== false ){
+                $count = 1;
+                $thumbnaillink = str_replace(".pdf", ".jpg", $thumbnaillink, $count );
+                $this->createThumbnailFileForPDF( $reference->getAbsolutePath(), $thumbnaillink );
             }
         }
 
@@ -50,10 +61,11 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     }
 
     /**
-     * Check if the mimetype is an image
+     * Check if a thumbnail can be created for this mimetype
      */
-    protected function isImage( $mimetype ){
-        return strpos( $mimetype, "image" ) !== false && strpos( $mimetype, "svg" ) === false;
+    protected function canGenerateThumbnail( $mimetype ){
+        return ( strpos( $mimetype, "image" ) !== false && strpos( $mimetype, "svg" ) === false )
+        || extension_loaded('imagick') && strpos($mimetype, "pdf") !== false;
     }
 
     /**
@@ -83,8 +95,8 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     protected function createThumbnailFileForPNG( $oldpath, $newpath ){
         $im = imagecreatefrompng( $oldpath );
 
-        $width = 50;
-        $height = 50;
+        $width = $this->thumbnail_size;
+        $height = $this->thumbnail_size;
 
         $thumbnailfile = imagecreatetruecolor($width, $height);
         imagealphablending($thumbnailfile, false);
@@ -109,8 +121,8 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     protected function createThumbnailFileForJPG( $oldpath, $newpath ){
         $im = imagecreatefromjpeg( $oldpath );
 
-        $width = 50;
-        $height = 50;
+        $width = $this->thumbnail_size;
+        $height = $this->thumbnail_size;
 
         $thumbnailfile = imagecreatetruecolor($width, $height);
         imagealphablending($thumbnailfile, false);
@@ -127,6 +139,20 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     }
 
     /**
+     * Create a thumbnail for a PDF file
+     *
+     * @param $oldpath
+     * @param $newpath
+     */
+    protected function createThumbnailFileForPDF( $oldpath, $newpath ){
+        $pdf = new imagick( $oldpath . '[0]');
+        $pdf->setImageFormat('jpg');
+        $pdf->setResolution($this->thumbnail_size, $this->thumbnail_size);
+
+        file_put_contents($newpath, $pdf);
+    }
+
+    /**
      * Get the sample position and size to generate a properly cropped image
      *
      * @param $im
@@ -138,8 +164,8 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         $sample['y'] = 0;
         $sample['destx'] = 0;
         $sample['desty'] = 0;
-        $sample['srcwidth'] = 50;
-        $sample['srcheight'] = 50;
+        $sample['srcwidth'] = $this->thumbnail_size;
+        $sample['srcheight'] = $this->thumbnail_size;
 
         $oldwidth = imagesx( $im );
         $oldheight = imagesy( $im );
@@ -177,8 +203,8 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         $sample['y'] = 0;
         $sample['destx'] = 0;
         $sample['desty'] = 0;
-        $srcwidth = 50;
-        $srcheight = 50;
+        $srcwidth = $this->thumbnail_size;
+        $srcheight = $this->thumbnail_size;
 
         $sample['srcwidth'] = $srcwidth;
         $sample['srcheight'] = $srcheight;

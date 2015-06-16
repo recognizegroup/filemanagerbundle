@@ -3,6 +3,8 @@ namespace Recognize\FilemanagerBundle\Response;
 
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Exception\FileTooLargeException;
+use Recognize\FilemanagerBundle\Repository\FileRepository;
+use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Finder\SplFileInfo;
@@ -25,6 +27,9 @@ class FilemanagerResponseBuilder {
     public function __construct(){
         $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
     }
+
+    private $fileRepository;
+    private $webdir;
 
     /**
      * Fail the response and return a detailed message
@@ -150,14 +155,30 @@ class FilemanagerResponseBuilder {
         $filedata['file_extension'] = $file->getExtension();
         $mimetype = @finfo_file( $this->finfo, $absolutepath );
         $filedata['mimetype'] = $mimetype;
-        if( strpos( $mimetype, "image") !== false ){
-            $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
-        }
 
         if( $file->isDir() ){
             $filedata['type'] = "dir";
         } else {
             $filedata['type'] = "file";
+
+            // Search for the file preview if it is enabled
+            $fileref = null;
+            if( $this->fileRepository != null && $this->webdir != null ){
+                $constraints = array(
+                    "working_directory" => str_replace( $filedata['path'], "", $absolutepath),
+                    "relative_path" => $file->getRelativePath(),
+                    "filename" => $file->getFilename(),
+                );
+
+                $fileref = $this->fileRepository->findOneBy( $constraints );
+                if( $fileref != null && ( $fileref->getPreviewUrl() != "" && $fileref->getPreviewUrl() != null ) ){
+                    $filedata['preview'] = PathUtils::stripWorkingDirectoryFromAbsolutePath( $this->webdir, $fileref->getPreviewUrl() );
+                }
+            }
+
+            if( $fileref == null && strpos( $mimetype, "image") !== false ){
+                $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+            }
         }
 
         $date = new \DateTime();
@@ -276,6 +297,19 @@ class FilemanagerResponseBuilder {
         if( $message != null ){
             $this->fail( $message );
         }
+
+    }
+
+    /**
+     * Set the filerepository and the root directory so we can retrieve thumbnails
+     *
+     * @param FileRepository $repository
+     */
+    public function enableThumbnailLinking( FileRepository $repository, $rootdir ){
+        $this->fileRepository = $repository;
+        $this->webdir = PathUtils::addTrailingSlash(
+                PathUtils::moveUpPath( $rootdir )
+            ) . "web";
 
     }
 

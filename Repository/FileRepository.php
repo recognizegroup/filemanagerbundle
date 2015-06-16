@@ -109,4 +109,16 @@ class FileRepository extends EntityRepository {
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Get all the indexed pdfs
+     *
+     * @return array
+     */
+    public function getAllPDFFiles(){
+        $qb = $this->createQueryBuilder('d');
+        $qb->where("d.mimetype LIKE '%/pdf'");
+
+        return $qb->getQuery()->getResult();
+    }
 }

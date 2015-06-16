@@ -38,6 +38,15 @@ class ThumbnailGenerationCommand extends Command implements ContainerAwareInterf
         $output->writeln("Generating thumbnails...");
 
         $files = $synchronizer->getAllImageFiles();
+
+        // Allow previews of PDFs if imagick is installed
+        if( extension_loaded('imagick') ){
+            $pdfs = $synchronizer->getAllPDFFiles();
+            for( $i = 0, $length = count( $pdfs); $i < $length; $i++ ){
+                $files[] = $pdfs[$i];
+            }
+        }
+
         for( $i = 0, $length = count( $files ); $i < $length; $i++ ){
             $file = $files[$i];
             if( $fs->exists( $file->getAbsolutePath() ) && $file->getPreviewUrl() == "" || $fs->exists( $file->getPreviewUrl() ) == false ){
@@ -54,6 +63,8 @@ class ThumbnailGenerationCommand extends Command implements ContainerAwareInterf
                 }
             }
         }
+
+
 
         $output->writeln("DONE!");
     }

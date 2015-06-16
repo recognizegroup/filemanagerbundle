@@ -6,6 +6,7 @@ use Recognize\FilemanagerBundle\Response\FilemanagerResponseBuilder;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\BrowserKit\Response;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -28,6 +29,12 @@ class FilemanagerController extends Controller {
         $filemanager = $this->getFilemanager();
 
         $builder = new FilemanagerResponseBuilder();
+        try {
+            $repository = $this->get('recognize.filemanager_file_repository');
+            $builder->enableThumbnailLinking( $repository, $this->container->getParameter('kernel.root_dir') );
+        } catch( ServiceNotFoundException $e ){
+        }
+
         $builder->attemptRead( function() use ($filemanager, $request) {
             return $filemanager->getDirectoryContents($request->get('directory'));
         });
@@ -44,6 +51,12 @@ class FilemanagerController extends Controller {
         $filemanager = $this->getFilemanager();
 
         $builder = new FilemanagerResponseBuilder();
+        try {
+            $repository = $this->get('recognize.filemanager_file_repository');
+            $builder->enableThumbnailLinking( $repository, $this->container->getParameter('kernel.root_dir') );
+        } catch( ServiceNotFoundException $e ){
+        }
+
         $builder->attemptRead( function() use ($filemanager, $request) {
             return $filemanager->searchDirectoryContents($request->get('directory'), "/" . preg_quote( strtolower( $request->get('q') ), "/" ) . "/" );
         }, $this->get('translator'));
