@@ -97,4 +97,16 @@ class FileRepository extends EntityRepository {
         $results = $query->getResult();
         return count($results) > 0;
     }
+
+    /**
+     * Get all the indexed image files
+     *
+     * @return array
+     */
+    public function getAllImageFiles( ){
+        $qb = $this->createQueryBuilder('d');
+        $qb->where("d.mimetype LIKE 'image%'");
+
+        return $qb->getQuery()->getResult();
+    }
 }

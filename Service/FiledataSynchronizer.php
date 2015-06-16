@@ -106,7 +106,7 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                     $mimetype = "";
                 }
                 $fileref->setMimetype( $mimetype );
-                $fileref->setPreviewUrl( $this->thumbnailGenerator->generateThumbnailForFile( $fileref ) );
+                $fileref = $this->generateThumbnail( $fileref );
 
                 $this->em->persist( $fileref );
             }
@@ -404,5 +404,29 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         } else {
             return true;
         }
+    }
+
+    /**
+     * Get all image files from the database
+     *
+     * @return FileReference[]
+     */
+    public function getAllImageFiles(){
+        return $this->fileRepository->getAllImageFiles();
+    }
+
+    /**
+     * Generate a thumbnail for this file
+     *
+     * @param FileReference $ref
+     * @return FileReference
+     */
+    public function generateThumbnail( FileReference $ref = null ){
+        try {
+            $ref->setPreviewUrl($this->thumbnailGenerator->generateThumbnailForFile($ref));
+        } catch( \RuntimeException $e ){
+        }
+
+        return $ref;
     }
 }

@@ -241,6 +241,22 @@ This will create a standalone element with the bootstrap theme of the filemanage
 It uses the filemanager configuration variable that is pushed into the globally into the twig templates.
 You can override this with your own configuration object if you want to use a different configuration for the standalone element.
 
+Cleaning
+--------------
+
+You can clean both the filesystem and the database from unindexed files and directories using the command line tool.
+It is recommended that you use the verbose flag to see exactly what files and directories are removed.
+
+Command for cleaning the filesystem
+```sh
+php app/console filemanager:filesystem:clean -v
+```
+
+Command for cleaning the database
+```sh
+php app/console filemanager:database:clean -v
+```
+
 Configuration
 --------------
 
@@ -271,6 +287,20 @@ This can be useful if you want to show a different set of folders for users and 
         return $manager;
     }
 
+```
+
+**Thumbnails**
+
+The thumbnails are automatically generated when images are uploaded to the server 
+and added to the thumbnail directory that is set in the configuration file.
+
+Not setting the thumbnail directory has a significant performance impact.
+It means the complete files will be retrieved through php from the server instead of an image.
+
+If there are some files that don't have proper thumbnails, you can generate them using the following command
+
+```sh
+php app/console filemanager:thumbnails:generate
 ```
 
 **Api paths**
