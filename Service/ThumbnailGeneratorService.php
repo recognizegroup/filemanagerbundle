@@ -147,7 +147,7 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     protected function createThumbnailFileForPDF( $oldpath, $newpath ){
         $pdf = new imagick( $oldpath . '[0]');
         $pdf->setImageFormat('jpg');
-        $pdf->setResolution($this->thumbnail_size, $this->thumbnail_size);
+        $pdf->thumbnailImage($this->thumbnail_size, $this->thumbnail_size, true, true);
 
         file_put_contents($newpath, $pdf);
     }
