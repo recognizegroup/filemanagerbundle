@@ -1,0 +1,79 @@
+<div id="hidden_filemanager_modal" class="filemanager-modal-overlay" style="display:none">
+    <div class="filemanager-modal-background"></div>
+    <div class="filemanager-modal">
+        <div class="row">
+            <div style="margin-left: 36px; margin-right: 36px;">
+                <h1>Filemanager<a class="pull-right text-danger close-modal" href="#"><i class="fa fa-close"></i></a></h1></div>
+        </div>
+        {{ filemanager("hidden_filemanager_manager", {"api":{"startingDirectory": ""}}, "bootstrap") }}
+    </div>
+</div>
+
+<script type="text/javascript">
+    setTimeout( function(){
+        if( typeof CKEDITOR !== undefined ) {
+            console.log( "Registering CKEDITOR plugin" );
+
+            CKEDITOR.plugins.add('abbr', {
+                init: function (editor) {
+                    editor.ui.addButton( 'abbr', {
+                        label: 'Abbreviation',
+                        command: 'insertImage',
+                        toolbar: 'insert',
+                        icon: 'image'
+                    });
+
+
+                    editor.addCommand('insertImage', {
+                        exec: function( editor ){
+                            $('#hidden_filemanager_modal').trigger('open', {
+                                select: function( selection ){
+                                    editor.insertHtml( selection );
+                                }
+                            });
+                        }
+                    })
+                }
+            });
+
+            CKEDITOR.config.extraPlugins = 'abbr';
+        }
+
+    }, 1);
+
+    $(document).ready(function(){
+        var container_element = $('#hidden_filemanager_manager').get(0);
+
+        window.recognizeevents = {};
+        window.recognizeevents.select = function(){};
+
+        $("#hidden_filemanager_modal").on("open", function( event, functions ){
+            $("#hidden_filemanager_modal.filemanager-modal-overlay").toggle();
+            $("#hidden_filemanager_modal .upload-button").focus();
+
+            window.recognizeevents.select = functions.select;
+        });
+
+        var closeModal = function(){
+            $('#hidden_filemanager_modal.filemanager-modal-overlay').hide();
+        };
+
+        $('#hidden_filemanager_modal.filemanager-modal a.close-modal').on("click", closeModal);
+        $('#hidden_filemanager_modal .filemanager-modal-background').on("click", closeModal);
+
+
+        $.data(container_element, "filemanager").on("filemanager:view:select", function( event ){
+            if( event.file.type == "file" ){
+                $('#hidden_filemanager_modal.filemanager-modal-overlay').hide();
+
+                var html = "";
+                if( event.file.hasOwnProperty('preview') ){
+                    html += "<img class=\"preview\" src=\"/" + event.file.preview + "\">";
+                }
+
+                console.log( window.recognizeevents );
+                window.recognizeevents.select( html );
+            }
+        });
+    });
+</script>
