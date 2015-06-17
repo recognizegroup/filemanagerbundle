@@ -30,6 +30,81 @@
         }
     });
 
+    var bootstrap_icon = function( mimetype, extension ){
+        var icon = "fa-file-o";
+
+        switch( mimetype ){
+            case "application/msword":
+            case "application/vnd.oasis.opendocument.text":
+                icon = "fa-file-word-o";
+                break;
+
+            case "multipart/x-zip":
+            case "application/x-compressed":
+            case "application/x-zip-compressed":
+            case "application/zip":
+                icon = "fa-file-archive-o";
+                break;
+
+            case "text/html":
+            case "text/javascript":
+            case "text/ecmascript":
+            case "text/css":
+                icon = "fa-file-code-o";
+                break;
+
+            case "application/pdf":
+                icon = "fa-file-pdf-o";
+                break;
+
+            case "video/x-flv":
+            case "video/mp4":
+            case "application/x-mpegURL":
+            case "video/MP2T":
+            case "video/3gpp":
+            case "video/quicktime":
+            case "video/x-msvideo":
+            case "video/x-ms-wmv":
+                icon = "fa-file-video-o";
+                break;
+
+            case "audio/basic":
+            case "auido/L24":
+            case "audio/mid":
+            case "audio/mpeg":
+            case "audio/mp4":
+            case "audio/x-aiff":
+            case "audio/x-mpegurl":
+            case "audio/vnd.rn-realaudio":
+            case "audio/ogg":
+            case "audio/vorbis":
+            case "audio/vnd.wav":
+                icon = "fa-file-audio-o";
+                break;
+        }
+
+        if( icon == "fa-file-o" ){
+            if( mimetype.indexOf("image") > -1){
+                icon = "fa-file-image-o";
+            } else {
+                switch( extension ){
+                    case "php":
+                    case "html":
+                    case "js":
+                    case "css":
+                    case "xml":
+                    case "yml":
+                        icon = "fa-file-code-o";
+                        break;
+                }
+            }
+        }
+
+
+
+        return icon;
+    };
+
     var recognize_filemanager_defaults_{{ id }} = { debug: true,
         i18n: {
             rename: "{{ 'Rename'|trans }}",
@@ -44,7 +119,7 @@
     recognize_filemanager_config_{{ id }}['filerowFormat'] = function( file ){
 
         // Set the icon as a file or a directory
-        var icon = "<i class=\"fa fa-file-o pull-left\"></i>";
+        var icon = "<i class=\"fa " + bootstrap_icon( file.mimetype, file.file_extension ) + " pull-left\"></i>";
         if( file.type == "dir" ){
             icon = "<i class=\"fa fa-folder-open pull-left\"></i>";
         }
@@ -55,7 +130,7 @@
     recognize_filemanager_config_{{ id }}['renamerowFormat'] = function( file ){
 
         // Set the icon as a file or a directory
-        var icon = "<i class=\"fa fa-file-o pull-left\"></i>";
+        var icon = "<i class=\"fa " + bootstrap_icon( file.mimetype, file.file_extension ) + " pull-left\"></i>";
         if( file.type == "dir" ){
             icon = "<i class=\"fa fa-folder-open pull-left\"></i>";
         }
@@ -70,9 +145,9 @@
     recognize_filemanager_config_{{ id }}['fileCellFormat'] = function( file ){
 
         // Set the icon as a file or a directory
-        var icon = "<i class=\"fa fa-file-o\" style=\"display: block; font-size: 70px;\"></i>";
+        var icon = "<i class=\"fa " + bootstrap_icon( file.mimetype, file.file_extension ) + "\"></i>";
         if( file.type == "dir" ){
-            icon = "<i class=\"fa fa-folder-open\" style=\"display: block; font-size: 70px;\"></i>";
+            icon = "<i class=\"fa fa-folder-open\"></i>";
         }
 
         if( typeof file.preview !== "undefined") {
@@ -81,21 +156,22 @@
                 directorysep = "/";
             }
 
-            icon = "<img src=\"" + location.origin + directorysep + file.preview + "\" style=\"max-width: 100px; max-height: 100px;\" />";
+            icon = "<span><img src=\"" + location.origin + directorysep + file.preview + "\" /></span>";
         }
 
-        var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";
-        contents += "<span style=\"display:block; overflow: hidden; word-wrap: break-word;\">" + file.size + "</span>";
+        var iconcontainer = "<div class=\"icon-container\"><div class=\"center-helper\"></div>" + icon + "</div>";
 
-        return "<a href=\"#\" style=\"text-align: center; color: #000000; height: 150px; width: 150px; margin-right: 10px; margin-bottom: 10px; display: inline-block;\">" + icon + contents + "</div>";
+        var contents = "<div class=\"cell-content\"><span>" + file.name + "</span></div>";
+
+        return "<a tabindex=\"0\" class=\"filemanager-cell\">" + iconcontainer + contents + "</div>";
     };
 
     recognize_filemanager_config_{{ id }}['renamecellFormat'] = function( file ){
 
         // Set the icon as a file or a directory
-        var icon = "<i class=\"fa fa-file-o\" style=\"display: block; font-size: 70px;\"></i>";
+        var icon = "<i class=\"fa " + bootstrap_icon( file.mimetype, file.file_extension ) + "\"></i>";
         if( file.type == "dir" ){
-            icon = "<i class=\"fa fa-folder-open\" style=\"display: block; font-size: 70px;\"></i>";
+            icon = "<i class=\"fa fa-folder-open\"></i>";
         }
 
         if( typeof file.preview !== "undefined") {
@@ -104,13 +180,14 @@
                 directorysep = "/";
             }
 
-            icon = "<img src=\"" + location.origin + directorysep + file.preview + "\" style=\"max-width: 100px; max-height: 100px;\" />";
+            icon = "<span><img src=\"" + location.origin + directorysep + file.preview + "\" /></span>";
         }
 
-        var contents = "<span style=\"display:block; overflow: hidden;  word-wrap: break-word;\">" + file.name + "</span>";
-        contents += "<span style=\"display:block; overflow: hidden; word-wrap: break-word;\">" + file.size + "</span>";
+        var iconcontainer = "<div class=\"icon-container\"><div class=\"center-helper\"></div>" + icon + "</div>";
 
-        return "<a href=\"#\" style=\"text-align: center; color: #000000; height: 150px; width: 150px; margin-right: 10px; margin-bottom: 10px; display: inline-block;\">" + icon + contents + "</div>";
+        var contents = "<div class=\"cell-content\"><span>" + file.name + "</span></div>";
+
+        return "<a tabindex=\"0\" class=\"filemanager-cell\">" + iconcontainer + contents + "</div>";
     };
 
 

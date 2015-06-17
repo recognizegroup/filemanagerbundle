@@ -1265,3 +1265,113 @@ li[aria-expanded=true] > .jstree-anchor .jstree-themeicon:before {
     left: 0px;
     position: absolute;
 }
+
+.filetree .filemanager-cell {
+    text-decoration: none;
+    text-align: center;
+    color: #000000;
+    width: 30%;
+    height: 140px;
+    max-height: 200px;
+    max-width: 110px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    display: block;
+    float:left;
+    cursor: pointer;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.filetree .mainview .filemanager-cell i {
+    display: block;
+    font-size: 70px;
+}
+
+.filetree .filemanager-cell span {
+    display: inline;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.filetree .filemanager-cell:focus span,
+.filetree .filemanager-cell.focussed span,
+.filetree .filemanager-cell.selected span{
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.filetree .filemanager-cell .cell-content {
+    margin-top: 3px;
+    padding: 5px;
+    max-width: 140px;
+    z-index: 1;
+}
+
+.filetree .filemanager-cell:focus,
+.filetree .filemanager-cell.focussed,
+.filetree .filemanager-cell.selected {
+    background: white;
+    outline: none;
+}
+
+.filetree .filemanager-cell:focus .cell-content,
+.filetree .filemanager-cell.focussed .cell-content,
+.filetree .filemanager-cell.selected .cell-content {
+    border-radius: 5px;
+    background: #EE5757;
+    color: white;
+    display: inline-block;
+    max-width: 110px;
+    position: relative;
+}
+
+.filemanager-cell .icon-container {
+    max-height: 100px;
+    height: 100px;
+    width: 100px;
+    display: table;
+    margin: 0 auto;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.filetree .filemanager-cell .icon-container span {
+    display: inline;
+    vertical-align: middle;
+}
+
+.filetree .filemanager-cell:focus .icon-container i,
+.filetree .filemanager-cell.focussed .icon-container i,
+.filetree .filemanager-cell.selected .icon-container i {
+    color: #EE5757;
+}
+
+
+.filetree .filemanager-cell:focus .icon-container span:after,
+.filetree .filemanager-cell.focussed .icon-container span:after,
+.filetree .filemanager-cell.selected .icon-container span:after {
+    content: '';
+    background: #EE5757;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0px;
+    top: 0px;
+    opacity: 0.2;
+}
+
+
+.filemanager-cell .icon-container span img {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.center-helper {
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+}
