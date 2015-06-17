@@ -1,0 +1,360 @@
+.filetree {
+  margin: 0 20px;
+}
+
+.filetree .titlebar {
+  margin-bottom: 10px;
+}
+
+.filetree .titlebar div {
+  margin-bottom: 10px;
+}
+
+.filetree .titlebar .search-col {
+  padding: 0;
+}
+
+.filetree .titlebar .row {
+  margin: 0;
+}
+
+.filetree .titlebar .row i {
+  font-size: 20px;
+}
+
+.filetree .mainview .row {
+  padding: 10px;
+}
+
+.filetree .mainview .row i {
+  font-size: 20px;
+}
+
+.filetree .mainview *.focussed,
+.filetree .mainview *:focus {
+  background: $filemanager_focus_bg_color;
+  color: $filemanager_focus_color;
+}
+
+.filetree .mainview .selected {
+  background: $filemanager_selection_bg_color;
+  color: $filemanager_selection_color;
+}
+
+.filetree .mainview input:focus {
+  background: #FFFFFF;
+}
+
+.filetree .mainview tbody tr:hover,
+.filetree .mainview thead th:hover {
+  cursor: pointer;
+}
+
+.filetree .jstree-hovered,
+.filetree .jstree-clicked {
+  background: $filemanager_selection_bg_color;
+  color: $filemanager_selection_color;
+}
+
+.filetree tbody i {
+  padding: 3px;
+  padding-right: 10px;
+}
+
+.filetree .search-col input {
+  top: 2px;
+  position: relative;
+}
+
+.filetree tbody .form-control {
+  width: 80%;
+}
+
+.filetree .btn.selected {
+  margin-top: 4px !important;
+  border-bottom-width: 0px !important;
+}
+
+.filetree .mode-cut {
+  opacity: 0.3;
+}
+
+.filetree .searchquery {
+  background: $filemanager_search_bg_color;
+}
+
+/* COPY STYLES FROM FONT AWESOME */
+
+.context-menu-item.icon {
+  padding-left: 12px;
+}
+
+.context-menu-item.icon:before {
+  font: normal normal normal 14px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform: translate(0, 0);
+  line-height: 0.75em;
+  vertical-align: -15%;
+  padding-right: 12px;
+}
+
+.context-menu-item.icon-rename:before {
+  content: "\f044";
+}
+
+.context-menu-item.icon-cut:before {
+  content: "\f0c4";
+}
+
+.context-menu-item.icon-paste:before {
+  content: "\f0ea";
+}
+
+.context-menu-item.icon-download:before {
+  content: "\f019";
+}
+
+.context-menu-item.icon-delete:before {
+  content: "\f00d";
+}
+
+.filemanager-modal {
+  position: relative;
+  background: white;
+  top: 10%;
+  margin-bottom: 10%;
+  left: 10%;
+  right: 10%;
+  width: 80%;
+  z-index: 2000;
+  border-radius: 20px;
+}
+
+@media (max-width: 500px ){
+  .filemanager-modal {
+    left: 5%;
+    right: 5%;
+    width: 90%;
+  }
+}
+
+.filemanager-modal-overlay {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  overflow-y: scroll;
+  z-index: 1999;
+}
+
+.filemanager-modal-background {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  background: rgba(1,1,1,0.7);
+}
+
+.filemanager-modal-overlay::-webkit-scrollbar,
+.filemanager-modal-background::-webkit-scrollbar {
+  display: none;
+}
+
+.filemanager-modal .options .btn {
+  margin-right: 5px;
+}
+
+.filemanager-modal .btn i {
+  margin-right: 5px;
+}
+
+.filemanager-modal .options .btn-group .btn {
+  margin-right: 0px;
+}
+
+.file-selection  .preview {
+  width: 100%;
+  border: 10px solid darkgrey;
+  border-radius: 5px;
+}
+
+.select-file {
+  z-index: 2;
+}
+
+.select-file input {
+  position: absolute;
+  left: -100px;
+  margin: 0;
+  padding: 0;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0;
+  filter: alpha(opacity=0);
+}
+
+.select-file:hover {
+  cursor: pointer;
+}
+
+.filemanager-error-content {
+  position: absolute;
+  top: 50px;
+  left: 35%;
+  width: 30%;
+  border-radius: 20px;
+  padding: 20px;
+  z-index: 20000;
+}
+
+@media (max-width: 500px) {
+  .filemanager-error-content {
+    top: 50px;
+    left: 10%;
+    width: 80%;
+  }
+}
+
+.filemanager-alert .error-background {
+  background: rgba(0,0,0, 0.3);
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  position: absolute;
+}
+
+.filetree .filemanager-cell {
+  text-decoration: none;
+  text-align: center;
+  color: #000000;
+  width: 30%;
+  height: 140px;
+  max-height: 200px;
+  max-width: 110px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  display: block;
+  float:left;
+  cursor: pointer;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.filetree .mainview .filemanager-cell i {
+  display: block;
+  font-size: 70px;
+}
+
+.filetree .filemanager-cell span {
+  display: inline;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.filetree .filemanager-cell:focus span,
+.filetree .filemanager-cell.focussed span,
+.filetree .filemanager-cell.selected span{
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.filetree .filemanager-cell .cell-content {
+  margin-top: 3px;
+  padding: 5px;
+  max-width: 140px;
+  z-index: 1;
+}
+
+.filetree .filemanager-cell:focus,
+.filetree .filemanager-cell.focussed,
+.filetree .filemanager-cell.selected {
+  background: white;
+  outline: none;
+}
+
+.filetree .filemanager-cell:focus .cell-content,
+.filetree .filemanager-cell.focussed .cell-content {
+  border-radius: 5px;
+  background: $filemanager_focus_bg_color;
+  color: $filemanager_focus_color;
+  display: inline-block;
+  max-width: 110px;
+  position: relative;
+}
+
+.filetree .filemanager-cell.selected .cell-content {
+  border-radius: 5px;
+  background: $filemanager_selection_bg_color;
+  color: $filemanager_selection_color;
+  display: inline-block;
+  max-width: 110px;
+  position: relative;
+}
+
+.filemanager-cell .icon-container {
+  max-height: 100px;
+  height: 100px;
+  width: 100px;
+  display: table;
+  margin: 0 auto;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.filetree .filemanager-cell .icon-container span {
+  display: inline;
+  vertical-align: middle;
+}
+
+.filetree .filemanager-cell:focus .icon-container i,
+.filetree .filemanager-cell.focussed .icon-container i {
+  color: $filemanager_focus_color;
+}
+
+.filetree .filemanager-cell.selected .icon-container i {
+  color: $filemanager_selection_bg_color;
+}
+
+
+.filetree .filemanager-cell:focus .icon-container span:after,
+.filetree .filemanager-cell.focussed .icon-container span:after {
+  content: '';
+  background: $filemanager_focus_bg_color;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0px;
+  top: 0px;
+  opacity: 0.2;
+}
+
+.filetree .filemanager-cell.selected .icon-container span:after {
+  content: '';
+  background: $filemanager_selection_bg_color;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0px;
+  top: 0px;
+  opacity: 0.2;
+}
+
+
+.filemanager-cell .icon-container span img {
+  max-width: 100px;
+  max-height: 100px;
+}
+
+.center-helper {
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+}
