@@ -8,7 +8,7 @@ services:
 
     recognize.filemanager.form.type.filereference:
         class: Recognize\FilemanagerBundle\Form\Type\FileReferenceType
-        arguments: [@recognize.file_manager, @recognize.filedata_synchronizer]
+        arguments: [@recognize.file_manager, @recognize.filedata_synchronizer, @translator]
         tags:
             -  { name: form.type, alias: "filereference" }
 

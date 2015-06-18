@@ -316,7 +316,7 @@
 
 .filetree .filemanager-cell:focus .icon-container i,
 .filetree .filemanager-cell.focussed .icon-container i {
-  color: $filemanager_focus_color;
+  color: $filemanager_focus_bg_color;
 }
 
 .filetree .filemanager-cell.selected .icon-container i {
@@ -357,4 +357,9 @@
   display: inline-block;
   height: 100%;
   vertical-align: middle;
+}
+
+.filetree .mainview,
+.filetree .directories {
+  padding-bottom: 15px;
 }

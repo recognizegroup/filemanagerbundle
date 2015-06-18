@@ -14,6 +14,7 @@ use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
@@ -23,8 +24,10 @@ use Symfony\Component\Form\FormView;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 use Symfony\Component\Process\Exception\RuntimeException;
+use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Required;
 
 
 class FileReferenceType extends AbstractType {
@@ -39,13 +42,17 @@ class FileReferenceType extends AbstractType {
      */
     private $synchronizer;
 
+    /** @var TranslatorInterface */
+    private $translator;
+
     /**
      * @param FilemanagerService $service
      * @param FileRepository $fileRepository
      */
-    public function __construct( FilemanagerService $service, FiledataSynchronizerInterface $synchronizer ){
+    public function __construct( FilemanagerService $service, FiledataSynchronizerInterface $synchronizer, TranslatorInterface $translator ){
         $this->filemanager = $service;
         $this->synchronizer = $synchronizer;
+        $this->translator = $translator;
     }
 
     /**
@@ -59,7 +66,7 @@ class FileReferenceType extends AbstractType {
             $data = $event->getData();
 
             // Ignore empty values
-            if ($data !== null) {
+            if ($data !== null && $data !== "") {
                 try {
                     $fileref = null;
 
@@ -80,17 +87,18 @@ class FileReferenceType extends AbstractType {
                         }
                     }
 
-
-                    if ( $fileref == null ) {
-                        throw new \RuntimeException("Database entity not found ");
+                    if( $fileref == null ){
+                        throw new \RuntimeException();
                     } else {
                         $event->setData($fileref);
                     }
 
                 } catch(\RuntimeException $e) {
-
                     $event->setData(null);
-                    $event->getForm()->addError(new FormError($e->getMessage()));
+
+                    // Add the translation here because Symfony REFUSES to create proper documentation about
+                    // where to merge options to add a proper validation constraint by default
+                    $event->getForm()->addError( new FormError( $this->translator->trans("File not found in the database", array(), "validators") ) );
                 }
             }
         });
@@ -129,7 +137,6 @@ class FileReferenceType extends AbstractType {
 
         $resolver->setAllowedTypes(array( 'is_simple' => array("bool") ));
         $resolver->setAllowedTypes(array( 'directory' => array("string") ));
-
     }
 
 
