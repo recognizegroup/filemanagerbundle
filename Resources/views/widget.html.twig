@@ -1,7 +1,7 @@
 {% block filereference_widget %}
     {% set managerid = id ~ "_manager" %}
     {% spaceless %}
-        <div id="{{ id }}">
+        <div id="{{ id }}" class="form-group-bottom-margin">
             <div class="file-selection">
                 {% if preview is defined %}
                     <img class="preview" src="{{ preview }}">
