@@ -84,7 +84,7 @@
         }
 
         if( icon == "fa-file-o" ){
-            if( mimetype.indexOf("image") > -1){
+            if( typeof mimetype == "string" && mimetype.indexOf("image") > -1){
                 icon = "fa-file-image-o";
             } else {
                 switch( extension ){

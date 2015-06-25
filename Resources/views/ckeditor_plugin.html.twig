@@ -58,8 +58,8 @@
             $('#hidden_filemanager_modal.filemanager-modal-overlay').hide();
         };
 
-        $('#hidden_filemanager_modal.filemanager-modal a.close-modal').on("click", closeModal);
-        $('#hidden_filemanager_modal .filemanager-modal-background').on("click", closeModal);
+        $('#hidden_filemanager_modal .filemanager-modal a.close-modal').on("click", closeModal);
+        $('#hidden_filemanager_modal.filemanager-modal-background').on("click", closeModal);
 
 
         $.data(container_element, "filemanager").on("filemanager:view:select", function( event ){
@@ -71,7 +71,6 @@
                     html += "<img class=\"preview\" src=\"/" + event.file.preview + "\">";
                 }
 
-                console.log( window.recognizeevents );
                 window.recognizeevents.select( html );
             }
         });

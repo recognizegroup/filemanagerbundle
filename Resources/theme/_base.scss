@@ -36,6 +36,10 @@
   color: $filemanager_focus_color;
 }
 
+.filetree .mainview input {
+  color: black !important;
+}
+
 .filetree .mainview .selected {
   background: $filemanager_selection_bg_color;
   color: $filemanager_selection_color;
