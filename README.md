@@ -116,7 +116,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi", name="_filemanager_read")
+     * @Route("/fileapi", name="_fileapi_read")
      * @param Request $request
      */
     public function read(Request $request){
@@ -124,7 +124,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/search", name="_filemanager_search")
+     * @Route("/fileapi/search", name="_fileapi_search")
      * @param Request $request
      */
     public function search(Request $request){
@@ -132,7 +132,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/create", name="_filemanager_create")
+     * @Route("/fileapi/create", name="_fileapi_create")
      * @param Request $request
      */
     public function create(Request $request) {
@@ -140,7 +140,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/move", name="_filemanager_move")
+     * @Route("/fileapi/move", name="_fileapi_move")
      * @param Request $request
      */
     public function move(Request $request) {
@@ -148,7 +148,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/rename", name="_filemanager_rename")
+     * @Route("/fileapi/rename", name="_fileapi_rename")
      * @param Request $request
      */
     public function rename(Request $request) {
@@ -156,7 +156,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/delete", name="_filemanager_delete")
+     * @Route("/fileapi/delete", name="_fileapi_delete")
      * @param Request $request
      */
     public function delete(Request $request) {
@@ -164,7 +164,7 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/preview", name="_filemanager_preview")
+     * @Route("/fileapi/preview", name="_fileapi_preview")
      * @param Request $request
      */
     public function preview(Request $request) {
@@ -172,13 +172,23 @@ class FileController extends FilemanagerController {
     }
 
     /**
-     * @Route("/fileapi/download", name="_filemanager_download")
+     * @Route("/fileapi/download", name="_fileapi_download")
      * @param Request $request
      */
     public function download(Request $request) {
         return parent::download( $request );
     }
 }
+```
+
+If you are using security features, make sure you have the ACL connection enabled.
+
+```yml
+#app/config/security.yml
+
+security:
+    acl:
+        connection: default
 ```
 
 Usage
