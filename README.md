@@ -30,7 +30,7 @@ Add the bundle to your composer.json
 	"repositories": [
 		{
 			"type": "git",
-			"url":  "git@bitbucket.org:recognize/filemanager-bundle.git"
+			"url":  "git@bitbucket.org:recognize/filemanagerbundle.git"
 		}
 	],
 	 "require": {
@@ -364,4 +364,3 @@ grunt jasmine
 
 Documentation
 -------------
-
