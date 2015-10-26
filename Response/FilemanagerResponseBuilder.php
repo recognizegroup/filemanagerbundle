@@ -24,8 +24,11 @@ class FilemanagerResponseBuilder {
     protected $translation_function = null;
     protected $finfo = null;
 
-    public function __construct(){
+    protected $preview_link = "";
+
+    public function __construct( $preview_link = "/admin/fileapi/preview" ){
         $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
+        $this->preview_link = $preview_link;
     }
 
     private $fileRepository;
@@ -177,7 +180,7 @@ class FilemanagerResponseBuilder {
             }
 
             if( $fileref == null && strpos( $mimetype, "image") !== false ){
-                $filedata['preview'] = "/admin/fileapi/preview?filemanager_path=" . $filedata['path'];
+                $filedata['preview'] = $this->preview_link . "?filemanager_path=" . $filedata['path'];
             }
         }
 
@@ -287,7 +290,6 @@ class FilemanagerResponseBuilder {
                 $message = $translator->trans("File too large");
             }
         } catch (IOException $e){
-
             $message = $e->getMessage();
             if( $translator != null ){
                 $message = $translator->trans("Action failed");
@@ -297,7 +299,6 @@ class FilemanagerResponseBuilder {
         if( $message != null ){
             $this->fail( $message );
         }
-
     }
 
     /**

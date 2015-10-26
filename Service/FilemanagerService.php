@@ -473,7 +473,7 @@ class FilemanagerService {
                         }
 
                     } catch (IOException $e) {
-                        throw new IOException("Failed to create directory " . $directory_name);
+                        throw new IOException("Failed to create directory " . $directory_name, 0, $e);
                     }
                 } else {
                     throw new AccessDeniedException();

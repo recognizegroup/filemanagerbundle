@@ -27,8 +27,8 @@ class FilemanagerController extends Controller {
      */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
-        $builder = new FilemanagerResponseBuilder();
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
             $builder->enableThumbnailLinking( $repository, $this->container->getParameter('kernel.root_dir') );
@@ -49,8 +49,8 @@ class FilemanagerController extends Controller {
      */
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
-        $builder = new FilemanagerResponseBuilder();
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
             $builder->enableThumbnailLinking( $repository, $this->container->getParameter('kernel.root_dir') );
@@ -73,7 +73,7 @@ class FilemanagerController extends Controller {
      */
     public function create(Request $request) {
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
         // Attempt to find a parameter that ends with filemanager_upload
         // This is to allow multiple filemanager upload inputfields in a single document
@@ -119,7 +119,7 @@ class FilemanagerController extends Controller {
      */
     public function move(Request $request) {
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
         if( $request->request->has('filemanager_filepath')
             && $request->request->has('filemanager_newdirectory') ){
@@ -147,7 +147,7 @@ class FilemanagerController extends Controller {
      */
     public function rename(Request $request) {
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
         if( $request->request->has('filemanager_filename')
             && $request->request->has('filemanager_newfilename')
@@ -177,7 +177,7 @@ class FilemanagerController extends Controller {
      */
     public function delete(Request $request) {
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder();
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
 
         if( $request->request->has('filemanager_directory') && $request->request->has('filemanager_filename') ){
             $builder->attemptChange( function() use ($filemanager, $request) {
@@ -215,6 +215,13 @@ class FilemanagerController extends Controller {
     public function download(Request $request) {
         $filemanager = $this->getFilemanager();
         return $filemanager->downloadFile( $request->query->get('filemanager_path') );
+    }
+
+    /**
+     * Returns the absolute route for the preview path
+     */
+    protected function getPreviewLink(){
+        return $this->generateUrl( $this->container->getParameter("recognize_filemanager.config")['api_paths']['preview'] );
     }
 
 }

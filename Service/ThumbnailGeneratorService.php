@@ -226,7 +226,7 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
 
                 $ratio = $oldwidth / $oldheight;
                 $sample['srcwidth'] = $srcwidth * $ratio;
-                $sample['x'] = ( $srcwidth / 2 ) - ( ( $srcwidth * $ratio ) / 2 );
+                $sample['destx'] = ( $srcwidth / 2 ) - ( ( $srcwidth * $ratio ) / 2 );
 
             }
         }
