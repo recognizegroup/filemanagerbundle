@@ -52,7 +52,7 @@ var FileTreeView = function( config, element ){
     this._container = $( element );
     this._directoryElement = this._container.find("[data-fm-value=directories]");
 
-    this._eventHandler = options.eventHandler;
+    this._eventHandler = config.eventHandler;
 
     if( typeof options.filerowFormat === "function" ){
         this._formatFilerow = options.filerowFormat;

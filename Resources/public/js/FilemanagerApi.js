@@ -1,6 +1,6 @@
 "use strict";
 
-var FilemanagerAPI = function( options) {
+var FilemanagerAPI = function( origoptions) {
     var defaults = {
         debug: false,
         api: {
@@ -16,7 +16,7 @@ var FilemanagerAPI = function( options) {
             }
         }
     };
-    var options = $.extend(true, defaults, options);
+    var options = $.extend(true, defaults, origoptions);
 
     this._debug = false;
     this._url = "";
@@ -31,7 +31,7 @@ var FilemanagerAPI = function( options) {
     this._eventHandler = false;
     this._disableRequests = false;
 
-    this.init( options );
+    this.init( options, origoptions );
 };
 
 FilemanagerAPI.prototype = {
@@ -39,9 +39,9 @@ FilemanagerAPI.prototype = {
     /**
      * Initialize the API configuration
      */
-    init: function (config) {
+    init: function (config, origOptions) {
         if( config !== null && typeof config === 'object' ){
-            this._eventHandler = config.eventHandler;
+            this._eventHandler = origOptions.eventHandler;
 
             if( typeof config.debug !== 'undefined'){
                 this._debug = config.debug;

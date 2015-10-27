@@ -23,7 +23,7 @@ var FileTree = function(config){
     var options = $.extend(true, defaults, config);
     if( options !== null && typeof options === 'object' ){
         this._debug = options.debug;
-        this._eventHandler = options.eventHandler;
+        this._eventHandler = config.eventHandler;
     }
 
     this._currentContentSort = this._naturalFilemanagerSort;
