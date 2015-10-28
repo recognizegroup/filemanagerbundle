@@ -50,6 +50,7 @@ class Configuration implements ConfigurationInterface {
                         ->scalarNode('preview')->defaultValue('')->end()
                     ->end()
                 ->end()
+                ->scalarNode('security')->defaultValue("disabled")->end()
                 ->arrayNode('access_control')
                     ->prototype('array')
                         ->children()

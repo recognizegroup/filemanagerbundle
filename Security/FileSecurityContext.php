@@ -52,7 +52,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
         $this->config = $configuration;
         $this->always_authenticate = $always_authenticate;
         if( !$always_authenticate ){
-            if( array_key_exists( 'security', $configuration ) == false ){
+            if( array_key_exists( 'security', $configuration ) == false || $configuration['security'] !== "enabled" ){
                 $this->always_authenticate = true;
             }
         }

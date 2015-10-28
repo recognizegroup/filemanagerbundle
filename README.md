@@ -89,15 +89,6 @@ recognize_filemanager:
         delete: _fileapi_delete
         download: _fileapi_download
         preview: _fileapi_preview
-
-    security:
-        actions:
-            open: [ ROLE_USER ]
-            upload: [ ROLE_USER ]
-            create: [ ROLE_USER ]
-            move: [ ROLE_USER ]
-            rename: [ ROLE_USER ]
-            delete: [ ROLE_USER ]
 ```
 
 Finally, add a new Controller class with routes that serves as the API entrance.
@@ -179,16 +170,6 @@ class FileController extends FilemanagerController {
         return parent::download( $request );
     }
 }
-```
-
-If you are using security features, make sure you have the ACL connection enabled.
-
-```yml
-#app/config/security.yml
-
-security:
-    acl:
-        connection: default
 ```
 
 Usage
@@ -322,17 +303,63 @@ They should be path names responding to a path that exists in the router.
 
 **Security**
 
-In the security node of the configuration you can see an action array. 
-This is a key value pair responding to an action and an array of the roles that are allowed to use it.
-Any user role that isn't in the array will be denied access unless this is overwritten in the ACLs.
-
-In this example, only admins are allowed to move directories
+Security is divided into two seperate parts, a voter part based on the configuration, and ACLs.
+To enable security features for the filemanager bundle, add the following to the filemanager configuration
 
 ```yml
-// app/config.yml
+// app/config
 recognize_filemanager:
-    security:
-        move: [ ROLE_ADMIN ]
+    security: enabled
+```
+
+Configuration voters
+
+Add the following to the configuration of the filemanager
+
+```yml
+// app/config
+recognize_filemanager:
+    access_list:
+        - { path: ^/$, directory: default, roles: [ ROLE_USER ], actions: [open] }
+        
+```
+
+The access list works similarly like the one found in the security.yml one.
+It checks if the currently accessed directory matches the path and the working directory,
+And then checks if the currently logged in users roles are allowed to perform the actions defined.
+
+When one of the access_list nodes grants access, then the user is granted access, 
+otherwise it will check the next access_list node. If no node has given acces, it is denied.
+
+The actions possible are
+- open : Read access to the directory, but if the directories inside it lack open access, they will not be shown
+- create: Creating directories inside this directory
+- upload: Uploading files - Specific file types cannot be specified
+- move: Moving this directory
+- rename: Renaming this directory
+- delete: Deleting this directory
+
+ACLs
+
+To enable ACLs, make sure the acl connection is defined in the security.yml
+
+ACLs work on a per directory basis, meaning that they can be enabled solely on directories, not on specific files.
+When a directory has ACLs matching the user or one of its roles, any definite permission is immediately used.
+This means if the ACL for opening this directory is denied or granted, then access is given based on the outcome of the ACL.
+
+When no ACL is found for a directory, it checks if the next directory has ACLs, until it reaches the root directory, 
+where it starts to fall back on the configuration voter system.
+
+Granting or denying access to a directory for a user or a role must be done through the FileACLManagerService.
+There is no default UI for this, so to enable this for users, you have to make a UI encapsulating this functionality.
+
+
+```yml
+#app/config/security.yml
+
+security:
+    acl:
+        connection: default
 ```
 
 Testing PHP

@@ -50,6 +50,13 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
                     // Check if there are any roles in the access list that match the roles set from the user
                     if( count( array_intersect( $this->roles, $pattern['roles'] ) ) > 0 ){
 
+                        // If no actions are set, imply all actions
+                        if( isset($pattern['actions']) == false || empty( $pattern['actions'])){
+                            $pattern['actions'] = array(
+                                "open", "upload", "create", "rename", "delete", "move"
+                            );
+                        }
+
                         // Check if the user mask matches the required mask
                         $user_access_mask = DirectoryMaskBuilder::getMaskFromValues( $pattern['actions'] );
                         if( 0 !== ($user_access_mask & $required_mask) ){

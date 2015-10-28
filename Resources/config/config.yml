@@ -13,5 +13,7 @@ recognize_filemanager:
         download: _fileapi_download
         preview: _fileapi_preview
 
+    security: enabled
+
     access_control:
         - { path: ^/, directory: default, roles: [ ROLE_USER ], actions: [ open, upload, create, move, rename, delete ] }

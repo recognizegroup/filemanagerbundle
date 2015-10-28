@@ -75,6 +75,22 @@ class ConfigurationAuthorizationCheckerTest extends \PHPUnit_Framework_TestCase 
         $this->assertFalse( $checker->isGranted("open", $directory) );
     }
 
+    public function testAllowedOpenWithEmptyActions(){
+        $directory = new Directory();
+        $directory->setDirectoryName("test");
+        $directory->setWorkingDirectory("");
+        $directory->setWorkingDirectoryName("default");
+        $directory->setRelativePath("test");
+
+        $roles = array("ROLE_USER");
+        $checker = new ConfigurationAuthorizationChecker( array( array( "path" => "^/te",
+            "directory" => "default", "roles" => $roles, "actions" => array() ) ) );
+        $checker->setCurrentRoles( array("ROLE_USER") );
+
+        $this->assertTrue( $checker->isGranted("open", $directory) );
+    }
+
+
     public function testMultipleRoleAllowedOpen(){
         $directory = new Directory();
         $directory->setDirectoryName("test");
