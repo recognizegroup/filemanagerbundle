@@ -5,15 +5,15 @@
             <span class="pull-left">
                 <a href="#" class="btn btn-primary upload-button" data-fm-functionality="upload_button" title="{{ 'Upload'|trans }}">
                     <i class="fa fa-upload fa-lg"></i>
-                    <span>{{ 'Upload'|trans }}</span>
+                    <span class="hidden-xs">{{ 'Upload'|trans }}</span>
                 </a>
 
-                <a href="#" class="btn hidden-xxs-inline" data-fm-functionality="create_directory">
+                <a href="#" class="btn btn-default" data-fm-functionality="create_directory">
                     <i class="fa fa-folder fa-lg"></i>
                     <span class="hidden-xs">{{ 'Create directory'|trans }}</span>
                 </a>
 
-                <a href="#" class="btn hidden-xxs-inline" data-fm-functionality="refresh">
+                <a href="#" class="btn btn-default" data-fm-functionality="refresh">
                     <i class="fa fa-refresh fa-lg"></i>
                     <span class="hidden-xs">{{ 'Refresh'|trans }}</span>
                 </a>
@@ -21,12 +21,12 @@
 
             <span class="pull-right">
                 <span class="btn-group">
-                    <a href="#" class="btn btn-default" data-fm-functionality="set_list">
+                    <a href="#" class="btn btn-default selected" data-fm-functionality="set_list">
                         <i class="fa fa-list fa-lg"></i>
                         <span class="hidden-xs">{{ 'List view'|trans }}</span>
                     </a>
 
-                    <a href="#" class="btn" data-fm-functionality="set_grid">
+                    <a href="#" class="btn btn-default" data-fm-functionality="set_grid">
                         <i class="fa fa-th fa-lg"></i>
                         <span class="hidden-xs">{{ 'Grid view'|trans }}</span>
                     </a>
@@ -37,7 +37,7 @@
         <div class="upload-area col-xs-12" style="display: none;">
             <a href="#" class="upload-cancel-button btn btn-danger col-sm-1 col-xs-3 no-r-c-right" style="padding-left: 0px; padding-right: 0px;" data-fm-functionality="abort_upload">
                 <i class="fa fa-lg fa-times" style="display:inline-block;"></i>
-                <span class="hidden-xxs-inline">{{ 'Cancel'|trans }}</span>
+                <span class="hidden-xs">{{ 'Cancel'|trans }}</span>
             </a>
             <span class="col-sm-11 col-xs-9" style="padding-left: 0px; padding-right: 0px;">
                 <div id="progressOuter" class="progress progress-striped active no-r-c-left" style="display:block; height: 37px; margin-bottom: 10px;">
@@ -49,7 +49,7 @@
 
     <div class="col-xs-12 navigation-area" style="margin-bottom: 10px;">
 
-        <a href="#" class="btn directory-up col-sm-9 col-xs-9 no-r-c-right" data-fm-functionality="directory_up">
+        <a href="#" class="btn btn-default directory-up col-sm-9 col-xs-9 no-r-c-right" data-fm-functionality="directory_up">
             <span class="pull-left">
                 <i class="fa fa-lg fa-flip-horizontal fa-level-up"></i>
                 <i class="fa fa-lg fa-folder-open"></i>
@@ -59,28 +59,25 @@
             </span>
         </a>
         <span class="search-input col-sm-3 col-xs-9" style="padding-left: 0px; padding-right: 0px;">
-            <input class="form-control no-r-c-right-xs" style="height: 37px; padding-bottom: 5px;" type="search" name="searchvalue" placeholder="{{ 'Search'|trans }}" data-fm-functionality="search" />
+            <input class="form-control no-r-c-right-xs" style="padding-bottom: 5px;" type="search" name="searchvalue" placeholder="{{ 'Search'|trans }}" data-fm-functionality="search" />
         </span>
         <a href="#" class="btn btn-default search-button visible-xs col-xs-3 no-r-c-left-xs">
             <i class="fa fa-search fa-lg"></i>
-            <span class="hidden-xxs-inline">{{ 'Search'|trans }}</span>
+            <span class="hidden-xs">{{ 'Search'|trans }}</span>
         </a>
     </div>
 </div>
 
 <div class="row overlayreference">
-    <div class="directories col-sm-3 hidden-xs" data-fm-value="directories">
-        <!-- Directories go here -->
-    </div>
-    <div id="filemanager_view" class="mainview col-sm-9 col-xs-12">
+    <div id="filemanager_view" class="mainview col-xs-12">
         <div class="table-responsive" data-fm-show="list_view">
             <table class="table table-striped table-hover table-bordered table-keyboard-nav">
                 <thead>
-                    <tr class="sorting-container">
-                        <th tabindex="0" data-fm-functionality="sort_filename" class="noselect tabfocus sort-by-filename" style="min-width: 140px;"><span class="pull-left">{{ 'File name'|trans }}</span><i class="fa fa-caret-down pull-right"></i></th>
-                        <th tabindex="0" data-fm-functionality="sort_size" class="noselect tabfocus sort-by-filesize" style="min-width: 140px;"><span class="pull-left">{{ 'File size'|trans }}</span><i class="fa fa-sort pull-right"></i></th>
-                        <th tabindex="0" data-fm-functionality="sort_date_modified" class="noselect tabfocus sort-by-date" style="min-width: 140px;"><span class="pull-left">{{ 'Date modified'|trans }}</span><i class="fa fa-sort pull-right"></i></th>
-                    </tr>
+                <tr class="sorting-container">
+                    <th tabindex="0" data-fm-functionality="sort_filename" class="noselect tabfocus sort-by-filename" style="min-width: 140px;"><span class="pull-left">{{ 'File name'|trans }}</span><i class="fa fa-caret-down pull-right"></i></th>
+                    <th tabindex="0" data-fm-functionality="sort_size" class="noselect tabfocus sort-by-filesize" style="min-width: 140px;"><span class="pull-left">{{ 'File size'|trans }}</span><i class="fa fa-sort pull-right"></i></th>
+                    <th tabindex="0" data-fm-functionality="sort_date_modified" class="noselect tabfocus sort-by-date" style="min-width: 140px;"><span class="pull-left">{{ 'Date modified'|trans }}</span><i class="fa fa-sort pull-right"></i></th>
+                </tr>
                 </thead>
                 <tbody data-fm-value="list_content">
                 <!-- Content goes here -->
