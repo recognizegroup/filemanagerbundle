@@ -100,7 +100,6 @@ class FilemanagerService {
             && isset( $this->configuration['directories'][ $config_directory_key ]) ){
             $this->working_directory = $this->configuration['directories'][ $config_directory_key ];
             $this->current_directory = $this->working_directory;
-
         } else {
             throw new \RuntimeException( sprintf( "Key '%s' doesn't exist in the recognize_filemanager.directories configuration", $config_directory_key) );
         }

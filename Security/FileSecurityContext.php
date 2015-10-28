@@ -154,10 +154,22 @@ class FileSecurityContext implements FileSecurityContextInterface {
         } catch( \Exception $e ){
             if( $this->authorization_checker == null ){
                 $this->authorization_checker = new ConfigurationAuthorizationChecker(
-                    $this->config['security']['actions'] );
+                    $this->config['access_control'] );
             }
             $this->authorization_checker->setCurrentRoles( $this->roles );
-            $granted = $this->authorization_checker->isGranted( $action );
+
+
+            // Set the working directory name which is used in the access lists
+            $directory->setWorkingDirectoryName( "default" );
+            if( isset( $this->config['directories'] ) ){
+                foreach( $this->config['directories'] as $working_directory_name => $directorypath ){
+                    if( $directorypath == $directory->getWorkingDirectory() ){
+                        $directory->setWorkingDirectoryName( $working_directory_name );
+                        break;
+                    }
+                }
+            }
+            $granted = $this->authorization_checker->isGranted( $action, $directory );
         }
 
         // Cache the result

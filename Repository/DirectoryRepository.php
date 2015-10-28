@@ -116,9 +116,9 @@ class DirectoryRepository extends EntityRepository {
     /**
      * Make a directory without an ID using the paths
      *
-     * @param $working_directory                The working directory
-     * @param $relative_path                    The relative path from the working directory
-     * @param $name                             The name of the directory
+     * @param string $working_directory                The working directory
+     * @param string $relative_path                    The relative path from the working directory
+     * @param string $name                             The name of the directory
      */
     public function getEmptyDirectory( $working_directory, $relative_path, $name ){
         $directory = new Directory();

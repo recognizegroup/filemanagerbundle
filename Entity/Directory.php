@@ -45,6 +45,8 @@ class Directory {
      */
     protected $name;
 
+    protected $working_directory_name;
+
     public function setParentDirectory( Directory $parent){
         $this->parent = $parent;
         $this->parent_id = $parent->getId();
@@ -125,5 +127,15 @@ class Directory {
      */
     public function getParentDirectory(){
         return $this->parent;
+    }
+
+    // --------------------------- Non persisting variables
+
+    public function setWorkingDirectoryName( $working_directory_name ){
+        $this->working_directory_name = $working_directory_name;
+    }
+
+    public function getWorkingDirectoryName(){
+        return $this->working_directory_name;
     }
 }

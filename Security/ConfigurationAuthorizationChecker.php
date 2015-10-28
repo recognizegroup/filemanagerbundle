@@ -1,44 +1,23 @@
 <?php
 namespace Recognize\FilemanagerBundle\Security;
 
+use Recognize\FilemanagerBundle\Entity\Directory;
 use Symfony\Component\Security\Acl\Permission\MaskBuilder;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface {
 
-    private $rolemasks = array();
+    private $patterns = array();
     private $roles = array();
 
     /**
-     * Parses an array of actions with the allowed roles into ACEs that are used by the security context
+     * Parses an array of access control objects
      *
-     * @param $actions
+     * @param $access_control
      */
-    public function __construct( $actions ){
+    public function __construct( $access_control ){
         $roles = array();
-
-        // Turn the action: [roles] into role: [actions]
-        $action_names = array_keys( $actions );
-        for( $i = 0, $length = count($action_names); $i < $length; $i++ ){
-            $allowed_action = $action_names[ $i ];
-
-            $allowed_roles = $actions[ $allowed_action ];
-            for( $j = 0, $jlength = count( $allowed_roles); $j < $jlength; $j++ ){
-                $allowed_role = $allowed_roles[$j];
-
-                if( isset( $roles[ $allowed_role ]) == false ){
-                    $roles[ $allowed_role ] = array();
-                }
-
-                $roles[ $allowed_role ][] = $allowed_action;
-            }
-        }
-
-        // Turn the actions into bitmasks
-        $role_names = array_keys( $roles );
-        for( $i = 0, $length = count( $role_names ); $i < $length; $i++ ){
-            $this->rolemasks[ $role_names[$i] ] = DirectoryMaskBuilder::getMaskFromValues( $roles[ $role_names[$i] ] );
-        }
+        $this->patterns = $access_control;
     }
 
     /**
@@ -55,24 +34,47 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
      * Checks if the attributes are granted against the current authentication token and optionally supplied object.
      *
      * @param mixed $attributes
-     * @param mixed $object
+     * @param mixed Directory $object
      *
      * @return bool
      */
     public function isGranted($attributes, $object = null) {
         $granted = false;
         $required_mask = DirectoryMaskBuilder::getMaskFromValues( array( strtolower( $attributes ) ) );
-        for( $i = 0, $length = count( $this->roles ); $i < $length; $i++ ){
+        if( $object instanceof Directory ){
+            for( $i = 0, $length = count( $this->patterns ); $i < $length; $i++ ){
 
-            $role = $this->roles[$i];
-            if( isset( $this->rolemasks[ $role ] ) && 0 !== ($this->rolemasks[ $role ] & $required_mask) ){
-                $granted = true;
-                break;
+                $pattern = $this->patterns[ $i ];
+                if( $this->directoryMatchesAccessObject( $object, $pattern) ){
+
+                    // Check if there are any roles in the access list that match the roles set from the user
+                    if( count( array_intersect( $this->roles, $pattern['roles'] ) ) > 0 ){
+
+                        // Check if the user mask matches the required mask
+                        $user_access_mask = DirectoryMaskBuilder::getMaskFromValues( $pattern['actions'] );
+                        if( 0 !== ($user_access_mask & $required_mask) ){
+                            $granted = true;
+                            break;
+                        }
+                    }
+                }
             }
-
         }
 
         return $granted;
+    }
+
+    /**
+     * Check if the directory matches the access control object - Needs a matching relative path and working directory
+     *
+     * @param Directory $directory
+     * @param $access_control
+     */
+    protected function directoryMatchesAccessObject( Directory $directory, $access_control ){
+        $escaped_regex = "/" . str_replace( "/", "\/", $access_control['path'] ) . "/";
+
+        return $directory->getWorkingDirectoryName() == $access_control['directory']
+            && preg_match( $escaped_regex, "/" . $directory->getRelativePath() );
     }
 
 }

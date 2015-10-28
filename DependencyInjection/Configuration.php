@@ -21,7 +21,7 @@ class Configuration implements ConfigurationInterface {
         // Load the default values
         $yaml = new Parser();
         $defaultconfig = $yaml->parse( file_get_contents(__DIR__.'/../Resources/config/config.yml') );
-        $actiondefaults = $defaultconfig['recognize_filemanager']['security']['actions'];
+        $access_control_default = $defaultconfig['recognize_filemanager']['access_control'];
 
         $rootNode = $treeBuilder->root('recognize_filemanager');
         $rootNode
@@ -50,16 +50,27 @@ class Configuration implements ConfigurationInterface {
                         ->scalarNode('preview')->defaultValue('')->end()
                     ->end()
                 ->end()
-                ->arrayNode('security')
-                    ->children()
-                        ->arrayNode('actions')
-                            ->children()
-                                ->arrayNode('open')->prototype('scalar')->defaultValue( $actiondefaults['open'] )->end()->end()
-                                ->arrayNode('upload')->prototype('scalar')->defaultValue( $actiondefaults['upload'] )->end()->end()
-                                ->arrayNode('create')->prototype('scalar')->defaultValue( $actiondefaults['create'] )->end()->end()
-                                ->arrayNode('rename')->prototype('scalar')->defaultValue( $actiondefaults['rename'] )->end()->end()
-                                ->arrayNode('move')->prototype('scalar')->defaultValue( $actiondefaults['move'] )->end()->end()
-                                ->arrayNode('delete')->prototype('scalar')->defaultValue( $actiondefaults['delete'] )->end()->end()
+                ->arrayNode('access_control')
+                    ->prototype('array')
+                        ->children()
+                            ->scalarNode('directory')
+                                ->defaultValue("default")
+                            ->end()
+                            ->scalarNode('path')
+                                ->defaultNull()
+                                ->example('^/path to resource from all working directories/')
+                            ->end()
+                            ->arrayNode('actions')
+                                ->prototype('scalar')
+                                    ->validate()
+                                        ->ifNotInArray(array("open", "upload", "create", "rename", "move", "delete"))
+                                        ->thenInvalid( "Invalid action - Can only use open, upload, create, rename, move, rename and delete " )
+                                    ->end()
+                                ->end()
+                            ->end()
+                            ->arrayNode('roles')
+                                ->isRequired()
+                                ->prototype('scalar')->end()
                             ->end()
                         ->end()
                     ->end()
@@ -68,6 +79,8 @@ class Configuration implements ConfigurationInterface {
         ;
 
         return $treeBuilder;
+
+
     }
 
 }
