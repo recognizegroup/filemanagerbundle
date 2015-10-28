@@ -1,11 +1,18 @@
 <?php
 namespace Recognize\FilemanagerBundle\DependencyInjection;
 
+use Recognize\FilemanagerBundle\Security\NoConnectionAclProvider;
+use Recognize\FilemanagerBundle\Service\FileACLManagerService;
 use Symfony\Component\DependencyInjection\ContainerBuilder,
     Symfony\Component\HttpKernel\DependencyInjection\Extension,
     Symfony\Component\Config\FileLocator;
 
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Acl\Dbal\MutableAclProvider;
+use Symfony\Component\Security\Acl\Model\MutableAclProviderInterface;
 
 /**
  * Class Recognize\WysiwygBundle\RecognizeWysiwygExtension
@@ -23,6 +30,17 @@ class RecognizeFilemanagerExtension extends Extension {
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('recognize_filemanager.config', $config);
+
+        // Make sure the ACL Manager service is initialized even if the acls aren't enabled
+        $provider = $container->get("security.acl.provider", ContainerInterface::NULL_ON_INVALID_REFERENCE );
+        if( $provider instanceof MutableAclProviderInterface == false ){
+            $container->setDefinition(
+                "security.acl.provider",
+                new Definition(
+                    "Recognize\FilemanagerBundle\Security\NoConnectionAclProvider"
+                )
+            );
+        }
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
