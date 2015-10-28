@@ -74,8 +74,8 @@ class FileChanges {
         $filedata['path'] = $file->getRelativePath() . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
-        $absolutepath = PathUtils::addTrailingSlash( $file->getPath() ) .
-            PathUtils::addTrailingSlash( $file->getRelativePath() ) . $file->getFilename();
+        $absolutepath = PathUtils::addTrailingSlash( $file->getPath() ) . $file->getFilename();
+
 
         $mimetype = $this->mimetype;
         if( $this->mimetype == null ){

@@ -8,6 +8,7 @@ use Recognize\FilemanagerBundle\Repository\DirectoryRepository;
 use Recognize\FilemanagerBundle\Repository\FileRepository;
 use Recognize\FilemanagerBundle\Response\FileChanges;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Finder\SplFileInfo;
 
 class FiledataSynchronizer implements FiledataSynchronizerInterface {
@@ -218,6 +219,26 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
                     $current_file->setParentDirectory( $newdir );
                     $this->em->persist( $current_file );
                 }
+
+            // Index the file if it isn't in the database already
+            } else {
+                $newdir = $this->loadDirectoryForFilepath( $working_directory,  $changes_array['updatedfile']['directory'], true );
+
+                $fileref = new FileReference();
+                $fileref->setFilename( $changes_array['updatedfile']['name'] );
+                $fileref->setParentDirectory( $newdir );
+
+                $finfo = @finfo_open( FILEINFO_MIME_TYPE );
+                $mimetype = @finfo_file( $finfo, PathUtils::addTrailingSlash( $working_directory ) . $changes_array['updatedfile']['path'] );
+                @finfo_close( $finfo );
+
+                if( $mimetype == false ){
+                    $mimetype = "";
+                }
+                $fileref->setMimetype( $mimetype );
+                $fileref = $this->generateThumbnail( $fileref );
+
+                $this->em->persist( $fileref );
             }
         }
 
@@ -303,12 +324,14 @@ class FiledataSynchronizer implements FiledataSynchronizerInterface {
         // If the directory does not exist yet, create it
         if( count($dirs) == 0 ){
             $new_directory = $this->directoryRepository->getEmptyDirectory($working_directory, $relpath, $dirname);
-            $this->em->persist( $new_directory );
             if( $flush ){
+                $this->em->persist( $new_directory );
                 $this->em->flush();
-            }
 
-            $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
+                $dirs = $this->directoryRepository->findDirectoryByLocation( $working_directory, $relpath, $dirname );
+            } else {
+                $dirs = array( null );
+            }
         }
 
         return $dirs[0];
