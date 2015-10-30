@@ -124,6 +124,26 @@ class FileACLManagerServiceTest extends KernelTestCase {
     }
 
     /**
+     * @depends testClearDirectoryACLS
+     */
+    public function testClearDirectoryACLSForSpecificRole(){
+        $this->aclmanager->grantAccessToDirectory( $this->rootdir, array("ROLE_TESTACLUSER", "ROLE_TESTADMIN"), array("OPEN") );
+
+        $context = $this->getFileSecurityContext();
+        $this->assertTrue( $context->isGranted("OPEN", "aclroot/", ""), "Grant access didn't work - Required to test clearing for single role" );
+
+        $this->aclmanager->clearAccessToDirectory( $this->rootdir, array("ROLE_TESTACLUSER") );
+
+        $user = new MockUser("testadminuser", array("ROLE_TESTADMIN"));
+        $context = $this->getFileSecurityContext( $user );
+        $this->assertTrue( $context->isGranted("OPEN", "aclroot/", ""), "Other roles' ACLs were incorrectly cleared where only TESTACLUSER role ACLS should be cleared" );
+
+        $context = $this->getFileSecurityContext();
+        $this->assertFalse( $context->isGranted("open", "aclroot/", ""), "Test users ACLs weren't cleared properly" );
+    }
+
+
+    /**
      * @depends testACLStateIsProperlySet
      * @expectedException InvalidArgumentException
      */
@@ -142,13 +162,16 @@ class FileACLManagerServiceTest extends KernelTestCase {
 
     // ----------------------------------- UTILS --------------------------------------
 
-    protected function getFileSecurityContext( ){
+    protected function getFileSecurityContext( $user = false ){
         $em = $this->container->get('doctrine')->getManager();
         $dir_repository = $em->getRepository('RecognizeFilemanagerBundle:Directory');
         $aclprovider = $this->container->get('security.acl.provider');
 
         $tokenstorage = new TokenStorage();
-        $user = $this->getTestUser();
+        if( $user == false ){
+            $user = $this->getTestUser();
+        }
+
         $tokenstorage->setToken( new PreAuthenticatedToken( $user, true, true, $user->getRoles() ) );
 
         return new FileSecurityContext($this->getConfig(), $aclprovider, $tokenstorage, $dir_repository, false );
@@ -159,9 +182,10 @@ class FileACLManagerServiceTest extends KernelTestCase {
     }
 
     protected function getConfig(){
-        return array("security" => array("actions" =>
-            array('OPEN' => array("ROLE_TESTUSER", "ROLE_TESTADMIN") ),
-            array('DELETE' => array("ROLE_TESTUSER", "ROLE_TESTADMIN") )
-        ));
+        return array("security" => "enabled",
+            "access_control" => array( array( "directory" => "default", "path" => "^/$", "actions" => array ( 'OPEN', 'DELETE' ),
+                "roles" => array("ROLE_TESTUSER", "ROLE_TESTADMIN") )
+            )
+        );
     }
 }

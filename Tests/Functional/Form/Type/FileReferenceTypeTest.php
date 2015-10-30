@@ -7,6 +7,7 @@ use Recognize\FilemanagerBundle\Form\Type\FileReferenceType;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
+use Recognize\FilemanagerBundle\Tests\MockTranslator;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\Forms;
@@ -152,7 +153,7 @@ class FileReferenceTypeTest extends FilesystemTestCase {
         $datasynchroniser = new MockFiledataSynchronizer( $filereference );
 
 
-        return new FileReferenceType( $filemanagerservice, $datasynchroniser );
+        return new FileReferenceType( $filemanagerservice, $datasynchroniser, new MockTranslator() );
     }
 
 }

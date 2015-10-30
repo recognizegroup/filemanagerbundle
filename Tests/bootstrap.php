@@ -34,7 +34,7 @@ if( defined('IS_TEST_BOOTED') == false ) {
             if( $_SERVER['argv'][$i + 1] == "functional" || $_SERVER['argv'][$i + 1] == "all"){
 
                 require_once( $rootpath . '/app/AppKernel.php');
-                $booter = new Recognize\FilemanagerBundle\Tests\TestUtils\Database\DatabaseBooter( $rootpath . '/src/' );
+                $booter = new Recognize\FilemanagerBundle\Tests\TestUtils\Database\DatabaseBooter( $rootpath . '/vendor/recognize/' );
                 $booter->clearDatabase( $verbose );
                 $booter->createAndAlterDatabase( $verbose );
                 $booter->fillDatabaseWithFixtures( $verbose );

@@ -152,7 +152,6 @@ class DatabaseBooter {
         }
 
         $executor->execute( $fixtures );
-
         echo "Done! \n\n";
     }
 

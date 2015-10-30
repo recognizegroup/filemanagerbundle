@@ -60,6 +60,8 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
                         // Check if the user mask matches the required mask
                         $user_access_mask = DirectoryMaskBuilder::getMaskFromValues( $pattern['actions'] );
                         if( 0 !== ($user_access_mask & $required_mask) ){
+                            //echo "pattern = " . $pattern['path'] . '<br/>';
+                            //echo "directory path = /" . $object->getRelativePath() . $object->getDirectoryName() . "<br/>";
                             $granted = true;
                             break;
                         }
@@ -81,7 +83,7 @@ class ConfigurationAuthorizationChecker implements AuthorizationCheckerInterface
         $escaped_regex = "/" . str_replace( "/", "\/", $access_control['path'] ) . "/";
 
         return $directory->getWorkingDirectoryName() == $access_control['directory']
-            && preg_match( $escaped_regex, "/" . $directory->getRelativePath() );
+            && preg_match( $escaped_regex, "/" . $directory->getRelativePath() . $directory->getDirectoryName() );
     }
 
 }

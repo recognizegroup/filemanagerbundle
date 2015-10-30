@@ -183,16 +183,19 @@ class FileSecurityContextTest extends KernelTestCase {
     }
 
     protected function getAllowedAllConfig(){
-        return array("security" => array("actions" =>
-            array('OPEN' => array("ROLE_TESTUSER", "ROLE_TESTADMIN") ),
-            array('DELETE' => array("ROLE_TESTUSER", "ROLE_TESTADMIN") )
-        ));
+        return array("security" => "enabled",
+            "access_control" => array( array( "directory" => "default", "path" => "^/$", "actions" => array ( 'OPEN', 'DELETE' ),
+                "roles" => array("ROLE_TESTUSER", "ROLE_TESTADMIN"))
+            )
+        );
+
     }
 
     protected function getDisallowedAllConfig(){
-        return array("security" => array("actions" =>
-            array('OPEN' => array("") ),
-            array('DELETE' => array("") )
-        ));
+        return array("security" => "enabled",
+            "access_control" => array( array( "directory" => "default", "path" => "^/$", "actions" => array ( 'OPEN', 'DELETE' ),
+                "roles" => array("") )
+            )
+        );
     }
 }

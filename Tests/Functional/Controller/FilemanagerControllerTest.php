@@ -6,11 +6,13 @@ use Recognize\FilemanagerBundle\Repository\FileRepository;
 use Recognize\FilemanagerBundle\Service\FilemanagerService;
 use Recognize\FilemanagerBundle\Tests\MockFiledataSynchronizer;
 use Recognize\FilemanagerBundle\Tests\MockFileSecurityContext;
+use Recognize\FilemanagerBundle\Tests\MockRouter;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Filesystem\Tests\FilesystemTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Router;
 use Symfony\Component\Translation\Translator;
 
 class FilemanagerControllerTest extends FilesystemTestCase {
@@ -163,9 +165,28 @@ class FilemanagerControllerTest extends FilesystemTestCase {
         file_put_contents( $this->workspace . "/testfile.txt", "Test contents");
     }
 
+    protected function getTestConfig(){
+        return array(
+            "directories" => array( "default" => $this->workspace ),
+            "security" => "disabled",
+            "api_paths" => array(
+                "read" => "",
+                "create" => "",
+                "upload" => "",
+                "rename" => "",
+                "move" => "",
+                "delete" => "",
+                "download" => "",
+                "preview" => ""
+            )
+        );
+    }
+
     protected function getController() {
         $container = new Container();
-        $filemanager = new FilemanagerService( array("directories" => array( "default" => $this->workspace ) ), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $filemanager = new FilemanagerService( $this->getTestConfig(), new MockFileSecurityContext(), new MockFiledataSynchronizer() );
+        $container->setParameter("recognize_filemanager.config", $this->getTestConfig());
+        $container->set("router", new MockRouter());
         $container->set("recognize.file_manager", $filemanager);
         $container->set("translator", new Translator("en"));
 

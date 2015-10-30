@@ -114,6 +114,19 @@ class DirectoryRepository extends EntityRepository {
     }
 
     /**
+     * Find all the directories one level deep under the root directories
+     *
+     * @return array
+     */
+    public function findAllDirectoriesUnderRootDirectories(){
+        return $qb = $this->createQueryBuilder('d')
+            ->where( "d.relative_path = :empty AND d.name <> :empty")
+            ->setParameter("empty", "")
+            ->getQuery()->getResult();
+
+    }
+
+    /**
      * Make a directory without an ID using the paths
      *
      * @param string $working_directory                The working directory

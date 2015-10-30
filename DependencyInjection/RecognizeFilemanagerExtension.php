@@ -32,8 +32,7 @@ class RecognizeFilemanagerExtension extends Extension {
         $container->setParameter('recognize_filemanager.config', $config);
 
         // Make sure the ACL Manager service is initialized even if the acls aren't enabled
-        $provider = $container->get("security.acl.provider", ContainerInterface::NULL_ON_INVALID_REFERENCE );
-        if( $provider instanceof MutableAclProviderInterface == false ){
+        if( $config['security'] !== "enabled" ){
             $container->setDefinition(
                 "security.acl.provider",
                 new Definition(

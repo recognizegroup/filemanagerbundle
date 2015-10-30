@@ -15,6 +15,7 @@ use Symfony\Component\Security\Acl\Permission\MaskBuilder;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\SecurityContext;
 use Symfony\Component\Security\Core\SecurityContextInterface;
+use Symfony\Component\Security\Core\Util\ClassUtils;
 
 /**
  * Checks access for certain actions on directories
@@ -73,6 +74,17 @@ class FileSecurityContext implements FileSecurityContextInterface {
                 $securityidentities[] = $user;
             } catch( \Exception $e ){
             }
+
+            // Get the groups
+            $groups = $token->getUser()->getGroups();
+            for ($i = 0, $length = count($groups); $i < $length; $i++) {
+
+                // Because the Symfony2 ACL service requires a ton of rewiring if we want to add
+                // User groups, simply abuse the user security identity for our purposes
+                $securityidentities[] = new UserSecurityIdentity($groups[$i]->getId(),
+                    ClassUtils::getRealClass( $groups[$i]));
+            }
+
 
             // Get the roles
             $roles = $token->getUser()->getRoles();

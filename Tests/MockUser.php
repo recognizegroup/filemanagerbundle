@@ -59,4 +59,8 @@ class MockUser implements  UserInterface {
     public function eraseCredentials() {
         // TODO: Implement eraseCredentials() method.
     }
+
+    public function getGroups(){
+        return array();
+    }
 }
