@@ -1,13 +1,17 @@
 <?php
 namespace Recognize\FilemanagerBundle\Service;
 
-
 use Imagick;
 use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 
+/**
+ * Class ThumbnailGeneratorService
+ * @package Recognize\FilemanagerBundle\Service
+ * @author Kevin te Raa <k.teraa@recognize.nl>
+ * @author Willem Slaghekke <w.slaghekke@recognize.nl>
+ */
 class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
 
     private $thumbnail_directory = null;
@@ -30,7 +34,7 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
      * Generate a thumbnail for a filereference
      *
      * @param FileReference $reference
-     * @return $path to thumbnail
+     * @return mixed|string $path to thumbnail
      */
     public function generateThumbnailForFile( FileReference $reference = null ){
         $thumbnaillink = "";
@@ -54,6 +58,13 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
                 $count = 1;
                 $thumbnaillink = str_replace(".pdf", ".jpg", $thumbnaillink, $count );
                 $this->createThumbnailFileForPDF( $reference->getAbsolutePath(), $thumbnaillink );
+            } else if ( extension_loaded('imagick') == true) {
+                $count = 1;
+                $thumbname = str_replace(".".$reference->getExtension(), ".jpg", $thumbnaillink, $count );
+                $success = $this->createThumbnailFileForMISC( $reference->getAbsolutePath(), $thumbname );
+                if($success) {
+                    $thumbnaillink = $thumbname;
+                }
             }
         }
 
@@ -65,14 +76,15 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
      */
     protected function canGenerateThumbnail( $mimetype ){
         return ( strpos( $mimetype, "image" ) !== false && strpos( $mimetype, "svg" ) === false )
-        || extension_loaded('imagick') && strpos($mimetype, "pdf") !== false;
+            || extension_loaded('imagick');
     }
 
     /**
      * Generates a thumbnail filename that doesn't overwrite another file
      *
-     * @param string $filename                     The filename
-     * @param string $extension                    The files extension
+     * @param string $filename The filename
+     * @param string $extension The files extension
+     * @return mixed|string
      */
     protected function generateThumbnailName( $filename, $extension ){
         $thumbnaillink = md5( $filename . time() ) . "." . $extension;
@@ -82,7 +94,7 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         if( $fs->exists( PathUtils::addTrailingSlash( $this->thumbnail_directory ) . $thumbnaillink) == false ){
             return $thumbnaillink;
         } else {
-            return $this->generateThumbnailForFile( $filename . "1", $extension);
+            return $this->generateThumbnailName( $filename . "1", $extension);
         }
     }
 
@@ -150,6 +162,27 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         $pdf->thumbnailImage($this->thumbnail_size, $this->thumbnail_size, true, true);
 
         file_put_contents($newpath, $pdf);
+    }
+
+    /**
+     * Create a thumbnail for a PDF file
+     *
+     * @param $oldpath
+     * @param $newpath
+     * @return bool
+     */
+    protected function createThumbnailFileForMISC( $oldpath, $newpath ){
+        try {
+            $pdf = new imagick( $oldpath . '[0]');
+            $pdf->setImageFormat('jpg');
+            $pdf->thumbnailImage($this->thumbnail_size, $this->thumbnail_size, true, true);
+
+            file_put_contents($newpath, $pdf);
+        } catch(\Exception $e) {
+            // do nothing
+            return false;
+        }
+        return true;
     }
 
     /**
