@@ -1,0 +1,37 @@
+<h1>Filemanager</h1>
+
+{{ filemanager("hidden_filemanager_manager", {"api":{"startingDirectory": ""}, "debug": false}, "bootstrap") }}
+
+<script type="text/javascript">
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : sParameterName[1];
+
+            }
+        }
+    };
+
+    $( document ).ready(function(){
+        var function_number = getUrlParameter( "CKEditorFuncNum" );
+        var container_element = $('#hidden_filemanager_manager').get(0);
+
+
+        $.data(container_element, "filemanager").on("filemanager:view:select", function( event ){
+            if( event.file.type == "file" ){
+                $('#hidden_filemanager_modal.filemanager-modal-overlay').hide();
+                
+                window.opener.CKEDITOR.tools.callFunction( function_number, event.file.preview );
+                window.close();
+            }
+        });
+
+    });
+</script>
