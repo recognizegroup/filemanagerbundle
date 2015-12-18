@@ -32,7 +32,7 @@ services:
 
     recognize.thumbnail_generator:
         class: Recognize\FilemanagerBundle\Service\ThumbnailGeneratorService
-        arguments: [ %recognize_filemanager.config% ]
+        arguments: [ %recognize_filemanager.config%, %kernel.root_dir% ]
 
     recognize.filedata_synchronizer:
         class: Recognize\FilemanagerBundle\Service\FiledataSynchronizer

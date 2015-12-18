@@ -35,6 +35,7 @@ class Configuration implements ConfigurationInterface {
                     ->children()
                         ->scalarNode('directory')->defaultValue('')->end()
                         ->scalarNode('size')->defaultValue('')->end()
+                        ->scalarNode('strategy')->defaultValue("all")->end()
                     ->end()
                 ->end()
                 ->arrayNode('api_paths')

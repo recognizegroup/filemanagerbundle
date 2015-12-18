@@ -139,5 +139,4 @@ class PathUtils {
         $count = 1;
         return str_replace(self::addTrailingSlash( $working_directory ), "", $path, $count );
     }
-
 }

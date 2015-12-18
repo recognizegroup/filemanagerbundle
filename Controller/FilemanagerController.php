@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class FilemanagerController extends Controller {
@@ -27,7 +28,7 @@ class FilemanagerController extends Controller {
      */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy() );
 
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
@@ -49,7 +50,7 @@ class FilemanagerController extends Controller {
      */
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy() );
 
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
@@ -177,7 +178,7 @@ class FilemanagerController extends Controller {
      */
     public function delete(Request $request) {
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink() );
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy() );
 
         if( $request->request->has('filemanager_directory') && $request->request->has('filemanager_filename') ){
             $builder->attemptChange( function() use ($filemanager, $request) {
@@ -203,7 +204,12 @@ class FilemanagerController extends Controller {
      */
     public function preview(Request $request) {
         $filemanager = $this->getFilemanager();
-        return $filemanager->getLiveFilePreview( $request->query->get('filemanager_path') );
+        $response = $filemanager->getLiveFilePreview( $request->query->get('filemanager_path') );
+        if( $response instanceof RedirectResponse ){
+            $response->setTargetUrl( "http://" . $request->getHttpHost() . "/" . $response->getTargetUrl() );
+        }
+
+        return $response;
     }
 
     /**
@@ -222,6 +228,14 @@ class FilemanagerController extends Controller {
      */
     protected function getPreviewLink(){
         return $this->generateUrl( $this->container->getParameter("recognize_filemanager.config")['api_paths']['preview'] );
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getThumbnailStrategy(){
+        return $this->get("recognize.thumbnail_generator")->getThumbnailStrategy();
+
     }
 
 }

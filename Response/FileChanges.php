@@ -1,6 +1,7 @@
 <?php
 namespace Recognize\FilemanagerBundle\Response;
 
+use Recognize\FilemanagerBundle\Service\ThumbnailGeneratorService;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\HttpFoundation\File\File;
@@ -75,7 +76,6 @@ class FileChanges {
 
         $filedata['file_extension'] = $file->getExtension();
         $absolutepath = PathUtils::addTrailingSlash( $file->getPath() ) . $file->getFilename();
-
 
         $mimetype = $this->mimetype;
         if( $this->mimetype == null ){

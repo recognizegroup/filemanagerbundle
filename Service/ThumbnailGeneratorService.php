@@ -5,6 +5,9 @@ use Imagick;
 use Recognize\FilemanagerBundle\Entity\FileReference;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Form\Exception\InvalidConfigurationException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ThumbnailGeneratorService
@@ -14,10 +17,17 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
 
+    const STRATEGY_INDEXED_ONLY = "indexed_only";
+    const STRATEGY_ALL = "all";
+
     private $thumbnail_directory = null;
     private $thumbnail_size = 50;
 
-    public function __construct( array $configuration ){
+    public function __construct( array $configuration, $kernel_rootdir ){
+
+        $this->webdir =  PathUtils::addTrailingSlash(
+                PathUtils::moveUpPath( $kernel_rootdir )
+            ) . "web";
 
         if( isset( $configuration['thumbnail'] ) ){
             if( isset( $configuration['thumbnail']['directory'] ) ){
@@ -27,7 +37,43 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
             if( isset( $configuration['thumbnail']['size'] ) ) {
                 $this->thumbnail_size = $configuration['thumbnail']['size'];
             }
+
+            if( isset( $configuration['thumbnail']['strategy'] ) ) {
+                if( in_array( $configuration['thumbnail']['strategy'], array(
+                    ThumbnailGeneratorService::STRATEGY_ALL,
+                    ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY
+                ) ) ){
+                   $this->strategy = $configuration['thumbnail']['strategy'];
+                } else {
+                    throw new InvalidConfigurationException( "Thumbnail strategy can only be 'all' or 'indexed_only' " );
+                }
+            } else {
+                $this->strategy = ThumbnailGeneratorService::STRATEGY_ALL;
+            }
         }
+    }
+
+    /**
+     * @param $working_directory
+     * @param $relative_filepath
+     * @return bool
+     */
+    public function generateThumbnailForFilepath( $working_directory, $relative_filepath ){
+        $thumbnail_name = $this->generateRetracableThumbnailName( $relative_filepath );
+        $link = PathUtils::addTrailingSlash( $this->thumbnail_directory ) . $thumbnail_name;
+
+        $fs = new FileSystem();
+        if( $fs->exists( $link ) === false ){
+            if( strpos( $relative_filepath, "png" ) !== false ) {
+                $this->createThumbnailFileForPNG(PathUtils::addTrailingSlash( $working_directory ) .
+                    $relative_filepath, $link);
+            } else if ( extension_loaded('imagick') == true) {
+                $this->createThumbnailFileForMISC(  PathUtils::addTrailingSlash( $working_directory ) .
+                    $relative_filepath, $link );
+            }
+        }
+
+        return $fs->exists( $link );
     }
 
     /**
@@ -80,6 +126,16 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     }
 
     /**
+     * Generates a SHA1 thumbnail filename
+     *
+     * @param $relative_filepath
+     * @return string
+     */
+    public static function generateRetracableThumbnailName( $relative_filepath ){
+        return sha1( $relative_filepath ) . ".jpg";
+    }
+
+    /**
      * Generates a thumbnail filename that doesn't overwrite another file
      *
      * @param string $filename The filename
@@ -88,7 +144,6 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
      */
     protected function generateThumbnailName( $filename, $extension ){
         $thumbnaillink = md5( $filename . time() ) . "." . $extension;
-
 
         $fs = new FileSystem();
         if( $fs->exists( PathUtils::addTrailingSlash( $this->thumbnail_directory ) . $thumbnaillink) == false ){
@@ -268,6 +323,18 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
         $sample['height'] = $oldheight;
 
         return $sample;
+    }
+
+    /**
+     * Return the method of thumbnail generation
+     *
+     * Either ALL for generating thumbnails based on the filepath,
+     * or indexed only where the thumbnails only get generated if they are uploaded through the filemanager
+     *
+     * @return string
+     */
+    public function getThumbnailStrategy(){
+        return $this->strategy;
     }
 
 

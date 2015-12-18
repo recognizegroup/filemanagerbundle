@@ -20,6 +20,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Form\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -45,6 +46,11 @@ class FilemanagerService {
      * @var string $webdirectory
      */
     private $webdir;
+
+    /**
+     * @var ThumbnailGeneratorInterface
+     */
+    protected $thumbnailservice;
 
     public function __construct( array $configuration, FileSecurityContextInterface $security_context,
                                  FiledataSynchronizerInterface $synchronizer, $kernelRootDir = null ){
@@ -240,6 +246,10 @@ class FilemanagerService {
     protected function finderToFilesArray( Finder $finder, $with_permissions = false ){
         $files = array();
 
+        if( $this->thumbnailservice == null ) {
+            $this->thumbnailservice = new ThumbnailGeneratorService($this->configuration, "/var/www/beagleboxx-backend/app/");
+        }
+
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
             $transformed_file = $this->transformFileRelativePath( $file );
@@ -248,6 +258,15 @@ class FilemanagerService {
             if( $with_permissions == false || $this->security_context->isGranted("open",
                     $this->working_directory, $transformed_file->getRelativePath() ) ){
                 $files[] = $transformed_file;
+
+                // Aggressively generate thumbnails that do not exist yet
+                if( $this->configuration['thumbnail']['strategy'] == ThumbnailGeneratorService::STRATEGY_ALL
+                    && $file->isFile() ){
+
+                    $file_to_generate = PathUtils::addTrailingSlash( $transformed_file->getRelativePath() )
+                        . $transformed_file->getFilename();
+                    $this->thumbnailservice->generateThumbnailForFilepath( $this->working_directory, $file_to_generate );
+                }
             }
         }
 
@@ -586,12 +605,15 @@ class FilemanagerService {
         // Check the mimetype
         $finfo = @finfo_open( FILEINFO_MIME_TYPE );
         $absolute_path = $this->current_directory . DIRECTORY_SEPARATOR . $relative_filepath;
+
+
         if ($fs->exists($absolute_path) == true
-            && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath( $absolute_path ))) {
+            && $this->security_context->isGranted("open", $this->working_directory, $this->absolutePathToRelativePath($absolute_path))
+        ) {
 
             $mimetype = finfo_file($finfo, $absolute_path);
-            @finfo_close( $finfo );
-            if( strpos( $mimetype, "image" ) !== false ){
+            @finfo_close($finfo);
+            if (strpos($mimetype, "image") !== false) {
 
                 $finder = new Finder();
                 $finder->in($this->current_directory)->path("/^" . $this->escapeRegex($relative_filepath) . "$/");
@@ -599,11 +621,12 @@ class FilemanagerService {
                 if ($finder->count() > 0) {
                     $file = $this->getFirstFileInFinder($finder);
 
-                    $response = new Response( $file->getContents() ,
-                        200, array("Content-Type" => $file->getType() ));
+                    $response = new Response($file->getContents(),
+                        200, array("Content-Type" => $file->getType()));
                 }
             }
         }
+
 
         return $response;
     }

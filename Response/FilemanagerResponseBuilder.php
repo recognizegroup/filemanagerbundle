@@ -4,6 +4,7 @@ namespace Recognize\FilemanagerBundle\Response;
 use Recognize\FilemanagerBundle\Exception\ConflictException;
 use Recognize\FilemanagerBundle\Exception\FileTooLargeException;
 use Recognize\FilemanagerBundle\Repository\FileRepository;
+use Recognize\FilemanagerBundle\Service\ThumbnailGeneratorService;
 use Recognize\FilemanagerBundle\Utils\PathUtils;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -26,9 +27,12 @@ class FilemanagerResponseBuilder {
 
     protected $preview_link = "";
 
-    public function __construct( $preview_link = "/admin/fileapi/preview" ){
+    protected $thumbnail_strategy = ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY;
+
+    public function __construct( $preview_link = "/admin/fileapi/preview", $thumbnail_strategy = ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY ){
         $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
         $this->preview_link = $preview_link;
+        $this->thumbnail_strategy = $thumbnail_strategy;
     }
 
     private $fileRepository;
@@ -164,23 +168,31 @@ class FilemanagerResponseBuilder {
         } else {
             $filedata['type'] = "file";
 
-            // Search for the file preview if it is enabled
-            $fileref = null;
-            if( $this->fileRepository != null && $this->webdir != null ){
-                $constraints = array(
-                    "working_directory" => str_replace( $filedata['path'], "", $absolutepath),
-                    "relative_path" => $file->getRelativePath(),
-                    "filename" => $file->getFilename(),
-                );
+            // Just get the tracable URL of the thumbnail we generate thumbnails of all the files
+            if( $this->thumbnail_strategy === ThumbnailGeneratorService::STRATEGY_ALL ){
 
-                $fileref = $this->fileRepository->findOneBy( $constraints );
-                if( $fileref != null && ( $fileref->getPreviewUrl() != "" && $fileref->getPreviewUrl() != null ) ){
-                    $filedata['preview'] = PathUtils::stripWorkingDirectoryFromAbsolutePath( $this->webdir, $fileref->getPreviewUrl() );
+                $filedata['preview'] = "/thumbnails/" . ThumbnailGeneratorService::generateRetracableThumbnailName(
+                        PathUtils::addTrailingSlash( $file->getRelativePath() ) . $file->getFilename() );
+            } else {
+
+                // Search for the file preview if it is enabled
+                $fileref = null;
+                if( $this->fileRepository != null && $this->webdir != null ){
+                    $constraints = array(
+                        "working_directory" => str_replace( $filedata['path'], "", $absolutepath),
+                        "relative_path" => $file->getRelativePath(),
+                        "filename" => $file->getFilename(),
+                    );
+
+                    $fileref = $this->fileRepository->findOneBy( $constraints );
+                    if( $fileref != null && ( $fileref->getPreviewUrl() != "" && $fileref->getPreviewUrl() != null ) ){
+                        $filedata['preview'] = PathUtils::stripWorkingDirectoryFromAbsolutePath( $this->webdir, $fileref->getPreviewUrl() );
+                    }
                 }
-            }
 
-            if( $fileref == null && strpos( $mimetype, "image") !== false ){
-                $filedata['preview'] = $this->preview_link . "?filemanager_path=" . $filedata['path'];
+                if( $fileref == null && strpos( $mimetype, "image") !== false ){
+                    $filedata['preview'] = $this->preview_link . "?filemanager_path=" . $filedata['path'];
+                }
             }
         }
 
