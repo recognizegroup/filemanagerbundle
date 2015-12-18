@@ -53,7 +53,7 @@ class FilemanagerService {
     protected $thumbnailservice;
 
     public function __construct( array $configuration, FileSecurityContextInterface $security_context,
-                                 FiledataSynchronizerInterface $synchronizer, $kernelRootDir = null ){
+                                 FiledataSynchronizerInterface $synchronizer, ThumbnailGeneratorInterface $thumbnailservice, $kernelRootDir = null ){
 
         $this->configuration = $configuration;
         if( isset( $configuration['directories']) && isset( $configuration['directories']['default'] ) ){
@@ -66,6 +66,7 @@ class FilemanagerService {
         $this->current_directory = $this->working_directory;
         $this->security_context = $security_context;
         $this->synchronizer = $synchronizer;
+        $this->thumbnailservice = $thumbnailservice;
 
         // Set the web directory
         if( $kernelRootDir != null ){
@@ -246,10 +247,6 @@ class FilemanagerService {
     protected function finderToFilesArray( Finder $finder, $with_permissions = false ){
         $files = array();
 
-        if( $this->thumbnailservice == null ) {
-            $this->thumbnailservice = new ThumbnailGeneratorService($this->configuration, "/var/www/beagleboxx-backend/app/");
-        }
-
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
             $transformed_file = $this->transformFileRelativePath( $file );
@@ -260,7 +257,7 @@ class FilemanagerService {
                 $files[] = $transformed_file;
 
                 // Aggressively generate thumbnails that do not exist yet
-                if( $this->configuration['thumbnail']['strategy'] == ThumbnailGeneratorService::STRATEGY_ALL
+                if( $this->thumbnailservice->getThumbnailStrategy() == ThumbnailGeneratorService::STRATEGY_ALL
                     && $file->isFile() ){
 
                     $file_to_generate = PathUtils::addTrailingSlash( $transformed_file->getRelativePath() )

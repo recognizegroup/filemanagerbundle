@@ -28,7 +28,7 @@ services:
 
     recognize.file_manager:
         class: Recognize\FilemanagerBundle\Service\FilemanagerService
-        arguments: [ %recognize_filemanager.config%, @recognize.file_security_context, @recognize.filedata_synchronizer, %kernel.root_dir% ]
+        arguments: [ %recognize_filemanager.config%, @recognize.file_security_context, @recognize.filedata_synchronizer, @recognize.thumbnail_generator, %kernel.root_dir% ]
 
     recognize.thumbnail_generator:
         class: Recognize\FilemanagerBundle\Service\ThumbnailGeneratorService

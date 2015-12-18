@@ -78,6 +78,7 @@ recognize_filemanager:
     thumbnail:
         directory: /var/www/Filemanager/web/cache
         size: 80
+        strategy: indexed_only
 		
     api_paths:
         read: _fileapi_read
@@ -289,6 +290,9 @@ and added to the thumbnail directory that is set in the configuration file.
 
 Not setting the thumbnail directory has a significant performance impact.
 It means the complete files will be retrieved through php from the server instead of an image.
+
+If the thumbnail directory is set and the thumbnail strategy is set to all, thumbnails will be generated for ALL
+files when they are retrieved from the filemanager API. Otherwise, only indexed files have their thumbnails generated.
 
 If there are some files that don't have proper thumbnails, you can generate them using the following command
 
