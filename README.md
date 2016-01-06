@@ -79,6 +79,7 @@ recognize_filemanager:
         directory: /var/www/Filemanager/web/cache
         size: 80
         strategy: indexed_only
+        mimetype_mode: complex
 		
     api_paths:
         read: _fileapi_read

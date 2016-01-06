@@ -28,7 +28,7 @@ class FilemanagerController extends Controller {
      */
     public function read(Request $request){
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy() );
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy(), $this->getMimetypeStrategy() );
 
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
@@ -50,7 +50,7 @@ class FilemanagerController extends Controller {
      */
     public function search(Request $request){
         $filemanager = $this->getFilemanager();
-        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy() );
+        $builder = new FilemanagerResponseBuilder( $this->getPreviewLink(), $this->getThumbnailStrategy(), $this->getMimetypeStrategy() );
 
         try {
             $repository = $this->get('recognize.filemanager_file_repository');
@@ -236,6 +236,13 @@ class FilemanagerController extends Controller {
     protected function getThumbnailStrategy(){
         return $this->get("recognize.thumbnail_generator")->getThumbnailStrategy();
 
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getMimetypeStrategy(){
+        return $this->container->getParameter("recognize_filemanager.config")['thumbnail']['mimetype_mode'];
     }
 
 }
