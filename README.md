@@ -79,6 +79,7 @@ recognize_filemanager:
         directory: /var/www/Filemanager/web/cache
         size: 80
         strategy: indexed_only
+        mimetype_mode: complex
 		
     api_paths:
         read: _fileapi_read
@@ -172,6 +173,15 @@ class FileController extends FilemanagerController {
     }
 }
 ```
+
+Make sure to include the javascript files and the CSS into the page you are using the filemanager.
+
+These files are:
+
+Resources/public/js/jquery.contextmenu.js
+Resources/public/js/SimpleAjaxUploader.js
+Resources/public/js/filemanager.min.js
+Resources/public/themes/bootstrap/styles.css
 
 Usage
 --------------

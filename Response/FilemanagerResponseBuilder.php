@@ -29,10 +29,16 @@ class FilemanagerResponseBuilder {
 
     protected $thumbnail_strategy = ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY;
 
-    public function __construct( $preview_link = "/admin/fileapi/preview", $thumbnail_strategy = ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY ){
+    const MIMETYPE_STRATEGY_COMPLEX = "complex";
+    const MIMETYPE_STRATEGY_SIMPLE = "simple";
+
+    protected $mimetype_strategy = self::MIMETYPE_STRATEGY_COMPLEX;
+
+    public function __construct( $preview_link = "/admin/fileapi/preview", $thumbnail_strategy = ThumbnailGeneratorService::STRATEGY_INDEXED_ONLY, $mimetype_strategy = self::MIMETYPE_STRATEGY_COMPLEX ){
         $this->finfo = finfo_open( FILEINFO_MIME_TYPE );
         $this->preview_link = $preview_link;
         $this->thumbnail_strategy = $thumbnail_strategy;
+        $this->mimetype_strategy = $mimetype_strategy;
     }
 
     private $fileRepository;
@@ -160,8 +166,12 @@ class FilemanagerResponseBuilder {
         $absolutepath = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename();
 
         $filedata['file_extension'] = $file->getExtension();
-        $mimetype = @finfo_file( $this->finfo, $absolutepath );
-        $filedata['mimetype'] = $mimetype;
+        if( $this->mimetype_strategy == "simple"){
+            $mimetype = "";
+        } else {
+            $mimetype = @finfo_file( $this->finfo, $absolutepath );
+            $filedata['mimetype'] = $mimetype;
+        }
 
         if( $file->isDir() ){
             $filedata['type'] = "dir";

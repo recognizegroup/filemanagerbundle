@@ -87,7 +87,7 @@ class FileSecurityContext implements FileSecurityContextInterface {
 
 
             // Get the roles
-            $roles = $token->getUser()->getRoles();
+            $roles = array_values( $token->getUser()->getRoles() );
             for ($i = 0, $length = count($roles); $i < $length; $i++) {
                 $securityidentities[] = new RoleSecurityIdentity($roles[$i]);
             }

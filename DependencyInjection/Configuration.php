@@ -33,6 +33,7 @@ class Configuration implements ConfigurationInterface {
                 ->end()
                 ->arrayNode('thumbnail')
                     ->children()
+                        ->scalarNode('mimetype_mode')->defaultValue('complex')->end()
                         ->scalarNode('directory')->defaultValue('')->end()
                         ->scalarNode('size')->defaultValue('')->end()
                         ->scalarNode('strategy')->defaultValue("all")->end()

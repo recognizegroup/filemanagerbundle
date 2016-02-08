@@ -8,7 +8,7 @@
                 {% endif %}
                 <p>{{ value }}</p>
             </div>
-            <a class="select-file btn btn-primary" href="#">
+            <a class="select-file btn btn-primary">
                 <input type="file" id="{{ id }}" name="{{ full_name }}" {% if value is not empty %}value="{{ value }}" {% endif %} {% if required %}required="required"{% endif %} />
             Selecteer bestand</a>
 
@@ -18,7 +18,7 @@
                 <div class="filemanager-modal">
                     <div class="row">
                         <div style="margin-left: 36px; margin-right: 36px;">
-                            <h1>Filemanager<a class="pull-right text-danger close-modal" href="#"><i class="fa fa-close"></i></a></h1></div>
+                            <h1>Filemanager<a class="pull-right text-danger close-modal"><i class="fa fa-close"></i></a></h1></div>
                     </div>
                     {{ filemanager(managerid, {"api":{"startingDirectory": directory}}, "bootstrap") }}
                 </div>
