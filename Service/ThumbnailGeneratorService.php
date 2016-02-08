@@ -160,7 +160,13 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
      * @param $newpath
      */
     protected function createThumbnailFileForPNG( $oldpath, $newpath ){
-        $im = imagecreatefrompng( $oldpath );
+
+        // Check memory limit
+        list ($width, $height) = getimagesize($oldpath);
+        $memory = $width * $height * 4; // 4 bytes per pixel
+        if(!self::checkMemory($memory)) return;
+
+        $im = imagecreatefrompng($oldpath);
 
         $width = $this->thumbnail_size;
         $height = $this->thumbnail_size;
@@ -338,4 +344,44 @@ class ThumbnailGeneratorService implements ThumbnailGeneratorInterface {
     }
 
 
+    /**
+     * @param $neededBytes
+     * @return bool
+     */
+    protected static function checkMemory($neededBytes)
+    {
+        $mem_limit = self::parseBytes(ini_get('memory_limit'));
+        $memory    = function_exists('memory_get_usage') ? memory_get_usage() : 16*1024*1024; // safe value: 16MB
+        return $mem_limit > 0 && $memory + $neededBytes > $mem_limit ? false : true;
+    }
+
+    /**
+     * @param $str
+     * @return float|null
+     */
+    protected static function parseBytes($str)
+    {
+        if (is_numeric($str)) {
+            return floatval($str);
+        }
+        if (preg_match('/([0-9\.]+)\s*([a-z]*)/i', $str, $regs)) {
+            $bytes = floatval($regs[1]);
+            switch (strtolower($regs[2])) {
+                case 'g':
+                case 'gb':
+                    $bytes *= 1073741824;
+                    break;
+                case 'm':
+                case 'mb':
+                    $bytes *= 1048576;
+                    break;
+                case 'k':
+                case 'kb':
+                    $bytes *= 1024;
+                    break;
+            }
+            return floatval($bytes);
+        }
+        return null;
+    }
 }
