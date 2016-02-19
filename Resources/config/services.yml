@@ -14,17 +14,15 @@ services:
 
     recognize.filemanager_directory_repository:
         class: Doctrine\ORM\EntityRepository
-        factory_service: doctrine.orm.default_entity_manager
-        factory_method: getRepository
+        factory: ["@doctrine.orm.default_entity_manager", getRepository]
         arguments:
             - Recognize\FilemanagerBundle\Entity\Directory
 
     recognize.filemanager_file_repository:
-            class: Doctrine\ORM\EntityRepository
-            factory_service: doctrine.orm.default_entity_manager
-            factory_method: getRepository
-            arguments:
-                - Recognize\FilemanagerBundle\Entity\FileReference
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.default_entity_manager", getRepository]
+        arguments:
+            - Recognize\FilemanagerBundle\Entity\FileReference
 
     recognize.file_manager:
         class: Recognize\FilemanagerBundle\Service\FilemanagerService
