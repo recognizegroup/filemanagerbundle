@@ -124,6 +124,7 @@ class FileReferenceType extends AbstractType {
 
         $view->vars['is_simple'] = $options['is_simple'];
         $view->vars['directory'] = $options['directory'];
+        $view->vars['reload_directory_from_localstorage'] = $options['reload_directory_from_localstorage'];
     }
 
     /**
@@ -132,10 +133,12 @@ class FileReferenceType extends AbstractType {
     public function setDefaultOptions(OptionsResolverInterface $resolver){
         $resolver->setDefaults(array(
             'is_simple' => false,
+            'reload_directory_from_localstorage' => false,
             'directory' => ""
         ));
 
         $resolver->setAllowedTypes(array( 'is_simple' => array("bool") ));
+        $resolver->setAllowedTypes(array( 'reload_directory_from_localstorage' => array("bool") ));
         $resolver->setAllowedTypes(array( 'directory' => array("string") ));
     }
 
