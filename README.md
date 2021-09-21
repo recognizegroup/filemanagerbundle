@@ -30,7 +30,7 @@ Add the bundle to your composer.json
 	"repositories": [
 		{
 			"type": "git",
-			"url":  "git@bitbucket.org:recognize/filemanagerbundle.git"
+			"url":  "https://github.com/recognizegroup/filemanagerbundle.git"
 		}
 	],
 	 "require": {
